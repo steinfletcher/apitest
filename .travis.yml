@@ -2,11 +2,6 @@ language: go
 
 go:
   - "1.11"
-  - "1.10"
-  - "1.92"
-  - "1.82"
-  - "1.72"
-  - "1.62"
   - "stable"
 
 before_install:
@@ -21,3 +16,6 @@ script:
 
 after_success:
   - goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+
+env:
+  - GO111MODULE=on
