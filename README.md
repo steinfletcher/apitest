@@ -2,6 +2,8 @@
 
 # api-test
 
+[![Coverage Status](https://coveralls.io/repos/github/steinfletcher/api-test/badge.svg?branch=master)](https://coveralls.io/github/steinfletcher/api-test?branch=master)
+
 Simple behavioural (black box) api testing library. 
 
 _In black box tests the internal structure of the app is not know by the tests. Data is input by calling the rest endpoints with a http client and the outputs are expected to meet certain conditions._

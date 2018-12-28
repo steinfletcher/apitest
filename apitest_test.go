@@ -37,7 +37,7 @@ func TestApiTest_AddsTextBodyToRequest(t *testing.T) {
 	})
 
 	New(handler).
-		Post("/hello").
+		Put("/hello").
 		Body(`hello`).
 		Expect(t).
 		Status(http.StatusOK).
@@ -73,7 +73,7 @@ func TestApiTest_AddsHeadersToRequest(t *testing.T) {
 	})
 
 	New(handler).
-		Get("/hello").
+		Delete("/hello").
 		Headers(map[string]string{"My-Header": "12345"}).
 		Expect(t).
 		Status(http.StatusOK).
@@ -167,7 +167,7 @@ func TestApiTest_MatchesResponseCookies(t *testing.T) {
 	})
 
 	New(handler).
-		Get("/hello").
+		Patch("/hello").
 		Expect(t).
 		Status(http.StatusOK).
 		Cookies(map[string]string{

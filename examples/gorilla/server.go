@@ -49,5 +49,5 @@ func getUser() func(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	NewApp().start()
+	newApp().start()
 }
