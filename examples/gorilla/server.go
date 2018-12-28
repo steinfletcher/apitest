@@ -16,17 +16,17 @@ type App struct {
 	Router *mux.Router
 }
 
-func NewApp() *App {
+func newApp() *App {
 	router := mux.NewRouter()
-	router.HandleFunc("/user/{id}", GetUser()).Methods("GET")
+	router.HandleFunc("/user/{id}", getUser()).Methods("GET")
 	return &App{Router: router}
 }
 
-func (a *App) Start() {
+func (a *App) start() {
 	log.Fatal(http.ListenAndServe(":8888", a.Router))
 }
 
-func GetUser() func(w http.ResponseWriter, r *http.Request) {
+func getUser() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := mux.Vars(r)["id"]
 
@@ -49,5 +49,5 @@ func GetUser() func(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	NewApp().Start()
+	NewApp().start()
 }

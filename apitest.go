@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-type ApiTest struct {
+type APITest struct {
 	name     string
 	handler  http.Handler
 	request  *Request
@@ -20,7 +20,7 @@ type ApiTest struct {
 }
 
 func New(handler http.Handler) *Request {
-	apiTest := &ApiTest{}
+	apiTest := &APITest{}
 
 	request := &Request{apiTest: apiTest}
 	response := &Response{apiTest: apiTest}
@@ -33,7 +33,7 @@ func New(handler http.Handler) *Request {
 
 type Handler struct {
 	handler http.Handler
-	apiTest *ApiTest
+	apiTest *APITest
 }
 
 func (r *Request) Name(n string) *Request {
@@ -50,7 +50,7 @@ type Request struct {
 	query     map[string]string
 	cookies   map[string]string
 	basicAuth string
-	apiTest   *ApiTest
+	apiTest   *APITest
 }
 
 func (r *Request) Get(url string) *Request {
@@ -125,7 +125,7 @@ type Response struct {
 	headers        map[string]string
 	cookies        map[string]string
 	cookiesPresent []string
-	apiTest        *ApiTest
+	apiTest        *APITest
 }
 
 func (r *Response) BodyJSON(b string) *Response {
@@ -162,21 +162,21 @@ func (r *Response) End() {
 	r.apiTest.Run()
 }
 
-func (a *ApiTest) Run() {
+func (a *APITest) Run() {
 	res := a.runTest()
 	a.assertResponse(res)
 	a.assertHeaders(res)
 	a.assertCookies(res)
 }
 
-func (a *ApiTest) runTest() *httptest.ResponseRecorder {
+func (a *APITest) runTest() *httptest.ResponseRecorder {
 	req := a.buildRequestFromTestCase()
 	res := httptest.NewRecorder()
 	a.handler.ServeHTTP(res, req)
 	return res
 }
 
-func (a *ApiTest) buildRequestFromTestCase() *http.Request {
+func (a *APITest) buildRequestFromTestCase() *http.Request {
 	var body string
 	var contentType string
 	if a.request.bodyJSON != "" {
@@ -217,7 +217,7 @@ func (a *ApiTest) buildRequestFromTestCase() *http.Request {
 	return req
 }
 
-func (a *ApiTest) assertResponse(res *httptest.ResponseRecorder) {
+func (a *APITest) assertResponse(res *httptest.ResponseRecorder) {
 	assert.Equal(a.t, a.response.status, res.Code, a.name)
 	if a.response.bodyJSON != "" {
 		assert.JSONEq(a.t, a.response.bodyJSON, res.Body.String(), a.name)
@@ -228,7 +228,7 @@ func (a *ApiTest) assertResponse(res *httptest.ResponseRecorder) {
 	}
 }
 
-func (a *ApiTest) assertCookies(response *httptest.ResponseRecorder) {
+func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 	for name, value := range a.response.cookies {
 		foundCookie := false
 		for _, cookie := range getResponseCookies(response) {
@@ -264,7 +264,7 @@ func getResponseCookies(response *httptest.ResponseRecorder) []*http.Cookie {
 	return []*http.Cookie{}
 }
 
-func (a *ApiTest) assertHeaders(res *httptest.ResponseRecorder) {
+func (a *APITest) assertHeaders(res *httptest.ResponseRecorder) {
 	if a.response.headers != nil {
 		for k, v := range a.response.headers {
 			header := res.Header().Get(k)

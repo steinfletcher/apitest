@@ -42,4 +42,3 @@ func GetUser() gin.HandlerFunc {
 func main() {
 	NewApp().Start()
 }
-

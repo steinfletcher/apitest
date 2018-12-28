@@ -22,4 +22,3 @@ func TestGetUser_NotFound(t *testing.T) {
 		Status(http.StatusNotFound).
 		End()
 }
-

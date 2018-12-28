@@ -12,12 +12,10 @@ go:
 before_install:
   - go get -u -v github.com/axw/gocov/gocov
   - go get -u -v github.com/mattn/goveralls
-  - go get -v -u golang.org/x/lint/golint
 
 script:
   - diff -u <(echo -n) <(gofmt -s -d ./)
   - diff -u <(echo -n) <(go vet ./...)
-  - diff -u <(echo -n) <(golint ./...)
   - go test -v -race -covermode=atomic -coverprofile=coverage.out
   - go test ./... -race
 
