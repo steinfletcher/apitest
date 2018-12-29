@@ -156,7 +156,7 @@ func TestApiTest_MatchesTextResponseBody(t *testing.T) {
 	New(handler).
 		Get("/hello").
 		Expect(t).
-		Body(`hello`).
+		BodyText(`hello`).
 		Status(http.StatusOK).
 		End()
 }
@@ -232,4 +232,24 @@ func TestApiTest_CustomAssertFunction_Panics(t *testing.T) {
 			}).
 			End()
 	})
+}
+
+func TestApiTest_SupportsJSONPathExpectations(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		_, err := w.Write([]byte(`{"a": 12345, "b": [{"key": "c", "value": "result"}]}`))
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	New(handler).
+		Get("/hello").
+		Expect(t).
+		JSONPath(`$.b[? @.key=="c"].value`, func(values interface{}) {
+			assert.Contains(t, values, "result")
+		}).
+		End()
 }

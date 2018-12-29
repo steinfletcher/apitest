@@ -3,7 +3,9 @@ package apitest
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"github.com/PaesslerAG/jsonpath"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -119,14 +121,16 @@ func (r *Request) Expect(t *testing.T) *Response {
 }
 
 type Response struct {
-	status         int
-	bodyJSON       string
-	body           string
-	headers        map[string]string
-	cookies        map[string]string
-	cookiesPresent []string
-	apiTest        *APITest
-	assert         func(*http.Response, *http.Request)
+	status             int
+	bodyJSON           string
+	body               string
+	headers            map[string]string
+	cookies            map[string]string
+	cookiesPresent     []string
+	jsonPathExpression string
+	jsonPathAssert     func(interface{})
+	apiTest            *APITest
+	assert             func(*http.Response, *http.Request)
 }
 
 func (r *Response) BodyJSON(b string) *Response {
@@ -134,7 +138,7 @@ func (r *Response) BodyJSON(b string) *Response {
 	return r
 }
 
-func (r *Response) Body(b string) *Response {
+func (r *Response) BodyText(b string) *Response {
 	r.body = b
 	return r
 }
@@ -164,6 +168,12 @@ func (r *Response) Assert(fn func(*http.Response, *http.Request)) *Response {
 	return r.apiTest.response
 }
 
+func (r *Response) JSONPath(expression string, assert func(interface{})) *Response {
+	r.jsonPathExpression = expression
+	r.jsonPathAssert = assert
+	return r.apiTest.response
+}
+
 func (r *Response) End() {
 	r.apiTest.Run()
 }
@@ -173,6 +183,7 @@ func (a *APITest) Run() {
 	a.assertResponse(res)
 	a.assertHeaders(res)
 	a.assertCookies(res)
+	a.assertJSONPath(res)
 	if a.response.assert != nil {
 		a.response.assert(res.Result(), req)
 	}
@@ -263,6 +274,20 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 			}
 			assert.Equal(a.t, true, foundCookie, "Cookie not found - "+cookieName)
 		}
+	}
+}
+
+func (a *APITest) assertJSONPath(res *httptest.ResponseRecorder) {
+	if a.response.jsonPathExpression != "" {
+		v := interface{}(nil)
+		err := json.Unmarshal(res.Body.Bytes(), &v)
+
+		value, err := jsonpath.Get(a.response.jsonPathExpression, v)
+		if err != nil {
+			assert.Nil(a.t, err)
+		}
+
+		a.response.jsonPathAssert(value.(interface{}))
 	}
 }
 
