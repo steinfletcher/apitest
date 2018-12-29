@@ -1,6 +1,7 @@
 package apitest
 
 import (
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -18,6 +19,7 @@ func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 	})
 
 	New(handler).
+		Name("adds json body").
 		Post("/hello").
 		BodyJSON(`{"a": 12345}`).
 		Expect(t).
@@ -196,4 +198,38 @@ func TestApiTest_MatchesResponseHeaders(t *testing.T) {
 			"DEF": "67890",
 		}).
 		End()
+}
+
+func TestApiTest_CustomAssertFunction_Success(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	New(handler).
+		Get("/hello").
+		Expect(t).
+		Assert(func(res *http.Response, req *http.Request) {
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+		}).
+		End()
+}
+
+func TestApiTest_CustomAssertFunction_Panics(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	})
+
+	assert.Panics(t, func() {
+		New(handler).
+			Get("/hello").
+			Expect(t).
+			Assert(func(res *http.Response, req *http.Request) {
+				if res.StatusCode >= http.StatusBadRequest {
+					panic("panic in Assert")
+				}
+			}).
+			End()
+	})
 }

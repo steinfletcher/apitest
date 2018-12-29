@@ -126,6 +126,7 @@ type Response struct {
 	cookies        map[string]string
 	cookiesPresent []string
 	apiTest        *APITest
+	assert         func(*http.Response, *http.Request)
 }
 
 func (r *Response) BodyJSON(b string) *Response {
@@ -158,22 +159,30 @@ func (r *Response) Status(s int) *Response {
 	return r
 }
 
+func (r *Response) Assert(fn func(*http.Response, *http.Request)) *Response {
+	r.assert = fn
+	return r.apiTest.response
+}
+
 func (r *Response) End() {
 	r.apiTest.Run()
 }
 
 func (a *APITest) Run() {
-	res := a.runTest()
+	res, req := a.runTest()
 	a.assertResponse(res)
 	a.assertHeaders(res)
 	a.assertCookies(res)
+	if a.response.assert != nil {
+		a.response.assert(res.Result(), req)
+	}
 }
 
-func (a *APITest) runTest() *httptest.ResponseRecorder {
+func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
 	req := a.buildRequestFromTestCase()
 	res := httptest.NewRecorder()
 	a.handler.ServeHTTP(res, req)
-	return res
+	return res, req
 }
 
 func (a *APITest) buildRequestFromTestCase() *http.Request {
@@ -218,25 +227,30 @@ func (a *APITest) buildRequestFromTestCase() *http.Request {
 }
 
 func (a *APITest) assertResponse(res *httptest.ResponseRecorder) {
-	assert.Equal(a.t, a.response.status, res.Code, a.name)
+	if a.response.status != 0 {
+		assert.Equal(a.t, a.response.status, res.Code, a.name)
+	}
 	if a.response.bodyJSON != "" {
 		assert.JSONEq(a.t, a.response.bodyJSON, res.Body.String(), a.name)
 		return
 	}
+
 	if a.response.body != "" {
 		assert.Equal(a.t, a.response.body, res.Body.String(), a.name)
 	}
 }
 
 func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
-	for name, value := range a.response.cookies {
-		foundCookie := false
-		for _, cookie := range getResponseCookies(response) {
-			if cookie.Name == name && cookie.Value == value {
-				foundCookie = true
+	if a.response.cookies != nil {
+		for name, value := range a.response.cookies {
+			foundCookie := false
+			for _, cookie := range getResponseCookies(response) {
+				if cookie.Name == name && cookie.Value == value {
+					foundCookie = true
+				}
 			}
+			assert.Equal(a.t, true, foundCookie, "Cookie not found - "+name)
 		}
-		assert.Equal(a.t, true, foundCookie, "Cookie not found - "+name)
 	}
 
 	if len(a.response.cookiesPresent) > 0 {
