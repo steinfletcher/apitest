@@ -63,6 +63,26 @@ func TestApiTest_AddsQueryParamsToRequest(t *testing.T) {
 		End()
 }
 
+func TestApiTest_AddsQueryParamCollectionToRequest(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		if "a=b&a=c&a=d&e=f" != r.URL.RawQuery {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	New(handler).
+		Observe(DumpHttp).
+		Get("/hello").
+		QueryCollection(map[string][]string{"a": {"b", "c", "d"}}).
+		Query(map[string]string{"e": "f"}).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
 func TestApiTest_AddsHeadersToRequest(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
@@ -273,4 +293,28 @@ func TestApiTest_Observe_DumpsTheHttpRequestAndResponse(t *testing.T) {
 		Expect(t).
 		Status(http.StatusCreated).
 		End()
+}
+
+func TestApiTest_BuildQueryCollection(t *testing.T) {
+	queryParams := map[string][]string{
+		"a": {"22", "33"},
+		"b": {"11"},
+		"c": {},
+	}
+
+	params := buildQueryCollection(queryParams)
+
+	assert.ElementsMatch(t, []pair{
+		{l: "a", r: "22"},
+		{l: "a", r: "33"},
+		{l: "b", r: "11"},
+	}, params)
+}
+
+func TestApiTest_BuildQueryCollection_EmptyIfNoParams(t *testing.T) {
+	queryParams := map[string][]string{"c": {}}
+
+	params := buildQueryCollection(queryParams)
+
+	assert.Empty(t, params)
 }

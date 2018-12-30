@@ -41,14 +41,20 @@ type Observe func(*http.Response, *http.Request)
 
 // Request is the user defined request that will be invoked on the handler under test
 type Request struct {
-	method    string
-	url       string
-	body      string
-	headers   map[string]string
-	query     map[string]string
-	cookies   map[string]string
-	basicAuth string
-	apiTest   *APITest
+	method          string
+	url             string
+	body            string
+	query           map[string]string
+	queryCollection map[string][]string
+	headers         map[string]string
+	cookies         map[string]string
+	basicAuth       string
+	apiTest         *APITest
+}
+
+type pair struct {
+	l string
+	r string
 }
 
 var DumpHttp Observe = func(res *http.Response, req *http.Request) {
@@ -122,9 +128,17 @@ func (r *Request) Body(b string) *Request {
 	return r
 }
 
-// Query is a builder method to set the request query parameters
+// Query is a builder method to set the request query parameters.
+// This can be used in combination with request.QueryCollection
 func (r *Request) Query(q map[string]string) *Request {
 	r.query = q
+	return r
+}
+
+// Query is a builder method to set the request query parameters
+// This can be used in combination with request.Query
+func (r *Request) QueryCollection(q map[string][]string) *Request {
+	r.queryCollection = q
 	return r
 }
 
@@ -252,11 +266,21 @@ func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
 
 func (a *APITest) buildRequestFromTestCase() *http.Request {
 	req, _ := http.NewRequest(a.request.method, a.request.url, bytes.NewBufferString(a.request.body))
+
+	query := req.URL.Query()
+	if a.request.queryCollection != nil {
+		for _, param := range buildQueryCollection(a.request.queryCollection) {
+			query.Add(param.l, param.r)
+		}
+	}
+
 	if a.request.query != nil {
-		query := req.URL.Query()
 		for k, v := range a.request.query {
 			query.Add(k, v)
 		}
+	}
+
+	if len(query) > 0 {
 		req.URL.RawQuery = query.Encode()
 	}
 
@@ -275,6 +299,20 @@ func (a *APITest) buildRequestFromTestCase() *http.Request {
 	}
 
 	return req
+}
+
+func buildQueryCollection(params map[string][]string) []pair {
+	if len(params) == 0 {
+		return []pair{}
+	}
+
+	var pairs []pair
+	for k, v := range params {
+		for _, paramValue := range v {
+			pairs = append(pairs, pair{l: k, r: paramValue})
+		}
+	}
+	return pairs
 }
 
 func (a *APITest) assertResponse(res *httptest.ResponseRecorder) {
