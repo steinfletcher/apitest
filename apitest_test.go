@@ -21,7 +21,7 @@ func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 	New(handler).
 		Name("adds json body").
 		Post("/hello").
-		BodyJSON(`{"a": 12345}`).
+		Body(`{"a": 12345}`).
 		Expect(t).
 		Status(http.StatusOK).
 		End()
@@ -137,7 +137,7 @@ func TestApiTest_MatchesJSONResponseBody(t *testing.T) {
 	New(handler).
 		Get("/hello").
 		Expect(t).
-		BodyJSON(`{"a": 12345}`).
+		Body(`{"a": 12345}`).
 		Status(http.StatusCreated).
 		End()
 }

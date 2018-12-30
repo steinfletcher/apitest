@@ -10,7 +10,7 @@ func TestGetUser_Success(t *testing.T) {
 	apitest.New(NewApp().Router).
 		Get("/user/1234").
 		Expect(t).
-		BodyJSON(`{"id": "1234", "name": "Andy"}`).
+		Body(`{"id": "1234", "name": "Andy"}`).
 		Status(http.StatusOK).
 		End()
 }

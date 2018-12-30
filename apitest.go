@@ -46,7 +46,6 @@ func (r *Request) Name(n string) *Request {
 type Request struct {
 	method    string
 	url       string
-	bodyJSON  string
 	body      string
 	headers   map[string]string
 	query     map[string]string
@@ -85,11 +84,6 @@ func (r *Request) Patch(url string) *Request {
 	return r
 }
 
-func (r *Request) BodyJSON(b string) *Request {
-	r.bodyJSON = b
-	return r
-}
-
 func (r *Request) Body(b string) *Request {
 	r.body = b
 	return r
@@ -122,7 +116,6 @@ func (r *Request) Expect(t *testing.T) *Response {
 
 type Response struct {
 	status             int
-	bodyJSON           string
 	body               string
 	headers            map[string]string
 	cookies            map[string]string
@@ -133,8 +126,8 @@ type Response struct {
 	assert             func(*http.Response, *http.Request)
 }
 
-func (r *Response) BodyJSON(b string) *Response {
-	r.bodyJSON = b
+func (r *Response) Body(b string) *Response {
+	r.body = b
 	return r
 }
 
@@ -197,21 +190,7 @@ func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
 }
 
 func (a *APITest) buildRequestFromTestCase() *http.Request {
-	var body string
-	var contentType string
-	if a.request.bodyJSON != "" {
-		body = a.request.bodyJSON
-		contentType = "application/json"
-	} else if a.request.body != "" {
-		body = a.request.body
-		contentType = "text/plain"
-	}
-
-	req, _ := http.NewRequest(a.request.method, a.request.url, bytes.NewBufferString(body))
-	if contentType != "" {
-		req.Header.Set("Content-Type", contentType)
-	}
-
+	req, _ := http.NewRequest(a.request.method, a.request.url, bytes.NewBufferString(a.request.body))
 	if a.request.query != nil {
 		query := req.URL.Query()
 		for k, v := range a.request.query {
@@ -241,13 +220,13 @@ func (a *APITest) assertResponse(res *httptest.ResponseRecorder) {
 	if a.response.status != 0 {
 		assert.Equal(a.t, a.response.status, res.Code, a.name)
 	}
-	if a.response.bodyJSON != "" {
-		assert.JSONEq(a.t, a.response.bodyJSON, res.Body.String(), a.name)
-		return
-	}
 
 	if a.response.body != "" {
-		assert.Equal(a.t, a.response.body, res.Body.String(), a.name)
+		if isJSON(a.response.body) {
+			assert.JSONEq(a.t, a.response.body, res.Body.String(), a.name)
+		} else {
+			assert.Equal(a.t, a.response.body, res.Body.String(), a.name)
+		}
 	}
 }
 
@@ -277,20 +256,6 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 	}
 }
 
-func (a *APITest) assertJSONPath(res *httptest.ResponseRecorder) {
-	if a.response.jsonPathExpression != "" {
-		v := interface{}(nil)
-		err := json.Unmarshal(res.Body.Bytes(), &v)
-
-		value, err := jsonpath.Get(a.response.jsonPathExpression, v)
-		if err != nil {
-			assert.Nil(a.t, err)
-		}
-
-		a.response.jsonPathAssert(value.(interface{}))
-	}
-}
-
 func getResponseCookies(response *httptest.ResponseRecorder) []*http.Cookie {
 	for _, rawCookieString := range response.Result().Header["Set-Cookie"] {
 		rawRequest := fmt.Sprintf("GET / HTTP/1.0\r\nCookie: %s\r\n\r\n", rawCookieString)
@@ -310,4 +275,23 @@ func (a *APITest) assertHeaders(res *httptest.ResponseRecorder) {
 			assert.Equal(a.t, v, header, fmt.Sprintf("'%s' header should be equal", k))
 		}
 	}
+}
+
+func (a *APITest) assertJSONPath(res *httptest.ResponseRecorder) {
+	if a.response.jsonPathExpression != "" {
+		v := interface{}(nil)
+		err := json.Unmarshal(res.Body.Bytes(), &v)
+
+		value, err := jsonpath.Get(a.response.jsonPathExpression, v)
+		if err != nil {
+			assert.Nil(a.t, err)
+		}
+
+		a.response.jsonPathAssert(value.(interface{}))
+	}
+}
+
+func isJSON(s string) bool {
+	var js map[string]interface{}
+	return json.Unmarshal([]byte(s), &js) == nil
 }

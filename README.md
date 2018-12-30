@@ -19,7 +19,7 @@ func TestGetUser(t *testing.T) {
     apitest.New(handler).
       Get("/user/1234").
       Expect(t).
-      BodyJSON(`{"id": "1234", "name": "Tate"}`).
+      Body(`{"id": "1234", "name": "Tate"}`).
       Status(http.StatusCreated).
       End()
 }
