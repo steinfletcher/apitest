@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
 	"strings"
 	"testing"
 )
@@ -18,6 +19,7 @@ type APITest struct {
 	handler  http.Handler
 	request  *Request
 	response *Response
+	observer Observe
 	t        *testing.T
 }
 
@@ -34,6 +36,9 @@ func New(handler http.Handler) *Request {
 	return apiTest.request
 }
 
+// Observer will be called by with the request and response on completion
+type Observe func(*http.Response, *http.Request)
+
 // Request is the user defined request that will be invoked on the handler under test
 type Request struct {
 	method    string
@@ -44,6 +49,24 @@ type Request struct {
 	cookies   map[string]string
 	basicAuth string
 	apiTest   *APITest
+}
+
+var DumpHttp Observe = func(res *http.Response, req *http.Request) {
+	requestDump, err := httputil.DumpRequest(req, true)
+	if err == nil {
+		fmt.Println("--> http request dump\n\n" + string(requestDump))
+	}
+
+	responseDump, err := httputil.DumpResponse(res, true)
+	if err == nil {
+		fmt.Println("<-- http response dump:\n\n" + string(responseDump))
+	}
+}
+
+// Observe is a builder method for setting the observer
+func (r *Request) Observe(observer Observe) *Request {
+	r.apiTest.observer = observer
+	return r
 }
 
 // Get is a convenience method for setting the request as http.MethodGet
@@ -129,8 +152,11 @@ type Response struct {
 	jsonPathExpression string
 	jsonPathAssert     func(interface{})
 	apiTest            *APITest
-	assert             func(*http.Response, *http.Request)
+	assert             Assert
 }
+
+// Assert is a user defined custom assertion function
+type Assert func(*http.Response, *http.Request) error
 
 // Body is the expected response body
 func (r *Response) Body(b string) *Response {
@@ -171,7 +197,7 @@ func (r *Response) Status(s int) *Response {
 
 // Assert allows the consumer to provide a user defined function containing their own
 // custom assertions
-func (r *Response) Assert(fn func(*http.Response, *http.Request)) *Response {
+func (r *Response) Assert(fn func(*http.Response, *http.Request) error) *Response {
 	r.assert = fn
 	return r.apiTest.response
 }
@@ -190,12 +216,18 @@ func (r *Response) End() {
 
 func (a *APITest) run() {
 	res, req := a.runTest()
+	if a.observer != nil {
+		a.observer(res.Result(), req)
+	}
 	a.assertResponse(res)
 	a.assertHeaders(res)
 	a.assertCookies(res)
 	a.assertJSONPath(res)
 	if a.response.assert != nil {
-		a.response.assert(res.Result(), req)
+		err := a.response.assert(res.Result(), req)
+		if err != nil {
+			a.t.Fatal(err.Error())
+		}
 	}
 }
 

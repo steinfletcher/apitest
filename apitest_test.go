@@ -216,40 +216,6 @@ func TestApiTest_MatchesResponseHeaders(t *testing.T) {
 		End()
 }
 
-func TestApiTest_CustomAssertFunction_Success(t *testing.T) {
-	handler := http.NewServeMux()
-	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	New(handler).
-		Get("/hello").
-		Expect(t).
-		Assert(func(res *http.Response, req *http.Request) {
-			assert.Equal(t, http.StatusOK, res.StatusCode)
-		}).
-		End()
-}
-
-func TestApiTest_CustomAssertFunction_Panics(t *testing.T) {
-	handler := http.NewServeMux()
-	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadRequest)
-	})
-
-	assert.Panics(t, func() {
-		New(handler).
-			Get("/hello").
-			Expect(t).
-			Assert(func(res *http.Response, req *http.Request) {
-				if res.StatusCode >= http.StatusBadRequest {
-					panic("panic in Assert")
-				}
-			}).
-			End()
-	})
-}
-
 func TestApiTest_SupportsJSONPathExpectations(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
@@ -267,5 +233,43 @@ func TestApiTest_SupportsJSONPathExpectations(t *testing.T) {
 		JSONPath(`$.b[? @.key=="c"].value`, func(values interface{}) {
 			assert.Contains(t, values, "result")
 		}).
+		End()
+}
+
+func TestApiTest_Observe(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	New(handler).
+		Observe(func(res *http.Response, req *http.Request) {
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Equal(t, "/hello", req.URL.Path)
+		}).
+		Get("/hello").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestApiTest_Observe_DumpsTheHttpRequestAndResponse(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+		_, err := w.Write([]byte(`{"a": 12345}`))
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	New(handler).
+		Observe(DumpHttp).
+		Post("/hello").
+		Body(`{"a": 12345}`).
+		Headers(map[string]string{"Content-Type": "application/json"}).
+		Expect(t).
+		Status(http.StatusCreated).
 		End()
 }

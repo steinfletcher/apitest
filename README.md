@@ -14,7 +14,7 @@ _In black box tests the internal structure of the app is not know by the tests. 
 
 ## Examples
 
-JSON body matcher
+**JSON body matcher**
 
 ```go
 func TestGetUser(t *testing.T) {
@@ -27,7 +27,8 @@ func TestGetUser(t *testing.T) {
 }
 ```
 
-JSONPath body matcher. Given the response is `{"a": 12345, "b": [{"key": "c", "value": "result"}]}`
+**JSONPath body matcher.** 
+Given the response is `{"a": 12345, "b": [{"key": "c", "value": "result"}]}`
 
 ```go
 func TestGetUser(t *testing.T) {
@@ -41,7 +42,7 @@ func TestGetUser(t *testing.T) {
 }
 ```
 
-Custom assert functions.
+**Custom assert functions.**
 
 ```go
 func TestGetUser(t *testing.T) {
@@ -55,7 +56,7 @@ func TestGetUser(t *testing.T) {
 }
 ```
 
-Assert cookies
+**Assert cookies**
 
 ```go
 func TestGetUser(t *testing.T) {
@@ -75,7 +76,7 @@ func TestGetUser(t *testing.T) {
 }
 ```
 
-Assert headers
+**Assert headers**
 
 ```go
 func TestGetUser(t *testing.T) {
@@ -88,7 +89,7 @@ func TestGetUser(t *testing.T) {
 }
 ```
 
-Provide basic auth in the request
+**Provide basic auth in the request**
 
 ```go
 func TestGetUser(t *testing.T) {
@@ -101,7 +102,7 @@ func TestGetUser(t *testing.T) {
 }
 ```
 
-Provide cookies in the request
+**Provide cookies in the request**
 
 ```go
 func TestGetUser(t *testing.T) {
@@ -114,7 +115,7 @@ func TestGetUser(t *testing.T) {
 }
 ```
 
-Provide headers in the request
+**Provide headers in the request**
 
 ```go
 func TestGetUser(t *testing.T) {
@@ -127,7 +128,7 @@ func TestGetUser(t *testing.T) {
 }
 ```
 
-Provide query parameters in the request
+**Provide query parameters in the request**
 
 ```go
 func TestGetUser(t *testing.T) {
@@ -138,4 +139,32 @@ func TestGetUser(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 }
+```
+
+**Capture the request and response data**
+
+```go
+func TestGetUser(t *testing.T) {
+	apitest.New(handler).
+		Observe(func(res *http.Response, req *http.Request) {
+			// do something with res and req
+		}).
+		Get("/hello").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+```
+
+one usage for this might be debug logging to the console. The provided `DumpHttp` function does this automatically
+
+```go
+	apitest.New(handler).
+		Observe(apitest.DumpHttp).
+		Post("/hello").
+		Body(`{"a": 12345}`).
+		Headers(map[string]string{"Content-Type": "application/json"}).
+		Expect(t).
+		Status(http.StatusCreated).
+		End()
 ```
