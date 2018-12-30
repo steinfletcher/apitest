@@ -13,14 +13,15 @@ import (
 	"testing"
 )
 
+// APITest is the top level struct holding the test spec
 type APITest struct {
-	name     string
 	handler  http.Handler
 	request  *Request
 	response *Response
 	t        *testing.T
 }
 
+// New creates a new api test with the given http.Handler
 func New(handler http.Handler) *Request {
 	apiTest := &APITest{}
 
@@ -33,16 +34,7 @@ func New(handler http.Handler) *Request {
 	return apiTest.request
 }
 
-type Handler struct {
-	handler http.Handler
-	apiTest *APITest
-}
-
-func (r *Request) Name(n string) *Request {
-	r.apiTest.name = n
-	return r.apiTest.request
-}
-
+// Request is the user defined request that will be invoked on the handler under test
 type Request struct {
 	method    string
 	url       string
@@ -54,124 +46,149 @@ type Request struct {
 	apiTest   *APITest
 }
 
+// Get is a convenience method for setting the request as http.MethodGet
 func (r *Request) Get(url string) *Request {
 	r.method = http.MethodGet
 	r.url = url
 	return r
 }
 
+// Post is a convenience method for setting the request as http.MethodPost
 func (r *Request) Post(url string) *Request {
 	r.method = http.MethodPost
 	r.url = url
 	return r
 }
 
+// Put is a convenience method for setting the request as http.MethodPut
 func (r *Request) Put(url string) *Request {
 	r.method = http.MethodPut
 	r.url = url
 	return r
 }
 
+// Delete is a convenience method for setting the request as http.MethodDelete
 func (r *Request) Delete(url string) *Request {
 	r.method = http.MethodDelete
 	r.url = url
 	return r
 }
 
+// Patch is a convenience method for setting the request as http.MethodPatch
 func (r *Request) Patch(url string) *Request {
 	r.method = http.MethodPatch
 	r.url = url
 	return r
 }
 
+// Body is a builder method to set the request body
 func (r *Request) Body(b string) *Request {
 	r.body = b
 	return r
 }
 
+// Query is a builder method to set the request query parameters
 func (r *Request) Query(q map[string]string) *Request {
 	r.query = q
 	return r
 }
 
+// Headers is a builder method to set the request headers
 func (r *Request) Headers(h map[string]string) *Request {
 	r.headers = h
 	return r
 }
 
+// Headers is a builder method to set the request headers
 func (r *Request) Cookies(c map[string]string) *Request {
 	r.cookies = c
 	return r
 }
 
+// BasicAuth is a builder method to sets basic auth on the request.
+// The credentials should be provided delimited by a colon, e.g. "username:password"
 func (r *Request) BasicAuth(auth string) *Request {
 	r.basicAuth = auth
 	return r
 }
 
+// Expect marks the request spec as complete and following code will define the expected response
 func (r *Request) Expect(t *testing.T) *Response {
 	r.apiTest.t = t
 	return r.apiTest.response
 }
 
+// Response is the user defined expected response from the application under test
 type Response struct {
 	status             int
 	body               string
 	headers            map[string]string
 	cookies            map[string]string
 	cookiesPresent     []string
+	httpCookies        []http.Cookie
 	jsonPathExpression string
 	jsonPathAssert     func(interface{})
 	apiTest            *APITest
 	assert             func(*http.Response, *http.Request)
 }
 
+// Body is the expected response body
 func (r *Response) Body(b string) *Response {
 	r.body = b
 	return r
 }
 
-func (r *Response) BodyText(b string) *Response {
-	r.body = b
-	return r
-}
-
+// Cookies is the expected response cookies
 func (r *Response) Cookies(cookies map[string]string) *Response {
 	r.cookies = cookies
 	return r
 }
 
+// HttpCookies is the expected response cookies
+func (r *Response) HttpCookies(cookies []http.Cookie) *Response {
+	r.httpCookies = cookies
+	return r
+}
+
+// CookiePresent is used to assert that a cookie is present in the response,
+// regardless of its value
 func (r *Response) CookiePresent(cookieName string) *Response {
 	r.cookiesPresent = append(r.cookiesPresent, cookieName)
 	return r
 }
 
+// Headers is the expected response headers
 func (r *Response) Headers(headers map[string]string) *Response {
 	r.headers = headers
 	return r
 }
 
+// Status is the expected response http status code
 func (r *Response) Status(s int) *Response {
 	r.status = s
 	return r
 }
 
+// Assert allows the consumer to provide a user defined function containing their own
+// custom assertions
 func (r *Response) Assert(fn func(*http.Response, *http.Request)) *Response {
 	r.assert = fn
 	return r.apiTest.response
 }
 
+// JSONPath provides support for jsonpath expectations as defined by https://goessner.net/articles/JsonPath/
 func (r *Response) JSONPath(expression string, assert func(interface{})) *Response {
 	r.jsonPathExpression = expression
 	r.jsonPathAssert = assert
 	return r.apiTest.response
 }
 
+// End runs the test and all defined assertions
 func (r *Response) End() {
-	r.apiTest.Run()
+	r.apiTest.run()
 }
 
-func (a *APITest) Run() {
+func (a *APITest) run() {
 	res, req := a.runTest()
 	a.assertResponse(res)
 	a.assertHeaders(res)
@@ -218,14 +235,14 @@ func (a *APITest) buildRequestFromTestCase() *http.Request {
 
 func (a *APITest) assertResponse(res *httptest.ResponseRecorder) {
 	if a.response.status != 0 {
-		assert.Equal(a.t, a.response.status, res.Code, a.name)
+		assert.Equal(a.t, a.response.status, res.Code)
 	}
 
 	if a.response.body != "" {
 		if isJSON(a.response.body) {
-			assert.JSONEq(a.t, a.response.body, res.Body.String(), a.name)
+			assert.JSONEq(a.t, a.response.body, res.Body.String())
 		} else {
-			assert.Equal(a.t, a.response.body, res.Body.String(), a.name)
+			assert.Equal(a.t, a.response.body, res.Body.String())
 		}
 	}
 }
@@ -254,6 +271,30 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 			assert.Equal(a.t, true, foundCookie, "Cookie not found - "+cookieName)
 		}
 	}
+
+	if len(a.response.httpCookies) > 0 {
+		for _, httpCookie := range a.response.httpCookies {
+			foundCookie := false
+			for _, cookie := range getResponseCookies(response) {
+				if compareHttpCookies(cookie, &httpCookie) {
+					foundCookie = true
+				}
+			}
+			assert.Equal(a.t, true, foundCookie, "Cookie not found - "+httpCookie.Name)
+		}
+	}
+}
+
+// only compare a subset of fields for flexibility
+func compareHttpCookies(l *http.Cookie, r *http.Cookie) bool {
+	return l.Name == r.Name &&
+		l.Value == r.Value &&
+		l.Domain == r.Domain &&
+		l.Expires == r.Expires &&
+		l.MaxAge == r.MaxAge &&
+		l.Secure == r.Secure &&
+		l.HttpOnly == r.HttpOnly &&
+		l.SameSite == r.SameSite
 }
 
 func getResponseCookies(response *httptest.ResponseRecorder) []*http.Cookie {

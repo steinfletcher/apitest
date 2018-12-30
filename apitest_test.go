@@ -19,7 +19,6 @@ func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 	})
 
 	New(handler).
-		Name("adds json body").
 		Post("/hello").
 		Body(`{"a": 12345}`).
 		Expect(t).
@@ -156,7 +155,7 @@ func TestApiTest_MatchesTextResponseBody(t *testing.T) {
 	New(handler).
 		Get("/hello").
 		Expect(t).
-		BodyText(`hello`).
+		Body(`hello`).
 		Status(http.StatusOK).
 		End()
 }
@@ -178,6 +177,23 @@ func TestApiTest_MatchesResponseCookies(t *testing.T) {
 		}).
 		CookiePresent("XXX").
 		CookiePresent("VVV").
+		End()
+}
+
+func TestApiTest_MatchesResponseHttpCookies(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Set-Cookie", "ABC=12345; DEF=67890;")
+		w.WriteHeader(http.StatusOK)
+	})
+
+	New(handler).
+		Get("/hello").
+		Expect(t).
+		HttpCookies([]http.Cookie{
+			{Name: "ABC", Value: "12345"},
+			{Name: "DEF", Value: "67890"},
+		}).
 		End()
 }
 
