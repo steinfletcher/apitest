@@ -92,7 +92,8 @@ func TestApiTest_AddsCookiesToRequest(t *testing.T) {
 	})
 
 	New(handler).
-		Get("/hello").
+		Method(http.MethodGet).
+		URL("/hello").
 		Cookies(map[string]string{"Cookie1": "Yummy"}).
 		Expect(t).
 		Status(http.StatusOK).

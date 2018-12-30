@@ -69,6 +69,18 @@ func (r *Request) Observe(observer Observe) *Request {
 	return r
 }
 
+// Method is a builder method for setting the http method of the request
+func (r *Request) Method(method string) *Request {
+	r.method = method
+	return r
+}
+
+// URL is a builder method for setting the url of the request
+func (r *Request) URL(url string) *Request {
+	r.url = url
+	return r
+}
+
 // Get is a convenience method for setting the request as http.MethodGet
 func (r *Request) Get(url string) *Request {
 	r.method = http.MethodGet

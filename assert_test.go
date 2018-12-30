@@ -32,4 +32,3 @@ func TestApiTest_Assert_StatusCodes(t *testing.T) {
 		}
 	}
 }
-
