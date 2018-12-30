@@ -67,6 +67,7 @@ func TestApi(t *testing.T) {
 			"DEF": "67890",
 		}).
 		CookiePresent("Session-Token").
+		CookieNotPresent("XXX").
 		HttpCookies([]http.Cookie{
 			{Name: "HIJ", Value: "12345"},
 		}).

@@ -198,6 +198,7 @@ func TestApiTest_MatchesResponseCookies(t *testing.T) {
 		}).
 		CookiePresent("XXX").
 		CookiePresent("VVV").
+		CookieNotPresent("ZZZ").
 		End()
 }
 

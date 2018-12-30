@@ -174,6 +174,7 @@ type Response struct {
 	headers            map[string]string
 	cookies            map[string]string
 	cookiesPresent     []string
+	cookiesNotPresent  []string
 	httpCookies        []http.Cookie
 	jsonPathExpression string
 	jsonPathAssert     func(interface{})
@@ -206,6 +207,12 @@ func (r *Response) HttpCookies(cookies []http.Cookie) *Response {
 // regardless of its value
 func (r *Response) CookiePresent(cookieName string) *Response {
 	r.cookiesPresent = append(r.cookiesPresent, cookieName)
+	return r
+}
+
+// CookieNotPresent is used to assert that a cookie is not present in the response
+func (r *Response) CookieNotPresent(cookieName string) *Response {
+	r.cookiesNotPresent = append(r.cookiesNotPresent, cookieName)
 	return r
 }
 
@@ -350,7 +357,19 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 					foundCookie = true
 				}
 			}
-			assert.Equal(a.t, true, foundCookie, "Cookie not found - "+cookieName)
+			assert.True(a.t, foundCookie, "Cookie not found - "+cookieName)
+		}
+	}
+
+	if len(a.response.cookiesNotPresent) > 0 {
+		for _, cookieName := range a.response.cookiesNotPresent {
+			foundCookie := false
+			for _, cookie := range getResponseCookies(response) {
+				if cookie.Name == cookieName {
+					foundCookie = true
+				}
+			}
+			assert.False(a.t, foundCookie, "Cookie found - "+cookieName)
 		}
 	}
 
@@ -362,7 +381,7 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 					foundCookie = true
 				}
 			}
-			assert.Equal(a.t, true, foundCookie, "Cookie not found - "+httpCookie.Name)
+			assert.True(a.t, foundCookie, "Cookie not found - "+httpCookie.Name)
 		}
 	}
 }
