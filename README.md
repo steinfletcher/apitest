@@ -15,7 +15,7 @@ _In black box tests the internal structure of the app is not know by the tests. 
 **JSON body matcher**
 
 ```go
-func TestGetUser(t *testing.T) {
+func TestApi(t *testing.T) {
 	apitest.New(handler).
 		Get("/user/1234").
 		Expect(t).
@@ -29,7 +29,7 @@ func TestGetUser(t *testing.T) {
 Given the response is `{"a": 12345, "b": [{"key": "c", "value": "result"}]}`
 
 ```go
-func TestGetUser(t *testing.T) {
+func TestApi(t *testing.T) {
 	apitest.New(handler).
 		Get("/hello").
 		Expect(t).
@@ -43,7 +43,7 @@ func TestGetUser(t *testing.T) {
 **Custom assert functions.**
 
 ```go
-func TestGetUser(t *testing.T) {
+func TestApi(t *testing.T) {
 	apitest.New(handler).
 		Get("/hello").
 		Expect(t).
@@ -57,7 +57,7 @@ func TestGetUser(t *testing.T) {
 **Assert cookies**
 
 ```go
-func TestGetUser(t *testing.T) {
+func TestApi(t *testing.T) {
 	apitest.New(handler).
 		Patch("/hello").
 		Expect(t).
@@ -77,7 +77,7 @@ func TestGetUser(t *testing.T) {
 **Assert headers**
 
 ```go
-func TestGetUser(t *testing.T) {
+func TestApi(t *testing.T) {
 	apitest.New(handler).
 		Get("/hello").
 		Expect(t).
@@ -90,7 +90,7 @@ func TestGetUser(t *testing.T) {
 **Provide basic auth in the request**
 
 ```go
-func TestGetUser(t *testing.T) {
+func TestApi(t *testing.T) {
 	apitest.New(handler).
 		Get("/hello").
 		BasicAuth("username:password").
@@ -103,7 +103,7 @@ func TestGetUser(t *testing.T) {
 **Provide cookies in the request**
 
 ```go
-func TestGetUser(t *testing.T) {
+func TestApi(t *testing.T) {
 	apitest.New(handler).
 		Get("/hello").
 		Cookies(map[string]string{"Cookie1": "Yummy"}).
@@ -116,7 +116,7 @@ func TestGetUser(t *testing.T) {
 **Provide headers in the request**
 
 ```go
-func TestGetUser(t *testing.T) {
+func TestApi(t *testing.T) {
 	apitest.New(handler).
 		Delete("/hello").
 		Headers(map[string]string{"My-Header": "12345"}).
@@ -131,7 +131,7 @@ func TestGetUser(t *testing.T) {
 `Query` can be used in combination with `QueryCollection`
 
 ```go
-func TestGetUser(t *testing.T) {
+func TestApi(t *testing.T) {
 	apitest.New(handler).
 		Get("/hello").
 		Query(map[string]string{"a": "b"}).
@@ -147,7 +147,7 @@ Providing `{"a": {"b", "c", "d"}` results in parameters encoded as `a=b&a=c&a=d`
 `QueryCollection` can be used in combination with `Query`
 
 ```go
-func TestGetUser(t *testing.T) {
+func TestApi(t *testing.T) {
 	apitest.New(handler).
 		Get("/hello").
 		QueryCollection(map[string][]string{"a": {"b", "c", "d"}}).
@@ -160,7 +160,7 @@ func TestGetUser(t *testing.T) {
 **Capture the request and response data**
 
 ```go
-func TestGetUser(t *testing.T) {
+func TestApi(t *testing.T) {
 	apitest.New(handler).
 		Observe(func(res *http.Response, req *http.Request) {
 			// do something with res and req
