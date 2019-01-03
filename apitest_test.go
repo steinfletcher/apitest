@@ -296,6 +296,33 @@ func TestApiTest_Observe_DumpsTheHttpRequestAndResponse(t *testing.T) {
 		End()
 }
 
+func TestApiTest_Intercept(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.RawQuery != "a[]=xxx&a[]=yyy" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		if r.Header.Get("Auth-Token") != "12345" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	New(handler).
+		Intercept(func(req *http.Request) {
+			req.URL.RawQuery = "a[]=xxx&a[]=yyy"
+			req.Header.Set("Auth-Token", req.Header.Get("authtoken"))
+		}).
+		Headers(map[string]string{"authtoken": "12345"}).
+		Get("/hello").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
 func TestApiTest_BuildQueryCollection(t *testing.T) {
 	queryParams := map[string][]string{
 		"a": {"22", "33"},

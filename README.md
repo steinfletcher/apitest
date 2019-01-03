@@ -176,6 +176,7 @@ func TestApi(t *testing.T) {
 one usage for this might be debug logging to the console. The provided `DumpHttp` function does this automatically
 
 ```go
+func TestApi(t *testing.T) {
 	apitest.New(handler).
 		Observe(apitest.DumpHttp).
 		Post("/hello").
@@ -184,4 +185,22 @@ one usage for this might be debug logging to the console. The provided `DumpHttp
 		Expect(t).
 		Status(http.StatusCreated).
 		End()
+}
+```
+
+**Intercept the request**
+
+This is useful for mutating the request before it is sent to the system under test.
+
+```go
+func TestApi(t *testing.T) {
+	apitest.New(handler).
+		Intercept(func(req *http.Request) {
+			req.URL.RawQuery = "a[]=xxx&a[]=yyy"
+		}).
+		Get("/hello").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
 ```
