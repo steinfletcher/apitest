@@ -5,9 +5,9 @@
 
 Simple behavioural (black box) api testing library. 
 
-In black box tests the internal structure of the app is not know by the tests. Data is input to the and the outputs are expected to meet certain conditions.
+In black box tests the internal structure of the app is not know by the tests. Data is input to the system and the outputs are expected to meet certain conditions.
 
-Check the full documentation [here](https://godoc.org/github.com/steinfletcher/api-test).
+Check the godoc [here](https://godoc.org/github.com/steinfletcher/api-test).
 
 ## Installation
 
@@ -68,7 +68,7 @@ and `JSONPathEquals` checks for value equality
 	New(handler).
 		Get("/hello").
 		Expect(t).
-		Assert(JSONPathEqual(`$.a`, "12345")).
+		Assert(JSONPathEqual(`$.a`, float64(12345))).
 		End()
 ```
 
