@@ -12,6 +12,15 @@ _In black box tests the internal structure of the app is not know by the tests. 
 
 ## Examples
 
+#### Framework and library integration examples
+
+| Example | Comment
+| --- | --- 
+| [gin](https://github.com/steinfletcher/api-test/tree/master/examples/gin) | popular martini-like web framework
+| [gorilla](https://github.com/steinfletcher/api-test/tree/master/examples/gorilla) | the gorilla web toolkit
+
+#### Code snippets
+
 **JSON body matcher**
 
 ```go
