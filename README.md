@@ -1,5 +1,6 @@
 # api-test
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/023e062d720847e08c1065cbb65a4068)](https://app.codacy.com/app/steinfletcher/api-test?utm_source=github.com&utm_medium=referral&utm_content=steinfletcher/api-test&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://travis-ci.org/steinfletcher/api-test.svg?branch=master)](https://travis-ci.org/steinfletcher/api-test) [![Coverage Status](https://coveralls.io/repos/github/steinfletcher/api-test/badge.svg?branch=master)](https://coveralls.io/github/steinfletcher/api-test?branch=master)
 
 Simple behavioural (black box) api testing library. 
