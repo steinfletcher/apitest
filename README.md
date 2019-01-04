@@ -6,6 +6,8 @@ Simple behavioural (black box) api testing library.
 
 _In black box tests the internal structure of the app is not know by the tests. Data is input by calling the rest endpoints with a http client and the outputs are expected to meet certain conditions._
 
+Check the full documentation [here](https://godoc.org/github.com/steinfletcher/api-test).
+
 ## Installation
 
      go get -u github.com/steinfletcher/api-test
