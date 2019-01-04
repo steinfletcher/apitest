@@ -15,16 +15,16 @@ Check the godoc [here](https://godoc.org/github.com/steinfletcher/api-test).
 
 ## Examples
 
-#### Framework and library integration examples
+### Framework and library integration examples
 
-| Example | Comment
-| --- | --- 
-| [gin](https://github.com/steinfletcher/api-test/tree/master/examples/gin) | popular martini-like web framework
-| [gorilla](https://github.com/steinfletcher/api-test/tree/master/examples/gorilla) | the gorilla web toolkit
+| Example                                                                           | Comment                             |
+| --------------------------------------------------------------------------------- | ----------------------------------- |
+| [gin](https://github.com/steinfletcher/api-test/tree/master/examples/gin)         | popular martini-like web framework  |
+| [gorilla](https://github.com/steinfletcher/api-test/tree/master/examples/gorilla) | the gorilla web toolkit            |
 
-#### Code snippets
+### Code snippets
 
-**JSON body matcher**
+#### JSON body matcher
 
 ```go
 func TestApi(t *testing.T) {
@@ -37,7 +37,7 @@ func TestApi(t *testing.T) {
 }
 ```
 
-**JSONPath body matcher.** 
+#### JSONPath body matcher
 Given the response is `{"a": 12345, "b": [{"key": "c", "value": "result"}]}`
 
 ```go
@@ -72,7 +72,7 @@ and `JSONPathEquals` checks for value equality
 		End()
 ```
 
-**Custom assert functions.**
+#### Custom assert functions
 
 ```go
 func TestApi(t *testing.T) {
@@ -86,7 +86,7 @@ func TestApi(t *testing.T) {
 }
 ```
 
-**Assert cookies**
+#### Assert cookies
 
 ```go
 func TestApi(t *testing.T) {
@@ -107,7 +107,7 @@ func TestApi(t *testing.T) {
 }
 ```
 
-**Assert headers**
+#### Assert headers
 
 ```go
 func TestApi(t *testing.T) {
@@ -120,7 +120,7 @@ func TestApi(t *testing.T) {
 }
 ```
 
-**Provide basic auth in the request**
+#### Provide basic auth in the request
 
 ```go
 func TestApi(t *testing.T) {
@@ -133,7 +133,7 @@ func TestApi(t *testing.T) {
 }
 ```
 
-**Provide cookies in the request**
+#### Provide cookies in the request
 
 ```go
 func TestApi(t *testing.T) {
@@ -146,7 +146,7 @@ func TestApi(t *testing.T) {
 }
 ```
 
-**Provide headers in the request**
+#### Provide headers in the request
 
 ```go
 func TestApi(t *testing.T) {
@@ -159,7 +159,7 @@ func TestApi(t *testing.T) {
 }
 ```
 
-**Provide query parameters in the request**
+#### Provide query parameters in the request
 
 `Query` can be used in combination with `QueryCollection`
 
@@ -174,7 +174,7 @@ func TestApi(t *testing.T) {
 }
 ```
 
-**Provide query parameters in collection format in the request**
+#### Provide query parameters in collection format in the request
 
 Providing `{"a": {"b", "c", "d"}` results in parameters encoded as `a=b&a=c&a=d`.
 `QueryCollection` can be used in combination with `Query`
@@ -190,7 +190,7 @@ func TestApi(t *testing.T) {
 }
 ```
 
-**Capture the request and response data**
+#### Capture the request and response data
 
 ```go
 func TestApi(t *testing.T) {
@@ -220,7 +220,7 @@ func TestApi(t *testing.T) {
 }
 ```
 
-**Intercept the request**
+#### Intercept the request
 
 This is useful for mutating the request before it is sent to the system under test.
 
