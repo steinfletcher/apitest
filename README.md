@@ -5,7 +5,7 @@
 
 Simple behavioural (black box) api testing library. 
 
-_In black box tests the internal structure of the app is not know by the tests. Data is input by calling the rest endpoints with a http client and the outputs are expected to meet certain conditions._
+In black box tests the internal structure of the app is not know by the tests. Data is input to the and the outputs are expected to meet certain conditions.
 
 Check the full documentation [here](https://godoc.org/github.com/steinfletcher/api-test).
 
@@ -50,6 +50,26 @@ func TestApi(t *testing.T) {
 		}).
 		End()
 }
+```
+
+implementations of `Assert` are provided to simplify JSONPath assertions. `JSONPathContains` works with array types
+
+```go
+	apitest.New(handler).
+		Get("/hello").
+		Expect(t).
+		Assert(JSONPathContains(`$.b[? @.key=="c"].value`, "result")).
+		End()
+```
+
+and `JSONPathEquals` checks for value equality
+
+```go
+	New(handler).
+		Get("/hello").
+		Expect(t).
+		Assert(JSONPathEqual(`$.a`, "12345")).
+		End()
 ```
 
 **Custom assert functions.**

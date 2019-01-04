@@ -37,7 +37,7 @@ func New(handler http.Handler) *Request {
 	return apiTest.request
 }
 
-// Observer will be called with the request and response on completion
+// Observe will be called by with the request and response on completion
 type Observe func(*http.Response, *http.Request)
 
 // Intercept will be called before the request is made. Updates to the request will be reflected in the test
@@ -61,6 +61,7 @@ type pair struct {
 	r string
 }
 
+// DumpHttp logs the http wire representation of the request and response
 var DumpHttp Observe = func(res *http.Response, req *http.Request) {
 	requestDump, err := httputil.DumpRequest(req, true)
 	if err == nil {
@@ -145,7 +146,7 @@ func (r *Request) Query(q map[string]string) *Request {
 	return r
 }
 
-// Query is a builder method to set the request query parameters
+// QueryCollection is a builder method to set the request query parameters
 // This can be used in combination with request.Query
 func (r *Request) QueryCollection(q map[string][]string) *Request {
 	r.queryCollection = q
@@ -158,7 +159,7 @@ func (r *Request) Headers(h map[string]string) *Request {
 	return r
 }
 
-// Headers is a builder method to set the request headers
+// Cookies is a builder method to set the request cookies
 func (r *Request) Cookies(c map[string]string) *Request {
 	r.cookies = c
 	return r
