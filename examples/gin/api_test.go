@@ -7,7 +7,8 @@ import (
 )
 
 func TestGetUser_Success(t *testing.T) {
-	apitest.New(NewApp().Router).
+	apitest.New().
+		Handler(NewApp().Router).
 		Get("/user/1234").
 		Expect(t).
 		Body(`{"id": "1234", "name": "Andy"}`).
@@ -16,7 +17,8 @@ func TestGetUser_Success(t *testing.T) {
 }
 
 func TestGetUser_NotFound(t *testing.T) {
-	apitest.New(NewApp().Router).
+	apitest.New().
+		Handler(NewApp().Router).
 		Get("/user/1515").
 		Expect(t).
 		Status(http.StatusNotFound).
