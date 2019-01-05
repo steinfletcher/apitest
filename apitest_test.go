@@ -18,7 +18,8 @@ func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Post("/hello").
 		Body(`{"a": 12345}`).
 		Expect(t).
@@ -37,7 +38,8 @@ func TestApiTest_AddsTextBodyToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Put("/hello").
 		Body(`hello`).
 		Expect(t).
@@ -55,7 +57,8 @@ func TestApiTest_AddsQueryParamsToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Get("/hello").
 		Query(map[string]string{"a": "b"}).
 		Expect(t).
@@ -73,7 +76,8 @@ func TestApiTest_AddsQueryParamCollectionToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Observe(DumpHttp).
 		Get("/hello").
 		QueryCollection(map[string][]string{"a": {"b", "c", "d"}}).
@@ -93,7 +97,8 @@ func TestApiTest_AddsHeadersToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Delete("/hello").
 		Headers(map[string]string{"My-Header": "12345"}).
 		Expect(t).
@@ -111,7 +116,8 @@ func TestApiTest_AddsCookiesToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Method(http.MethodGet).
 		URL("/hello").
 		Cookies(map[string]string{"Cookie1": "Yummy"}).
@@ -135,7 +141,8 @@ func TestApiTest_AddsBasicAuthToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New(handler).
+	New("some test name").
+		Handler(handler).
 		Get("/hello").
 		BasicAuth("username:password").
 		Expect(t).
@@ -154,7 +161,8 @@ func TestApiTest_MatchesJSONResponseBody(t *testing.T) {
 		}
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Body(`{"a": 12345}`).
@@ -173,7 +181,8 @@ func TestApiTest_MatchesTextResponseBody(t *testing.T) {
 		}
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Body(`hello`).
@@ -188,7 +197,8 @@ func TestApiTest_MatchesResponseCookies(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Patch("/hello").
 		Expect(t).
 		Status(http.StatusOK).
@@ -209,7 +219,8 @@ func TestApiTest_MatchesResponseHttpCookies(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		HttpCookies([]http.Cookie{
@@ -227,7 +238,8 @@ func TestApiTest_MatchesResponseHeaders(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Status(http.StatusOK).
@@ -249,7 +261,8 @@ func TestApiTest_SupportsJSONPathExpectations(t *testing.T) {
 		}
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		JSONPath(`$.b[? @.key=="c"].value`, func(values interface{}) {
@@ -264,7 +277,8 @@ func TestApiTest_Observe(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Observe(func(res *http.Response, req *http.Request) {
 			assert.Equal(t, http.StatusOK, res.StatusCode)
 			assert.Equal(t, "/hello", req.URL.Path)
@@ -286,7 +300,8 @@ func TestApiTest_Observe_DumpsTheHttpRequestAndResponse(t *testing.T) {
 		}
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Observe(DumpHttp).
 		Post("/hello").
 		Body(`{"a": 12345}`).
@@ -311,7 +326,8 @@ func TestApiTest_Intercept(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Intercept(func(req *http.Request) {
 			req.URL.RawQuery = "a[]=xxx&a[]=yyy"
 			req.Header.Set("Auth-Token", req.Header.Get("authtoken"))

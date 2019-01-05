@@ -24,7 +24,8 @@ func TestApiTest_Assert_StatusCodes(t *testing.T) {
 			})
 
 			t.Run(fmt.Sprintf("status: %d", status), func(t *testing.T) {
-				New(handler).
+				New().
+					Handler(handler).
 					Get("/hello").
 					Expect(t).
 					Assert(test.assertFunc).
@@ -45,7 +46,8 @@ func TestApiTest_Assert_JSONPathContains(t *testing.T) {
 		}
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Assert(JSONPathContains(`$.b[? @.key=="c"].value`, "result")).
@@ -63,7 +65,8 @@ func TestApiTest_Assert_JSONPathIs_Numeric(t *testing.T) {
 		}
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Assert(JSONPathEqual(`$.a`, float64(12345))).
@@ -81,7 +84,8 @@ func TestApiTest_Assert_JSONPathEqual_String(t *testing.T) {
 		}
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Assert(JSONPathEqual(`$.a`, "12345")).
@@ -99,7 +103,8 @@ func TestApiTest_Assert_JSONPathEqual_Map(t *testing.T) {
 		}
 	})
 
-	New(handler).
+	New().
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Assert(JSONPathEqual(`$`, map[string]interface{}{"a": "hello", "b": float64(12345)})).

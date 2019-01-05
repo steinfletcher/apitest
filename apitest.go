@@ -16,7 +16,7 @@ import (
 
 // APITest is the top level struct holding the test spec
 type APITest struct {
-	handler     http.Handler
+	name        string
 	request     *Request
 	response    *Response
 	observer    Observe
@@ -24,17 +24,35 @@ type APITest struct {
 	t           *testing.T
 }
 
-// New creates a new api test with the given http.Handler
-func New(handler http.Handler) *Request {
+// Request returns the request spec
+func (a *APITest) Request() *Request {
+	return a.request
+}
+
+// Response returns the expected response
+func (a *APITest) Response() *Response {
+	return a.response
+}
+
+// Handler defines the http handler that is invoked when the test is run
+func (a *APITest) Handler(handler http.Handler) *Request {
+	a.request.handler = handler
+	return a.request
+}
+
+func New(name ...string) *APITest {
 	apiTest := &APITest{}
 
 	request := &Request{apiTest: apiTest}
 	response := &Response{apiTest: apiTest}
 	apiTest.request = request
 	apiTest.response = response
-	apiTest.handler = handler
 
-	return apiTest.request
+	if len(name) > 0 {
+		apiTest.name = name[0]
+	}
+
+	return apiTest
 }
 
 // Observe will be called by with the request and response on completion
@@ -45,6 +63,7 @@ type Intercept func(*http.Request)
 
 // Request is the user defined request that will be invoked on the handler under test
 type Request struct {
+	handler         http.Handler
 	method          string
 	url             string
 	body            string
@@ -276,16 +295,16 @@ func (a *APITest) run() {
 }
 
 func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
-	req := a.buildRequestFromTestCase()
+	req := a.BuildRequest()
 	if a.interceptor != nil {
 		a.interceptor(req)
 	}
 	res := httptest.NewRecorder()
-	a.handler.ServeHTTP(res, req)
+	a.request.handler.ServeHTTP(res, req)
 	return res, req
 }
 
-func (a *APITest) buildRequestFromTestCase() *http.Request {
+func (a *APITest) BuildRequest() *http.Request {
 	req, _ := http.NewRequest(a.request.method, a.request.url, bytes.NewBufferString(a.request.body))
 
 	query := req.URL.Query()

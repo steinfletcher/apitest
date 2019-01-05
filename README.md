@@ -30,7 +30,8 @@ go get -u github.com/steinfletcher/api-test
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.New().
+		Handler(handler).
 		Get("/user/1234").
 		Expect(t).
 		Body(`{"id": "1234", "name": "Tate"}`).
@@ -44,7 +45,8 @@ Given the response is `{"a": 12345, "b": [{"key": "c", "value": "result"}]}`
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.New().
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		JSONPath(`$.b[? @.key=="c"].value`, func(values interface{}) {
@@ -57,7 +59,8 @@ func TestApi(t *testing.T) {
 implementations of `Assert` are provided to simplify JSONPath assertions. `JSONPathContains` works with array types
 
 ```go
-	apitest.New(handler).
+	apitest.New().
+	Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Assert(JSONPathContains(`$.b[? @.key=="c"].value`, "result")).
@@ -88,7 +91,8 @@ and for asserting on more complex values
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.New().
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Assert(func(res *http.Response, req *http.Request) {
@@ -102,7 +106,8 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.New().
+		Handler(handler).
 		Patch("/hello").
 		Expect(t).
 		Status(http.StatusOK).
@@ -123,7 +128,8 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.New().
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Status(http.StatusOK).
@@ -136,7 +142,8 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.New().
+		Handler(handler).
 		Get("/hello").
 		BasicAuth("username:password").
 		Expect(t).
@@ -149,7 +156,8 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.New().
+		Handler(handler).
 		Get("/hello").
 		Cookies(map[string]string{"Cookie1": "Yummy"}).
 		Expect(t).
@@ -162,7 +170,8 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.New().
+		Handler(handler).
 		Delete("/hello").
 		Headers(map[string]string{"My-Header": "12345"}).
 		Expect(t).
@@ -177,7 +186,8 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.New().
+		Handler(handler).
 		Get("/hello").
 		Query(map[string]string{"a": "b"}).
 		Expect(t).
@@ -193,7 +203,8 @@ Providing `{"a": {"b", "c", "d"}` results in parameters encoded as `a=b&a=c&a=d`
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.New().
+		Handler(handler).
 		Get("/hello").
 		QueryCollection(map[string][]string{"a": {"b", "c", "d"}}).
 		Expect(t).
@@ -206,7 +217,8 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.New().
+		Handler(handler).
 		Observe(func(res *http.Response, req *http.Request) {
 			// do something with res and req
 		}).
@@ -221,7 +233,8 @@ one usage for this might be debug logging to the console. The provided `DumpHttp
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.New().
+		Handler(handler).
 		Observe(apitest.DumpHttp).
 		Post("/hello").
 		Body(`{"a": 12345}`).
@@ -238,7 +251,8 @@ This is useful for mutating the request before it is sent to the system under te
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.New().
+		Handler(handler).
 		Intercept(func(req *http.Request) {
 			req.URL.RawQuery = "a[]=xxx&a[]=yyy"
 		}).
