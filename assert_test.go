@@ -88,6 +88,24 @@ func TestApiTest_Assert_JSONPathEqual_String(t *testing.T) {
 		End()
 }
 
+func TestApiTest_Assert_JSONPathEqual_Map(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		_, err := w.Write([]byte(`{"a": "hello", "b": 12345}`))
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	New(handler).
+		Get("/hello").
+		Expect(t).
+		Assert(JSONPathEqual(`$`, map[string]interface{}{"a": "hello", "b": float64(12345)})).
+		End()
+}
+
 func Test_IncludesElement(t *testing.T) {
 	list1 := []string{"Foo", "Bar"}
 	list2 := []int{1, 2}

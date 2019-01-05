@@ -74,6 +74,16 @@ and `JSONPathEquals` checks for value equality
 		End()
 ```
 
+and for asserting on more complex values
+
+```go
+	New(handler).
+		Get("/hello").
+		Expect(t).
+		Assert(JSONPathEqual(`$`, map[string]interface{}{"a": "hello", "b": float64(12345)})).
+		End()
+```
+
 #### Custom assert functions
 
 ```go

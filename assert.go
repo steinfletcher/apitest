@@ -65,7 +65,7 @@ func JSONPathEqual(expression string, expected interface{}) Assert {
 			return err
 		}
 
-		if value != expected {
+		if !assert.ObjectsAreEqual(value, expected) {
 			return errors.New(fmt.Sprintf("\"%s\" not equal to \"%s\"", value, expected))
 		}
 		return nil
