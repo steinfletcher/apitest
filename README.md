@@ -11,7 +11,9 @@ Check the godoc [here](https://godoc.org/github.com/steinfletcher/api-test).
 
 ## Installation
 
-     go get -u github.com/steinfletcher/api-test
+```bash
+go get -u github.com/steinfletcher/api-test
+```
 
 ## Examples
 
@@ -20,7 +22,7 @@ Check the godoc [here](https://godoc.org/github.com/steinfletcher/api-test).
 | Example                                                                           | Comment                             |
 | --------------------------------------------------------------------------------- | ----------------------------------- |
 | [gin](https://github.com/steinfletcher/api-test/tree/master/examples/gin)         | popular martini-like web framework  |
-| [gorilla](https://github.com/steinfletcher/api-test/tree/master/examples/gorilla) | the gorilla web toolkit            |
+| [gorilla](https://github.com/steinfletcher/api-test/tree/master/examples/gorilla) | the gorilla web toolkit             |
 
 ### Code snippets
 
