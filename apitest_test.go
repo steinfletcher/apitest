@@ -77,8 +77,8 @@ func TestApiTest_AddsQueryParamCollectionToRequest(t *testing.T) {
 	})
 
 	New().
-		Handler(handler).
 		Observe(DumpHttp).
+		Handler(handler).
 		Get("/hello").
 		QueryCollection(map[string][]string{"a": {"b", "c", "d"}}).
 		Query(map[string]string{"e": "f"}).
@@ -278,11 +278,11 @@ func TestApiTest_Observe(t *testing.T) {
 	})
 
 	New().
-		Handler(handler).
 		Observe(func(res *http.Response, req *http.Request) {
 			assert.Equal(t, http.StatusOK, res.StatusCode)
 			assert.Equal(t, "/hello", req.URL.Path)
 		}).
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Status(http.StatusOK).
@@ -301,8 +301,8 @@ func TestApiTest_Observe_DumpsTheHttpRequestAndResponse(t *testing.T) {
 	})
 
 	New().
-		Handler(handler).
 		Observe(DumpHttp).
+		Handler(handler).
 		Post("/hello").
 		Body(`{"a": 12345}`).
 		Headers(map[string]string{"Content-Type": "application/json"}).
@@ -328,12 +328,12 @@ func TestApiTest_Intercept(t *testing.T) {
 
 	New().
 		Handler(handler).
+		Get("/hello").
 		Intercept(func(req *http.Request) {
 			req.URL.RawQuery = "a[]=xxx&a[]=yyy"
 			req.Header.Set("Auth-Token", req.Header.Get("authtoken"))
 		}).
 		Headers(map[string]string{"authtoken": "12345"}).
-		Get("/hello").
 		Expect(t).
 		Status(http.StatusOK).
 		End()

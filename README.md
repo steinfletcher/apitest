@@ -218,10 +218,10 @@ func TestApi(t *testing.T) {
 ```go
 func TestApi(t *testing.T) {
 	apitest.New().
-		Handler(handler).
 		Observe(func(res *http.Response, req *http.Request) {
-			// do something with res and req
-		}).
+    	    // do something with res and req
+    	}).
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Status(http.StatusOK).
@@ -234,8 +234,8 @@ one usage for this might be debug logging to the console. The provided `DumpHttp
 ```go
 func TestApi(t *testing.T) {
 	apitest.New().
-		Handler(handler).
 		Observe(apitest.DumpHttp).
+		Handler(handler).
 		Post("/hello").
 		Body(`{"a": 12345}`).
 		Headers(map[string]string{"Content-Type": "application/json"}).

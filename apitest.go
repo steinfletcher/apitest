@@ -16,12 +16,35 @@ import (
 
 // APITest is the top level struct holding the test spec
 type APITest struct {
-	name        string
-	request     *Request
-	response    *Response
-	observer    Observe
-	interceptor Intercept
-	t           *testing.T
+	name     string
+	request  *Request
+	response *Response
+	observer Observe
+	t        *testing.T
+}
+
+// Observe will be called by with the request and response on completion
+type Observe func(*http.Response, *http.Request)
+
+func New(name ...string) *APITest {
+	apiTest := &APITest{}
+
+	request := &Request{apiTest: apiTest}
+	response := &Response{apiTest: apiTest}
+	apiTest.request = request
+	apiTest.response = response
+
+	if len(name) > 0 {
+		apiTest.name = name[0]
+	}
+
+	return apiTest
+}
+
+// Observe is a builder method for setting the observer
+func (a *APITest) Observe(observer Observe) *APITest {
+	a.observer = observer
+	return a
 }
 
 // Request returns the request spec
@@ -40,30 +63,10 @@ func (a *APITest) Handler(handler http.Handler) *Request {
 	return a.request
 }
 
-func New(name ...string) *APITest {
-	apiTest := &APITest{}
-
-	request := &Request{apiTest: apiTest}
-	response := &Response{apiTest: apiTest}
-	apiTest.request = request
-	apiTest.response = response
-
-	if len(name) > 0 {
-		apiTest.name = name[0]
-	}
-
-	return apiTest
-}
-
-// Observe will be called by with the request and response on completion
-type Observe func(*http.Response, *http.Request)
-
-// Intercept will be called before the request is made. Updates to the request will be reflected in the test
-type Intercept func(*http.Request)
-
 // Request is the user defined request that will be invoked on the handler under test
 type Request struct {
 	handler         http.Handler
+	interceptor     Intercept
 	method          string
 	url             string
 	body            string
@@ -74,6 +77,9 @@ type Request struct {
 	basicAuth       string
 	apiTest         *APITest
 }
+
+// Intercept will be called before the request is made. Updates to the request will be reflected in the test
+type Intercept func(*http.Request)
 
 type pair struct {
 	l string
@@ -93,15 +99,9 @@ var DumpHttp Observe = func(res *http.Response, req *http.Request) {
 	}
 }
 
-// Observe is a builder method for setting the observer
-func (r *Request) Observe(observer Observe) *Request {
-	r.apiTest.observer = observer
-	return r
-}
-
 // Intercept is a builder method for setting the request interceptor
 func (r *Request) Intercept(interceptor Intercept) *Request {
-	r.apiTest.interceptor = interceptor
+	r.interceptor = interceptor
 	return r
 }
 
@@ -296,8 +296,8 @@ func (a *APITest) run() {
 
 func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
 	req := a.BuildRequest()
-	if a.interceptor != nil {
-		a.interceptor(req)
+	if a.request.interceptor != nil {
+		a.request.interceptor(req)
 	}
 	res := httptest.NewRecorder()
 	a.request.handler.ServeHTTP(res, req)
