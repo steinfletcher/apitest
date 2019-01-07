@@ -24,6 +24,12 @@ go get -u github.com/steinfletcher/api-test
 | [gin](https://github.com/steinfletcher/api-test/tree/master/examples/gin)         | popular martini-like web framework  |
 | [gorilla](https://github.com/steinfletcher/api-test/tree/master/examples/gorilla) | the gorilla web toolkit             |
 
+### Companion libraries
+
+| Library                                                        | Comment                   |
+| -------------------------------------------------------------- | ------------------------- |
+| [JSONPath](https://github.com/steinfletcher/api-test-jsonpath) | JSONPath assertion addons |
+
 ### Code snippets
 
 #### JSON body matcher
@@ -40,50 +46,28 @@ func TestApi(t *testing.T) {
 }
 ```
 
-#### JSONPath body matcher
+#### JSONPath
+
+For asserting on parts of the response body JSONPath may be used. A separate module must be installed which provides these assertions - `go get -u github.com/steinfletcher/api-test-jsonpath`. This is packaged separately to keep this library dependency free.
+
 Given the response is `{"a": 12345, "b": [{"key": "c", "value": "result"}]}`
-
-```go
-func TestApi(t *testing.T) {
-	apitest.New().
-		Handler(handler).
-		Get("/hello").
-		Expect(t).
-		JSONPath(`$.b[? @.key=="c"].value`, func(values interface{}) {
-			assert.Contains(t, values, "result")
-		}).
-		End()
-}
-```
-
-implementations of `Assert` are provided to simplify JSONPath assertions. `JSONPathContains` works with array types
 
 ```go
 	apitest.New().
 	Handler(handler).
 		Get("/hello").
 		Expect(t).
-		Assert(JSONPathContains(`$.b[? @.key=="c"].value`, "result")).
+		Assert(jsonpath.Contains(`$.b[? @.key=="c"].value`, "result")).
 		End()
 ```
 
-and `JSONPathEquals` checks for value equality
+and `jsonpath.Equals` checks for value equality
 
 ```go
 	New(handler).
 		Get("/hello").
 		Expect(t).
-		Assert(JSONPathEqual(`$.a`, float64(12345))).
-		End()
-```
-
-and for asserting on more complex values
-
-```go
-	New(handler).
-		Get("/hello").
-		Expect(t).
-		Assert(JSONPathEqual(`$`, map[string]interface{}{"a": "hello", "b": float64(12345)})).
+		Assert(jsonpath.Equal(`$.a`, float64(12345))).
 		End()
 ```
 

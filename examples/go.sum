@@ -25,6 +25,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/steinfletcher/api-test v0.0.2 h1:TuyUgzRgIyt++8fcQrKac2XxMS/TDTa3LBHLGPD91R4=
 github.com/steinfletcher/api-test v0.0.2/go.mod h1:R0atcIHszAq+I8try5JurXJoqCTdVyaz4cwBdKjeBtQ=
+github.com/steinfletcher/api-test-jsonpath v0.0.0-20190107224845-6bfbd1cbc5b2 h1:hcsIHTBrSVV/O1hnC8gUKTPgsPzZYSzsua0hZMuOxDY=
+github.com/steinfletcher/api-test-jsonpath v0.0.0-20190107224845-6bfbd1cbc5b2/go.mod h1:CiTtJEgXWOZ9T4vOfYi3JYdW1GiD5oMLVnigJFJxEV8=
 github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1w=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/ugorji/go/codec v0.0.0-20181209151446-772ced7fd4c2 h1:EICbibRW4JNKMcY+LsWmuwob+CRS1BmdRdjphAm9mH4=

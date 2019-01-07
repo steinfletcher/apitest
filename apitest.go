@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/PaesslerAG/jsonpath"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -285,7 +284,7 @@ func (a *APITest) run() {
 	a.assertResponse(res)
 	a.assertHeaders(res)
 	a.assertCookies(res)
-	a.assertJSONPath(res)
+
 	if a.response.assert != nil {
 		err := a.response.assert(res.Result(), req)
 		if err != nil {
@@ -449,20 +448,6 @@ func (a *APITest) assertHeaders(res *httptest.ResponseRecorder) {
 			header := res.Header().Get(k)
 			assert.Equal(a.t, v, header, fmt.Sprintf("'%s' header should be equal", k))
 		}
-	}
-}
-
-func (a *APITest) assertJSONPath(res *httptest.ResponseRecorder) {
-	if a.response.jsonPathExpression != "" {
-		v := interface{}(nil)
-		err := json.Unmarshal(res.Body.Bytes(), &v)
-
-		value, err := jsonpath.Get(a.response.jsonPathExpression, v)
-		if err != nil {
-			assert.Nil(a.t, err)
-		}
-
-		a.response.jsonPathAssert(value.(interface{}))
 	}
 }
 
