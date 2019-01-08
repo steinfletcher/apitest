@@ -26,7 +26,7 @@ func (a *App) start() {
 	log.Fatal(http.ListenAndServe(":8888", a.Router))
 }
 
-func getUser() func(w http.ResponseWriter, r *http.Request) {
+func getUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := mux.Vars(r)["id"]
 		http.SetCookie(w, &http.Cookie{

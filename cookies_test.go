@@ -9,7 +9,7 @@ import (
 func TestApiTest_Cookies_ExpectedCookie(t *testing.T) {
 	expiry, _ := time.Parse("1/2/2006 15:04:05", "03/01/2017 12:00:00")
 
-	cookie := ExpectedCookie("Tom").
+	cookie := NewCookie("Tom").
 		Value("LovesBeers").
 		Path("/at-the-lyric").
 		Domain("in.london").
@@ -22,7 +22,7 @@ func TestApiTest_Cookies_ExpectedCookie(t *testing.T) {
 	boolt := true
 	boolf := false
 
-	assertEqual(t, expectedCookie{
+	assertEqual(t, Cookie{
 		name:     toString("Tom"),
 		value:    toString("LovesBeers"),
 		path:     toString("/at-the-lyric"),
@@ -37,7 +37,7 @@ func TestApiTest_Cookies_ExpectedCookie(t *testing.T) {
 func TestApiTest_Cookies_ToHttpCookie(t *testing.T) {
 	expiry, _ := time.Parse("1/2/2006 15:04:05", "03/01/2017 12:00:00")
 
-	httpCookie := ExpectedCookie("Tom").
+	httpCookie := NewCookie("Tom").
 		Value("LovesBeers").
 		Path("/at-the-lyric").
 		Domain("in.london").
@@ -62,7 +62,7 @@ func TestApiTest_Cookies_ToHttpCookie(t *testing.T) {
 func TestApiTest_Cookies_ToHttpCookie_PartiallyCreated(t *testing.T) {
 	expiry, _ := time.Parse("1/2/2006 15:04:05", "03/01/2017 12:00:00")
 
-	httpCookie := ExpectedCookie("Tom").
+	httpCookie := NewCookie("Tom").
 		Value("LovesBeers").
 		Expires(expiry).
 		ToHttpCookie()

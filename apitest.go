@@ -13,16 +13,20 @@ import (
 
 // APITest is the top level struct holding the test spec
 type APITest struct {
-	name     string
-	request  *Request
-	response *Response
-	observer Observe
-	t        *testing.T
+	name       string
+	request    *Request
+	response   *Response
+	observer   Observe
+	mocks      []*Mock
+	t          *testing.T
+	httpClient *http.Client
+	transport  *Transport
 }
 
 // Observe will be called by with the request and response on completion
 type Observe func(*http.Response, *http.Request)
 
+// New creates a new api test. The name is optional and will appear in test reports
 func New(name ...string) *APITest {
 	apiTest := &APITest{}
 
@@ -36,6 +40,18 @@ func New(name ...string) *APITest {
 	}
 
 	return apiTest
+}
+
+// Mocks is a builder method for setting the mocks
+func (a *APITest) Mocks(mocks ...*Mock) *APITest {
+	a.mocks = mocks
+	return a
+}
+
+// HttpClient allows the developer to provide a custom http client when using mocks
+func (a *APITest) HttpClient(cli *http.Client) *APITest {
+	a.httpClient = cli
+	return a
 }
 
 // Observe is a builder method for setting the observer
@@ -70,7 +86,7 @@ type Request struct {
 	query           map[string]string
 	queryCollection map[string][]string
 	headers         map[string]string
-	cookies         []*expectedCookie
+	cookies         []*Cookie
 	basicAuth       string
 	apiTest         *APITest
 }
@@ -176,7 +192,7 @@ func (r *Request) Headers(h map[string]string) *Request {
 }
 
 // Cookies is a builder method to set the request cookies
-func (r *Request) Cookies(c ...*expectedCookie) *Request {
+func (r *Request) Cookies(c ...*Cookie) *Request {
 	r.cookies = c
 	return r
 }
@@ -199,7 +215,7 @@ type Response struct {
 	status             int
 	body               string
 	headers            map[string]string
-	cookies            []*expectedCookie
+	cookies            []*Cookie
 	cookiesPresent     []string
 	cookiesNotPresent  []string
 	jsonPathExpression string
@@ -218,7 +234,7 @@ func (r *Response) Body(b string) *Response {
 }
 
 // Cookies is the expected response cookies
-func (r *Response) Cookies(cookies ...*expectedCookie) *Response {
+func (r *Response) Cookies(cookies ...*Cookie) *Response {
 	r.cookies = cookies
 	return r
 }
@@ -255,16 +271,17 @@ func (r *Response) Assert(fn func(*http.Response, *http.Request) error) *Respons
 	return r.apiTest.response
 }
 
-// JSONPath provides support for jsonpath expectations as defined by https://goessner.net/articles/JsonPath/
-func (r *Response) JSONPath(expression string, assert func(interface{})) *Response {
-	r.jsonPathExpression = expression
-	r.jsonPathAssert = assert
-	return r.apiTest.response
-}
-
 // End runs the test and all defined assertions
 func (r *Response) End() {
-	r.apiTest.run()
+	apiTest := r.apiTest
+
+	if len(apiTest.mocks) > 0 {
+		apiTest.transport = NewTransport(apiTest.mocks, apiTest.httpClient)
+		defer apiTest.transport.Reset()
+		apiTest.transport.Hijack()
+	}
+
+	apiTest.run()
 }
 
 func (a *APITest) run() {

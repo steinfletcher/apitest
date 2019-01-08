@@ -12,7 +12,7 @@ func TestGetUser_CookieMatching(t *testing.T) {
 		Handler(newApp().Router).
 		Get("/user/1234").
 		Expect(t).
-		Cookies(apitest.ExpectedCookie("TomsFavouriteDrink").
+		Cookies(apitest.NewCookie("TomsFavouriteDrink").
 			Value("Beer").
 			Path("/")).
 		Status(http.StatusOK).

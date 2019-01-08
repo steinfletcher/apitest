@@ -22,10 +22,11 @@ go get -u github.com/steinfletcher/api-test
 
 ### Framework and library integration examples
 
-| Example                                                                           | Comment                             |
-| --------------------------------------------------------------------------------- | ----------------------------------- |
-| [gin](https://github.com/steinfletcher/api-test/tree/master/examples/gin)         | popular martini-like web framework  |
-| [gorilla](https://github.com/steinfletcher/api-test/tree/master/examples/gorilla) | the gorilla web toolkit             |
+| Example                                                                           | Comment                                 |
+| --------------------------------------------------------------------------------- | --------------------------------------- |
+| [gin](https://github.com/steinfletcher/api-test/tree/master/examples/gin)         | popular martini-like web framework      |
+| [gorilla](https://github.com/steinfletcher/api-test/tree/master/examples/gorilla) | the gorilla web toolkit                 |
+| [mocks](https://github.com/steinfletcher/api-test/tree/master/examples/mocks)     | example mocking out external http calls |
 
 ### Companion libraries
 
@@ -122,6 +123,35 @@ func TestApi(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		Headers(map[string]string{"ABC": "12345"}).
+		End()
+}
+```
+
+#### Mocking external http calls
+
+```go
+var getUser = apitest.NewMock().
+	Get("/user/12345").
+	RespondWith().
+	Body(`{"name": "jon", "id": "1234"}`).
+	Status(http.StatusOK).
+	End()
+
+var getPreferences = apitest.NewMock().
+	Get("/preferences/12345").
+	RespondWith().
+	Body(`{"is_contactable": true}`).
+	Status(http.StatusOK).
+	End()
+
+func TestApi(t *testing.T) {
+	apitest.New().
+		Mocks(getUser, getPreferences).
+		Handler(handler).
+		Get("/hello").
+		Expect(t).
+		Status(http.StatusOK).
+		Body(`{"name": "jon", "id": "1234"}`).
 		End()
 }
 ```

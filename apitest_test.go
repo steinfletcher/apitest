@@ -142,7 +142,7 @@ func TestApiTest_AddsCookiesToRequest(t *testing.T) {
 		Handler(handler).
 		Method(http.MethodGet).
 		URL("/hello").
-		Cookies(ExpectedCookie("Cookie1").
+		Cookies(NewCookie("Cookie1").
 			Value("Yummy")).
 		Expect(t).
 		Status(http.StatusOK).
@@ -243,8 +243,8 @@ func TestApiTest_MatchesResponseCookies(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		Cookies(
-			ExpectedCookie("ABC").Value("12345"),
-			ExpectedCookie("DEF").Value("67890")).
+			NewCookie("ABC").Value("12345"),
+			NewCookie("DEF").Value("67890")).
 		CookiePresent("XXX").
 		CookiePresent("VVV").
 		CookieNotPresent("ZZZ").
@@ -271,8 +271,8 @@ func TestApiTest_MatchesResponseHttpCookies(t *testing.T) {
 		Get("/hello").
 		Expect(t).
 		Cookies(
-			ExpectedCookie("ABC").Value("12345"),
-			ExpectedCookie("DEF").Value("67890")).
+			NewCookie("ABC").Value("12345"),
+			NewCookie("DEF").Value("67890")).
 		End()
 }
 
@@ -300,7 +300,7 @@ func TestApiTest_MatchesResponseHttpCookies_OnlySuppliedFields(t *testing.T) {
 		Get("/hello").
 		Expect(t).
 		Cookies(
-			ExpectedCookie("session_id").
+			NewCookie("session_id").
 				Value("pdsanjdna_8e8922").
 				Path("/").
 				Expires(parsedDateTime).
@@ -341,27 +341,6 @@ func TestApiTest_CustomAssert(t *testing.T) {
 		Patch("/hello").
 		Expect(t).
 		Assert(IsSuccess).
-		End()
-}
-
-func TestApiTest_SupportsJSONPathExpectations(t *testing.T) {
-	handler := http.NewServeMux()
-	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-		_, err := w.Write([]byte(`{"a": 12345, "b": [{"key": "c", "value": "result"}]}`))
-		if err != nil {
-			panic(err)
-		}
-	})
-
-	New().
-		Handler(handler).
-		Get("/hello").
-		Expect(t).
-		JSONPath(`$.b[? @.key=="c"].value`, func(values interface{}) {
-			panic("If this is blowing up then jsonPath has actualy been implemented and you should fix this test.")
-		}).
 		End()
 }
 

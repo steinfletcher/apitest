@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type expectedCookie struct {
+type Cookie struct {
 	name     *string
 	value    *string
 	path     *string
@@ -17,48 +17,48 @@ type expectedCookie struct {
 	httpOnly *bool
 }
 
-func ExpectedCookie(name string) *expectedCookie {
-	return &expectedCookie{
+func NewCookie(name string) *Cookie {
+	return &Cookie{
 		name: &name,
 	}
 }
 
-func (cookie *expectedCookie) Value(value string) *expectedCookie {
+func (cookie *Cookie) Value(value string) *Cookie {
 	cookie.value = &value
 	return cookie
 }
 
-func (cookie *expectedCookie) Path(path string) *expectedCookie {
+func (cookie *Cookie) Path(path string) *Cookie {
 	cookie.path = &path
 	return cookie
 }
 
-func (cookie *expectedCookie) Domain(domain string) *expectedCookie {
+func (cookie *Cookie) Domain(domain string) *Cookie {
 	cookie.domain = &domain
 	return cookie
 }
 
-func (cookie *expectedCookie) Expires(expires time.Time) *expectedCookie {
+func (cookie *Cookie) Expires(expires time.Time) *Cookie {
 	cookie.expires = &expires
 	return cookie
 }
 
-func (cookie *expectedCookie) MaxAge(maxAge int) *expectedCookie {
+func (cookie *Cookie) MaxAge(maxAge int) *Cookie {
 	cookie.maxAge = &maxAge
 	return cookie
 }
 
-func (cookie *expectedCookie) Secure(secure bool) *expectedCookie {
+func (cookie *Cookie) Secure(secure bool) *Cookie {
 	cookie.secure = &secure
 	return cookie
 }
 
-func (cookie *expectedCookie) HttpOnly(httpOnly bool) *expectedCookie {
+func (cookie *Cookie) HttpOnly(httpOnly bool) *Cookie {
 	cookie.httpOnly = &httpOnly
 	return cookie
 }
 
-func (cookie *expectedCookie) ToHttpCookie() *http.Cookie {
+func (cookie *Cookie) ToHttpCookie() *http.Cookie {
 	httpCookie := http.Cookie{}
 
 	if cookie.name != nil {
@@ -96,9 +96,9 @@ func (cookie *expectedCookie) ToHttpCookie() *http.Cookie {
 	return &httpCookie
 }
 
-// Compares cookies based on only the provided fields from expectedCookie.
+// Compares cookies based on only the provided fields from Cookie.
 // Supported fields are Name, Value, Domain, Path, Expires, MaxAge, Secure and HttpOnly
-func compareCookies(expectedCookie *expectedCookie, actualCookie *http.Cookie) (bool, []string) {
+func compareCookies(expectedCookie *Cookie, actualCookie *http.Cookie) (bool, []string) {
 	cookieFound := *expectedCookie.name == actualCookie.Name
 	compareErrors := []string{}
 
