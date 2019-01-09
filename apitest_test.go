@@ -87,6 +87,27 @@ func TestApiTest_AddsQueryParamCollectionToRequest(t *testing.T) {
 		End()
 }
 
+func TestApiTest_AddsQueryParamCollectionToRequest_HandlesEmpty(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		if "e=f" != r.URL.RawQuery {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	New().
+		Observe(DumpHttp).
+		Handler(handler).
+		Get("/hello").
+		QueryCollection(map[string][]string{}).
+		Query(map[string]string{"e": "f"}).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
 func TestApiTest_AddsHeadersToRequest(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
@@ -250,6 +271,21 @@ func TestApiTest_MatchesResponseHeaders(t *testing.T) {
 		End()
 }
 
+func TestApiTest_CustomAssert(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Set-Cookie", "ABC=12345; DEF=67890; XXX=1fsadg235; VVV=9ig32g34g")
+		w.WriteHeader(http.StatusOK)
+	})
+
+	New().
+		Handler(handler).
+		Patch("/hello").
+		Expect(t).
+		Assert(IsSuccess).
+		End()
+}
+
 func TestApiTest_SupportsJSONPathExpectations(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
@@ -337,6 +373,13 @@ func TestApiTest_Intercept(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		End()
+}
+
+func TestApiTest_ExposesRequestAndResponse(t *testing.T) {
+	apiTest := New()
+
+	assert.NotNil(t, apiTest.Request())
+	assert.NotNil(t, apiTest.Response())
 }
 
 func TestApiTest_BuildQueryCollection(t *testing.T) {
