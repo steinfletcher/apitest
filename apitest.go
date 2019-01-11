@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -356,14 +355,14 @@ func buildQueryCollection(params map[string][]string) []pair {
 
 func (a *APITest) assertResponse(res *httptest.ResponseRecorder) {
 	if a.response.status != 0 {
-		assert.Equal(a.t, a.response.status, res.Code)
+		assertEqual(a.t, a.response.status, res.Code, fmt.Sprintf("Status code %d not equal to %d", res.Code, a.response.status))
 	}
 
 	if a.response.body != "" {
 		if isJSON(a.response.body) {
-			assert.JSONEq(a.t, a.response.body, res.Body.String())
+			jsonEqual(a.t, a.response.body, res.Body.String())
 		} else {
-			assert.Equal(a.t, a.response.body, res.Body.String())
+			assertEqual(a.t, a.response.body, res.Body.String())
 		}
 	}
 }
@@ -377,7 +376,7 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 					foundCookie = true
 				}
 			}
-			assert.Equal(a.t, true, foundCookie, "Cookie not found - "+name)
+			assertEqual(a.t, true, foundCookie, "Cookie not found - "+name)
 		}
 	}
 
@@ -389,7 +388,7 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 					foundCookie = true
 				}
 			}
-			assert.True(a.t, foundCookie, "Cookie not found - "+cookieName)
+			assertEqual(a.t, true, foundCookie, "Cookie not found - "+cookieName)
 		}
 	}
 
@@ -401,7 +400,7 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 					foundCookie = true
 				}
 			}
-			assert.False(a.t, foundCookie, "Cookie found - "+cookieName)
+			assertEqual(a.t, false, foundCookie, "Cookie found - "+cookieName)
 		}
 	}
 
@@ -413,7 +412,7 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 					foundCookie = true
 				}
 			}
-			assert.True(a.t, foundCookie, "Cookie not found - "+httpCookie.Name)
+			assertEqual(a.t, true, foundCookie, "Cookie not found - "+httpCookie.Name)
 		}
 	}
 }
@@ -446,7 +445,7 @@ func (a *APITest) assertHeaders(res *httptest.ResponseRecorder) {
 	if a.response.headers != nil {
 		for k, v := range a.response.headers {
 			header := res.Header().Get(k)
-			assert.Equal(a.t, v, header, fmt.Sprintf("'%s' header should be equal", k))
+			assertEqual(a.t, v, header, fmt.Sprintf("'%s' header should be equal", k))
 		}
 	}
 }
