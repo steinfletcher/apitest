@@ -1,9 +1,9 @@
 package apitest
 
 import (
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"testing"
 )
 
@@ -302,7 +302,7 @@ func TestApiTest_SupportsJSONPathExpectations(t *testing.T) {
 		Get("/hello").
 		Expect(t).
 		JSONPath(`$.b[? @.key=="c"].value`, func(values interface{}) {
-			assert.Contains(t, values, "result")
+			panic("If this is blowing up then jsonPath has actualy been implemented and you should fix this test.")
 		}).
 		End()
 }
@@ -315,8 +315,8 @@ func TestApiTest_Observe(t *testing.T) {
 
 	New().
 		Observe(func(res *http.Response, req *http.Request) {
-			assert.Equal(t, http.StatusOK, res.StatusCode)
-			assert.Equal(t, "/hello", req.URL.Path)
+			assertEqual(t, http.StatusOK, res.StatusCode)
+			assertEqual(t, "/hello", req.URL.Path)
 		}).
 		Handler(handler).
 		Get("/hello").
@@ -378,8 +378,8 @@ func TestApiTest_Intercept(t *testing.T) {
 func TestApiTest_ExposesRequestAndResponse(t *testing.T) {
 	apiTest := New()
 
-	assert.NotNil(t, apiTest.Request())
-	assert.NotNil(t, apiTest.Response())
+	assertNotNil(t, apiTest.Request())
+	assertNotNil(t, apiTest.Response())
 }
 
 func TestApiTest_BuildQueryCollection(t *testing.T) {
@@ -391,11 +391,28 @@ func TestApiTest_BuildQueryCollection(t *testing.T) {
 
 	params := buildQueryCollection(queryParams)
 
-	assert.ElementsMatch(t, []pair{
+	expectedPairs := []pair{
 		{l: "a", r: "22"},
 		{l: "a", r: "33"},
 		{l: "b", r: "11"},
-	}, params)
+	}
+
+	if len(expectedPairs) != len(params) {
+		t.Fatalf("Expected lengths not the same")
+	}
+
+	//Filter out expected pairs when found and remove
+	for _, param := range params {
+		for i, expectedPair := range expectedPairs {
+			if reflect.DeepEqual(param, expectedPair) {
+				expectedPairs = append(expectedPairs[:i], expectedPairs[i+1:]...)
+			}
+		}
+	}
+
+	if len(expectedPairs) != 0 {
+		t.Fatalf("%s not found in params", expectedPairs)
+	}
 }
 
 func TestApiTest_BuildQueryCollection_EmptyIfNoParams(t *testing.T) {
@@ -403,5 +420,13 @@ func TestApiTest_BuildQueryCollection_EmptyIfNoParams(t *testing.T) {
 
 	params := buildQueryCollection(queryParams)
 
-	assert.Empty(t, params)
+	if len(params) > 0 {
+		t.Errorf("Expected params to be empty")
+	}
+}
+
+func assertNotNil(t *testing.T, actual interface{}) {
+	if actual == nil {
+		t.Fatalf("Expected value to not be nil")
+	}
 }
