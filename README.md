@@ -1,3 +1,5 @@
+**This library is on Version 0 and we won't guarantee backwards compatible API changes until we go to version 1**
+
 # api-test
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/023e062d720847e08c1065cbb65a4068)](https://app.codacy.com/app/steinfletcher/api-test?utm_source=github.com&utm_medium=referral&utm_content=steinfletcher/api-test&utm_campaign=Badge_Grade_Dashboard)
