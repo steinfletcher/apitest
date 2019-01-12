@@ -39,9 +39,9 @@ var IsServerError Assert = func(response *http.Response, request *http.Request) 
 func assertEqual(t *testing.T, expected, actual interface{}, message ...string) {
 	if !objectsAreEqual(expected, actual) {
 		if len(message) > 0 {
-			t.Errorf(strings.Join(message, ","))
+			t.Fatalf(strings.Join(message, ","))
 		} else {
-			t.Errorf("Expected %s but recevied %s", expected, actual)
+			t.Fatalf("Expected %s but recevied %s", expected, actual)
 		}
 	}
 }
@@ -70,11 +70,11 @@ func jsonEqual(t *testing.T, expected string, actual string) {
 	var expectedJSONAsInterface, actualJSONAsInterface interface{}
 
 	if err := json.Unmarshal([]byte(expected), &expectedJSONAsInterface); err != nil {
-		t.Errorf(fmt.Sprintf("Expected value ('%s') is not valid json.\nJSON parsing error: '%s'", expected, err.Error()))
+		t.Fatalf(fmt.Sprintf("Expected value ('%s') is not valid json.\nJSON parsing error: '%s'", expected, err.Error()))
 	}
 
 	if err := json.Unmarshal([]byte(actual), &actualJSONAsInterface); err != nil {
-		t.Errorf(fmt.Sprintf("Input ('%s') needs to be valid json.\nJSON parsing error: '%s'", actual, err.Error()))
+		t.Fatalf(fmt.Sprintf("Input ('%s') needs to be valid json.\nJSON parsing error: '%s'", actual, err.Error()))
 	}
 
 	assertEqual(t, expectedJSONAsInterface, actualJSONAsInterface)

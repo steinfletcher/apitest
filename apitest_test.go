@@ -421,7 +421,7 @@ func TestApiTest_BuildQueryCollection_EmptyIfNoParams(t *testing.T) {
 	params := buildQueryCollection(queryParams)
 
 	if len(params) > 0 {
-		t.Errorf("Expected params to be empty")
+		t.Fatalf("Expected params to be empty")
 	}
 }
 
