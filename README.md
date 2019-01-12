@@ -55,22 +55,26 @@ For asserting on parts of the response body JSONPath may be used. A separate mod
 Given the response is `{"a": 12345, "b": [{"key": "c", "value": "result"}]}`
 
 ```go
+func TestApi(t *testing.T) {
 	apitest.New().
-	Handler(handler).
+		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Assert(jsonpath.Contains(`$.b[? @.key=="c"].value`, "result")).
 		End()
+}
 ```
 
 and `jsonpath.Equals` checks for value equality
 
 ```go
-	New(handler).
+func TestApi(t *testing.T) {
+	apitest.New(handler).
 		Get("/hello").
 		Expect(t).
 		Assert(jsonpath.Equal(`$.a`, float64(12345))).
 		End()
+}
 ```
 
 #### Custom assert functions
