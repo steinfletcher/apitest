@@ -11,6 +11,8 @@ In black box tests the internal structure of the app is not know by the tests. D
 
 Check the godoc [here](https://godoc.org/github.com/steinfletcher/api-test).
 
+**This library is dependency free and we intend to keep it that way**
+
 ## Installation
 
 ```bash
