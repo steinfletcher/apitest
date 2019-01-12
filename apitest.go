@@ -1,7 +1,6 @@
 package apitest
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -71,7 +70,7 @@ type Request struct {
 	query           map[string]string
 	queryCollection map[string][]string
 	headers         map[string]string
-	cookies         map[string]string
+	cookies         []*expectedCookie
 	basicAuth       string
 	apiTest         *APITest
 }
@@ -177,7 +176,7 @@ func (r *Request) Headers(h map[string]string) *Request {
 }
 
 // Cookies is a builder method to set the request cookies
-func (r *Request) Cookies(c map[string]string) *Request {
+func (r *Request) Cookies(c ...*expectedCookie) *Request {
 	r.cookies = c
 	return r
 }
@@ -200,10 +199,9 @@ type Response struct {
 	status             int
 	body               string
 	headers            map[string]string
-	cookies            map[string]string
+	cookies            []*expectedCookie
 	cookiesPresent     []string
 	cookiesNotPresent  []string
-	httpCookies        []http.Cookie
 	jsonPathExpression string
 	jsonPathAssert     func(interface{})
 	apiTest            *APITest
@@ -220,14 +218,8 @@ func (r *Response) Body(b string) *Response {
 }
 
 // Cookies is the expected response cookies
-func (r *Response) Cookies(cookies map[string]string) *Response {
+func (r *Response) Cookies(cookies ...*expectedCookie) *Response {
 	r.cookies = cookies
-	return r
-}
-
-// HttpCookies is the expected response cookies
-func (r *Response) HttpCookies(cookies []http.Cookie) *Response {
-	r.httpCookies = cookies
 	return r
 }
 
@@ -326,9 +318,8 @@ func (a *APITest) BuildRequest() *http.Request {
 		req.Header.Set(k, v)
 	}
 
-	for k, v := range a.request.cookies {
-		cookie := &http.Cookie{Name: k, Value: v}
-		req.AddCookie(cookie)
+	for _, cookie := range a.request.cookies {
+		req.AddCookie(cookie.ToHttpCookie())
 	}
 
 	if a.request.basicAuth != "" {
@@ -368,77 +359,49 @@ func (a *APITest) assertResponse(res *httptest.ResponseRecorder) {
 }
 
 func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
-	if a.response.cookies != nil {
-		for name, value := range a.response.cookies {
+	if len(a.response.cookies) > 0 {
+		for _, expectedCookie := range a.response.cookies {
+			var mismatchedFields []string
 			foundCookie := false
-			for _, cookie := range getResponseCookies(response) {
-				if cookie.Name == name && cookie.Value == value {
+			for _, actualCookie := range responseCookies(response) {
+				cookieFound, errors := compareCookies(expectedCookie, actualCookie)
+				if cookieFound {
 					foundCookie = true
+					mismatchedFields = append(mismatchedFields, errors...)
 				}
 			}
-			assertEqual(a.t, true, foundCookie, "Cookie not found - "+name)
+			assertEqual(a.t, true, foundCookie, "ExpectedCookie not found - "+*expectedCookie.name)
+			assertEqual(a.t, 0, len(mismatchedFields), mismatchedFields...)
 		}
 	}
 
 	if len(a.response.cookiesPresent) > 0 {
 		for _, cookieName := range a.response.cookiesPresent {
 			foundCookie := false
-			for _, cookie := range getResponseCookies(response) {
+			for _, cookie := range responseCookies(response) {
 				if cookie.Name == cookieName {
 					foundCookie = true
 				}
 			}
-			assertEqual(a.t, true, foundCookie, "Cookie not found - "+cookieName)
+			assertEqual(a.t, true, foundCookie, "ExpectedCookie not found - "+cookieName)
 		}
 	}
 
 	if len(a.response.cookiesNotPresent) > 0 {
 		for _, cookieName := range a.response.cookiesNotPresent {
 			foundCookie := false
-			for _, cookie := range getResponseCookies(response) {
+			for _, cookie := range responseCookies(response) {
 				if cookie.Name == cookieName {
 					foundCookie = true
 				}
 			}
-			assertEqual(a.t, false, foundCookie, "Cookie found - "+cookieName)
-		}
-	}
-
-	if len(a.response.httpCookies) > 0 {
-		for _, httpCookie := range a.response.httpCookies {
-			foundCookie := false
-			for _, cookie := range getResponseCookies(response) {
-				if compareHttpCookies(cookie, &httpCookie) {
-					foundCookie = true
-				}
-			}
-			assertEqual(a.t, true, foundCookie, "Cookie not found - "+httpCookie.Name)
+			assertEqual(a.t, false, foundCookie, "ExpectedCookie found - "+cookieName)
 		}
 	}
 }
 
-// only compare a subset of fields for flexibility
-func compareHttpCookies(l *http.Cookie, r *http.Cookie) bool {
-	return l.Name == r.Name &&
-		l.Value == r.Value &&
-		l.Domain == r.Domain &&
-		l.Expires == r.Expires &&
-		l.MaxAge == r.MaxAge &&
-		l.Secure == r.Secure &&
-		l.HttpOnly == r.HttpOnly &&
-		l.SameSite == r.SameSite
-}
-
-func getResponseCookies(response *httptest.ResponseRecorder) []*http.Cookie {
-	for _, rawCookieString := range response.Result().Header["Set-Cookie"] {
-		rawRequest := fmt.Sprintf("GET / HTTP/1.0\r\nCookie: %s\r\n\r\n", rawCookieString)
-		req, err := http.ReadRequest(bufio.NewReader(strings.NewReader(rawRequest)))
-		if err != nil {
-			panic("failed to parse response cookies. error: " + err.Error())
-		}
-		return req.Cookies()
-	}
-	return []*http.Cookie{}
+func responseCookies(response *httptest.ResponseRecorder) []*http.Cookie {
+	return response.Result().Cookies()
 }
 
 func (a *APITest) assertHeaders(res *httptest.ResponseRecorder) {

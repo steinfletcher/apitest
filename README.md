@@ -103,15 +103,12 @@ func TestApi(t *testing.T) {
 		Patch("/hello").
 		Expect(t).
 		Status(http.StatusOK).
-		Cookies(map[string]string{
-			"ABC": "12345",
-			"DEF": "67890",
-		}).
+		Cookies(ExpectedCookie"ABC").Value("12345")).
 		CookiePresent("Session-Token").
 		CookieNotPresent("XXX").
-		HttpCookies([]http.Cookie{
-			{Name: "HIJ", Value: "12345"},
-		}).
+        Cookies(
+			ExpectedCookie"ABC").Value("12345"),
+			ExpectedCookie"DEF").Value("67890")).
 		End()
 }
 ```
@@ -151,7 +148,7 @@ func TestApi(t *testing.T) {
 	apitest.New().
 		Handler(handler).
 		Get("/hello").
-		Cookies(map[string]string{"Cookie1": "Yummy"}).
+		Cookies(ExpectedCookie"ABC").Value("12345")).
 		Expect(t).
 		Status(http.StatusOK).
 		End()

@@ -27,6 +27,8 @@ func (a *App) Start() {
 
 func GetUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		c.SetCookie("TomsFavouriteDrink", "Beer", 0, "/", "here.com", false, false)
+
 		id := c.Param("id")
 		if id == "1234" {
 			user := &User{ID: id, Name: "Andy"}

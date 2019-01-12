@@ -39,9 +39,9 @@ var IsServerError Assert = func(response *http.Response, request *http.Request) 
 func assertEqual(t *testing.T, expected, actual interface{}, message ...string) {
 	if !objectsAreEqual(expected, actual) {
 		if len(message) > 0 {
-			t.Fatalf(strings.Join(message, ","))
+			t.Fatalf(strings.Join(message, ", "))
 		} else {
-			t.Fatalf("Expected %s but recevied %s", expected, actual)
+			t.Fatalf("Expected %+v but recevied %+v", expected, actual)
 		}
 	}
 }
