@@ -7,6 +7,18 @@ import (
 	"testing"
 )
 
+func TestGetUser_CookieMatching(t *testing.T) {
+	apitest.New().
+		Handler(NewApp().Router).
+		Get("/user/1234").
+		Expect(t).
+		Cookies(apitest.ExpectedCookie("TomsFavouriteDrink").
+			Value("Beer").
+			Path("/")).
+		Status(http.StatusOK).
+		End()
+}
+
 func TestGetUser_Success(t *testing.T) {
 	apitest.New().
 		Handler(NewApp().Router).

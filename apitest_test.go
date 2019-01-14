@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
@@ -141,7 +142,8 @@ func TestApiTest_AddsCookiesToRequest(t *testing.T) {
 		Handler(handler).
 		Method(http.MethodGet).
 		URL("/hello").
-		Cookies(map[string]string{"Cookie1": "Yummy"}).
+		Cookies(ExpectedCookie("Cookie1").
+			Value("Yummy")).
 		Expect(t).
 		Status(http.StatusOK).
 		End()
@@ -214,7 +216,24 @@ func TestApiTest_MatchesTextResponseBody(t *testing.T) {
 func TestApiTest_MatchesResponseCookies(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Set-Cookie", "ABC=12345; DEF=67890; XXX=1fsadg235; VVV=9ig32g34g")
+		w.Header().Set("Set-ExpectedCookie", "ABC=12345; DEF=67890; XXX=1fsadg235; VVV=9ig32g34g")
+		http.SetCookie(w, &http.Cookie{
+			Name:  "ABC",
+			Value: "12345",
+		})
+		http.SetCookie(w, &http.Cookie{
+			Name:  "DEF",
+			Value: "67890",
+		})
+		http.SetCookie(w, &http.Cookie{
+			Name:  "XXX",
+			Value: "1fsadg235",
+		})
+		http.SetCookie(w, &http.Cookie{
+			Name:  "VVV",
+			Value: "9ig32g34g",
+		})
+
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -223,20 +242,27 @@ func TestApiTest_MatchesResponseCookies(t *testing.T) {
 		Patch("/hello").
 		Expect(t).
 		Status(http.StatusOK).
-		Cookies(map[string]string{
-			"ABC": "12345",
-			"DEF": "67890",
-		}).
+		Cookies(
+			ExpectedCookie("ABC").Value("12345"),
+			ExpectedCookie("DEF").Value("67890")).
 		CookiePresent("XXX").
 		CookiePresent("VVV").
 		CookieNotPresent("ZZZ").
+		CookieNotPresent("TomBeer").
 		End()
 }
 
 func TestApiTest_MatchesResponseHttpCookies(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Set-Cookie", "ABC=12345; DEF=67890;")
+		http.SetCookie(w, &http.Cookie{
+			Name:  "ABC",
+			Value: "12345",
+		})
+		http.SetCookie(w, &http.Cookie{
+			Name:  "DEF",
+			Value: "67890",
+		})
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -244,10 +270,42 @@ func TestApiTest_MatchesResponseHttpCookies(t *testing.T) {
 		Handler(handler).
 		Get("/hello").
 		Expect(t).
-		HttpCookies([]http.Cookie{
-			{Name: "ABC", Value: "12345"},
-			{Name: "DEF", Value: "67890"},
-		}).
+		Cookies(
+			ExpectedCookie("ABC").Value("12345"),
+			ExpectedCookie("DEF").Value("67890")).
+		End()
+}
+
+func TestApiTest_MatchesResponseHttpCookies_OnlySuppliedFields(t *testing.T) {
+	parsedDateTime, err := time.Parse(time.RFC3339, "2019-01-26T23:19:02Z")
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
+
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session_id",
+			Value:    "pdsanjdna_8e8922",
+			Path:     "/",
+			Expires:  parsedDateTime,
+			Secure:   true,
+			HttpOnly: true,
+		})
+		w.WriteHeader(http.StatusOK)
+	})
+
+	New().
+		Handler(handler).
+		Get("/hello").
+		Expect(t).
+		Cookies(
+			ExpectedCookie("session_id").
+				Value("pdsanjdna_8e8922").
+				Path("/").
+				Expires(parsedDateTime).
+				Secure(true).
+				HttpOnly(true)).
 		End()
 }
 
@@ -274,7 +332,7 @@ func TestApiTest_MatchesResponseHeaders(t *testing.T) {
 func TestApiTest_CustomAssert(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Set-Cookie", "ABC=12345; DEF=67890; XXX=1fsadg235; VVV=9ig32g34g")
+		w.Header().Set("Set-ExpectedCookie", "ABC=12345; DEF=67890; XXX=1fsadg235; VVV=9ig32g34g")
 		w.WriteHeader(http.StatusOK)
 	})
 

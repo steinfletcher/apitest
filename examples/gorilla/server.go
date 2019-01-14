@@ -29,6 +29,11 @@ func (a *App) start() {
 func getUser() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := mux.Vars(r)["id"]
+		http.SetCookie(w, &http.Cookie{
+			Name:  "TomsFavouriteDrink",
+			Value: "Beer",
+			Path:  "/",
+		})
 
 		if id == "1234" {
 			user := &User{ID: id, Name: "Andy"}
