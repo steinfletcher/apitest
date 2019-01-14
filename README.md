@@ -1,4 +1,4 @@
-**This library is on Version 0 and we won't guarantee backwards compatible API changes until we go to version 1**
+**This library is on Version 0 and we won't guarantee backwards compatible API changes until we go to version 1. The roadmap for version includes mocking external http calls and sequence diagram generation. **
 
 # api-test
 
