@@ -2,14 +2,13 @@
 
 # api-test
 
+[![GoDoc](https://godoc.org/github.com/steinfletcher/api-test?status.svg)](https://godoc.org/github.com/steinfletcher/api-test)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/023e062d720847e08c1065cbb65a4068)](https://app.codacy.com/app/steinfletcher/api-test?utm_source=github.com&utm_medium=referral&utm_content=steinfletcher/api-test&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://travis-ci.org/steinfletcher/api-test.svg?branch=master)](https://travis-ci.org/steinfletcher/api-test) [![Coverage Status](https://coveralls.io/repos/github/steinfletcher/api-test/badge.svg?branch=master&service=github)](https://coveralls.io/github/steinfletcher/api-test?branch=master)
 
 Simple behavioural (black box) api testing library. 
 
 In black box tests the internal structure of the app is not know by the tests. Data is input to the system and the outputs are expected to meet certain conditions.
-
-Check the godoc [here](https://godoc.org/github.com/steinfletcher/api-test).
 
 **This library is dependency free and we intend to keep it that way**
 
