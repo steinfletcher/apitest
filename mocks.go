@@ -108,7 +108,7 @@ func NewMock() *Mock {
 		query:   map[string][]string{},
 	}
 	res := &MockResponse{
-		mock: mock,
+		mock:    mock,
 		headers: map[string][]string{},
 	}
 	mock.request = req
