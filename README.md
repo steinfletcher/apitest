@@ -177,7 +177,7 @@ func TestApi(t *testing.T) {
 	apitest.New().
 		Handler(handler).
 		Get("/hello").
-		Cookies(apitest.Cookie"ABC").Value("12345")).
+		Cookies(apitest.Cookie("ABC").Value("12345")).
 		Expect(t).
 		Status(http.StatusOK).
 		End()
