@@ -44,7 +44,15 @@ func New(name ...string) *APITest {
 
 // Mocks is a builder method for setting the mocks
 func (a *APITest) Mocks(mocks ...*Mock) *APITest {
-	a.mocks = mocks
+	var m []*Mock
+	for i := range mocks {
+		times := mocks[i].response.times
+		for j := 1; j <= times; j++ {
+			mockCopy := *mocks[i]
+			m = append(m, &mockCopy)
+		}
+	}
+	a.mocks = m
 	return a
 }
 

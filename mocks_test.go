@@ -350,6 +350,53 @@ func TestMocks_ApiTest_WithMocks(t *testing.T) {
 	}
 }
 
+func TestMocks_ApiTest_SupportsMultipleMocks(t *testing.T) {
+	getUser := NewMock().
+		Get("http://localhost:8080").
+		RespondWith().
+		Status(http.StatusOK).
+		Body("1").
+		Times(2).
+		End()
+
+	getPreferences := NewMock().
+		Get("http://localhost:8080").
+		RespondWith().
+		Status(http.StatusOK).
+		Body("2").
+		End()
+
+	New().
+		Mocks(getUser, getPreferences).
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			bytes1 := getUserData()
+			bytes2 := getUserData()
+			bytes3 := getUserData()
+
+			w.Write(bytes1)
+			w.Write(bytes2)
+			w.Write(bytes3)
+			w.WriteHeader(http.StatusOK)
+		})).
+		Get("/").
+		Expect(t).
+		Status(http.StatusOK).
+		Body(`112`).
+		End()
+}
+
+func getUserData() []byte {
+	res, err := http.Get("http://localhost:8080")
+	if err != nil {
+		panic(err)
+	}
+	bytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		panic(err)
+	}
+	return bytes
+}
+
 func getUserHandler(get HttpGet) *http.ServeMux {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {

@@ -78,6 +78,7 @@ func buildResponseFromMock(mockResponse *MockResponse) *http.Response {
 }
 
 type Mock struct {
+	isUsed   bool
 	request  *MockRequest
 	response *MockResponse
 }
@@ -98,6 +99,7 @@ type MockResponse struct {
 	cookies    []*Cookie
 	body       string
 	statusCode int
+	times      int
 }
 
 func NewMock() *Mock {
@@ -110,6 +112,7 @@ func NewMock() *Mock {
 	res := &MockResponse{
 		mock:    mock,
 		headers: map[string][]string{},
+		times:   1,
 	}
 	mock.request = req
 	mock.response = res
@@ -161,6 +164,10 @@ func (m *Mock) Method(method string) *MockRequest {
 
 func matches(req *http.Request, mocks []*Mock) *MockResponse {
 	for _, mock := range mocks {
+		if mock.isUsed {
+			continue
+		}
+
 		matches := true
 		for _, matcher := range matchers {
 			if !matcher(req, mock.request) {
@@ -168,7 +175,9 @@ func matches(req *http.Request, mocks []*Mock) *MockResponse {
 				break
 			}
 		}
+
 		if matches {
+			mock.isUsed = true
 			return mock.response
 		}
 	}
@@ -242,6 +251,11 @@ func (r *MockResponse) Body(body string) *MockResponse {
 
 func (r *MockResponse) Status(statusCode int) *MockResponse {
 	r.statusCode = statusCode
+	return r
+}
+
+func (r *MockResponse) Times(times int) *MockResponse {
+	r.times = times
 	return r
 }
 

@@ -1,6 +1,7 @@
 package apitest
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -78,7 +79,6 @@ func TestApiTest_AddsQueryParamCollectionToRequest(t *testing.T) {
 	})
 
 	New().
-		Observe(DumpHttp).
 		Handler(handler).
 		Get("/hello").
 		QueryCollection(map[string][]string{"a": {"b", "c", "d"}}).
@@ -99,7 +99,6 @@ func TestApiTest_AddsQueryParamCollectionToRequest_HandlesEmpty(t *testing.T) {
 	})
 
 	New().
-		Observe(DumpHttp).
 		Handler(handler).
 		Get("/hello").
 		QueryCollection(map[string][]string{}).
@@ -410,6 +409,29 @@ func TestApiTest_Intercept(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		End()
+}
+
+func TestApiTest_ReplicatesMocks(t *testing.T) {
+	tests := []struct {
+		times int
+	}{
+		{1}, {15}, {0}, {2},
+	}
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%v", test.times), func(t *testing.T) {
+			mock := NewMock().
+				Get("/abc").
+				RespondWith().
+				Status(http.StatusOK).
+				Times(test.times).
+				End()
+
+			numMocks := len(New().Mocks(mock).mocks)
+			if numMocks != test.times {
+				t.Fatalf("expected %d instances of the mock to be defined, but was %d", test.times, numMocks)
+			}
+		})
+	}
 }
 
 func TestApiTest_ExposesRequestAndResponse(t *testing.T) {
