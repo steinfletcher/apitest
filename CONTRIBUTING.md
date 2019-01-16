@@ -4,9 +4,7 @@ Thank you for taking the time to contribute. These are mostly guidelines, not ru
 
 # Working with forked go repos
 
-If you haven't worked with forked go repos before, take a look at this blog post for some excellent advice about working with git repos.
-
-[contributing to go open source git repositories](https://splice.com/blog/contributing-open-source-git-repositories-go/)
+If you haven't worked with forked go repos before, take a look at this blog post for some excellent advice [contributing to go open source git repositories](https://splice.com/blog/contributing-open-source-git-repositories-go/).
 
 # PRs
 
