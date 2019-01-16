@@ -55,16 +55,16 @@ func (r *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 func debugMock(res *http.Response, req *http.Request) {
 	requestDump, err := httputil.DumpRequestOut(req, true)
 	if err == nil {
-		debug(requestDebugPrefix,"request to mock", string(requestDump))
+		debug(requestDebugPrefix, "request to mock", string(requestDump))
 	}
 
 	if res != nil {
 		responseDump, err := httputil.DumpResponse(res, true)
 		if err == nil {
-			debug(responseDebugPrefix,"response from mock", string(responseDump))
+			debug(responseDebugPrefix, "response from mock", string(responseDump))
 		}
 	} else {
-		debug(responseDebugPrefix,"response from mock", "")
+		debug(responseDebugPrefix, "response from mock", "")
 	}
 }
 

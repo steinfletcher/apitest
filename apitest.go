@@ -326,7 +326,7 @@ func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
 	if a.debugEnabled {
 		requestDump, err := httputil.DumpRequest(req, true)
 		if err == nil {
-			debug(requestDebugPrefix,"inbound http request", string(requestDump))
+			debug(requestDebugPrefix, "inbound http request", string(requestDump))
 		}
 	}
 
@@ -335,7 +335,7 @@ func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
 	if a.debugEnabled {
 		responseDump, err := httputil.DumpResponse(res.Result(), true)
 		if err == nil {
-			debug(responseDebugPrefix,"final response", string(responseDump))
+			debug(responseDebugPrefix, "final response", string(responseDump))
 		}
 	}
 
