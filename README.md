@@ -26,6 +26,7 @@ go get -u github.com/steinfletcher/api-test
 | --------------------------------------------------------------------------------- | --------------------------------------- |
 | [gin](https://github.com/steinfletcher/api-test/tree/master/examples/gin)         | popular martini-like web framework      |
 | [gorilla](https://github.com/steinfletcher/api-test/tree/master/examples/gorilla) | the gorilla web toolkit                 |
+| [iris](https://github.com/steinfletcher/api-test/tree/master/examples/iris)       | iris web framework                      |
 | [mocks](https://github.com/steinfletcher/api-test/tree/master/examples/mocks)     | example mocking out external http calls |
 
 ### Companion libraries
