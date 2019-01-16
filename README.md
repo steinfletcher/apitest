@@ -280,3 +280,7 @@ func TestApi(t *testing.T) {
 		End()
 }
 ```
+
+## Contributing
+
+View the [contributing guide](CONTRIBUTING.md).
