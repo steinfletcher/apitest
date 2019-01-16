@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"reflect"
 	"regexp"
@@ -17,15 +18,17 @@ var (
 )
 
 type Transport struct {
+	debugEnabled    bool
 	mocks           []*Mock
 	nativeTransport http.RoundTripper
 	httpClient      *http.Client
 }
 
-func NewTransport(mocks []*Mock, httpClient *http.Client) *Transport {
+func NewTransport(mocks []*Mock, httpClient *http.Client, debugEnabled bool) *Transport {
 	t := &Transport{
-		mocks:      mocks,
-		httpClient: httpClient,
+		mocks:        mocks,
+		httpClient:   httpClient,
+		debugEnabled: debugEnabled,
 	}
 	if httpClient != nil {
 		t.nativeTransport = httpClient.Transport
@@ -36,10 +39,33 @@ func NewTransport(mocks []*Mock, httpClient *http.Client) *Transport {
 }
 
 func (r *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
+	var responseMock *http.Response
+	if r.debugEnabled {
+		defer func() {
+			debugMock(responseMock, req)
+		}()
+	}
 	if matchedResponse := matches(req, r.mocks); matchedResponse != nil {
-		return buildResponseFromMock(matchedResponse), nil
+		responseMock = buildResponseFromMock(matchedResponse)
+		return responseMock, nil
 	}
 	return nil, errors.New(ErrFailedToMatch)
+}
+
+func debugMock(res *http.Response, req *http.Request) {
+	requestDump, err := httputil.DumpRequestOut(req, true)
+	if err == nil {
+		debug(requestDebugPrefix,"request to mock", string(requestDump))
+	}
+
+	if res != nil {
+		responseDump, err := httputil.DumpResponse(res, true)
+		if err == nil {
+			debug(responseDebugPrefix,"response from mock", string(responseDump))
+		}
+	} else {
+		debug(responseDebugPrefix,"response from mock", "")
+	}
 }
 
 func (r *Transport) Hijack() {

@@ -11,16 +11,21 @@ import (
 	"testing"
 )
 
+var divider = strings.Repeat("-", 10)
+var requestDebugPrefix = fmt.Sprintf("%s>", divider)
+var responseDebugPrefix = fmt.Sprintf("<%s", divider)
+
 // APITest is the top level struct holding the test spec
 type APITest struct {
-	name       string
-	request    *Request
-	response   *Response
-	observer   Observe
-	mocks      []*Mock
-	t          *testing.T
-	httpClient *http.Client
-	transport  *Transport
+	debugEnabled bool
+	name         string
+	request      *Request
+	response     *Response
+	observers    []Observe
+	mocks        []*Mock
+	t            *testing.T
+	httpClient   *http.Client
+	transport    *Transport
 }
 
 // Observe will be called by with the request and response on completion
@@ -40,6 +45,11 @@ func New(name ...string) *APITest {
 	}
 
 	return apiTest
+}
+
+func (a *APITest) Debug() *APITest {
+	a.debugEnabled = true
+	return a
 }
 
 // Mocks is a builder method for setting the mocks
@@ -62,9 +72,9 @@ func (a *APITest) HttpClient(cli *http.Client) *APITest {
 	return a
 }
 
-// Observe is a builder method for setting the observer
-func (a *APITest) Observe(observer Observe) *APITest {
-	a.observer = observer
+// Observe is a builder method for setting the observers
+func (a *APITest) Observe(observers ...Observe) *APITest {
+	a.observers = observers
 	return a
 }
 
@@ -105,19 +115,6 @@ type Intercept func(*http.Request)
 type pair struct {
 	l string
 	r string
-}
-
-// DumpHttp logs the http wire representation of the request and response
-var DumpHttp Observe = func(res *http.Response, req *http.Request) {
-	requestDump, err := httputil.DumpRequest(req, true)
-	if err == nil {
-		fmt.Println("--> http request dump\n\n" + string(requestDump))
-	}
-
-	responseDump, err := httputil.DumpResponse(res, true)
-	if err == nil {
-		fmt.Println("<-- http response dump:\n\n" + string(responseDump))
-	}
 }
 
 // Intercept is a builder method for setting the request interceptor
@@ -284,7 +281,11 @@ func (r *Response) End() {
 	apiTest := r.apiTest
 
 	if len(apiTest.mocks) > 0 {
-		apiTest.transport = NewTransport(apiTest.mocks, apiTest.httpClient)
+		apiTest.transport = NewTransport(
+			apiTest.mocks,
+			apiTest.httpClient,
+			r.apiTest.debugEnabled,
+		)
 		defer apiTest.transport.Reset()
 		apiTest.transport.Hijack()
 	}
@@ -294,9 +295,15 @@ func (r *Response) End() {
 
 func (a *APITest) run() {
 	res, req := a.runTest()
-	if a.observer != nil {
-		a.observer(res.Result(), req)
-	}
+
+	defer func() {
+		if len(a.observers) > 0 {
+			for _, observe := range a.observers {
+				observe(res.Result(), req)
+			}
+		}
+	}()
+
 	a.assertResponse(res)
 	a.assertHeaders(res)
 	a.assertCookies(res)
@@ -315,7 +322,23 @@ func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
 		a.request.interceptor(req)
 	}
 	res := httptest.NewRecorder()
+
+	if a.debugEnabled {
+		requestDump, err := httputil.DumpRequest(req, true)
+		if err == nil {
+			debug(requestDebugPrefix,"inbound http request", string(requestDump))
+		}
+	}
+
 	a.request.handler.ServeHTTP(res, req)
+
+	if a.debugEnabled {
+		responseDump, err := httputil.DumpResponse(res.Result(), true)
+		if err == nil {
+			debug(responseDebugPrefix,"final response", string(responseDump))
+		}
+	}
+
 	return res, req
 }
 
@@ -441,4 +464,8 @@ func (a *APITest) assertHeaders(res *httptest.ResponseRecorder) {
 func isJSON(s string) bool {
 	var js map[string]interface{}
 	return json.Unmarshal([]byte(s), &js) == nil
+}
+
+func debug(prefix, header, msg string) {
+	fmt.Printf("\n%s %s\n%s\n", prefix, header, msg)
 }

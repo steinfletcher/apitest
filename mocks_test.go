@@ -338,6 +338,7 @@ func TestMocks_ApiTest_WithMocks(t *testing.T) {
 				End()
 
 			New().
+				Debug().
 				HttpClient(test.httpCli).
 				Mocks(getUser, getPreferences).
 				Handler(getUserHandler(NewHttpGet(test.httpCli))).

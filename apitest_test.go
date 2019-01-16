@@ -373,7 +373,6 @@ func TestApiTest_Observe_DumpsTheHttpRequestAndResponse(t *testing.T) {
 	})
 
 	New().
-		Observe(DumpHttp).
 		Handler(handler).
 		Post("/hello").
 		Body(`{"a": 12345}`).
