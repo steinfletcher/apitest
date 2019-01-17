@@ -2,6 +2,7 @@ package apitest
 
 import (
 	"fmt"
+	"github.com/steinfletcher/api-test/assert"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -359,8 +360,8 @@ func TestApiTest_Observe(t *testing.T) {
 
 	New().
 		Observe(func(res *http.Response, req *http.Request) {
-			assertEqual(t, http.StatusOK, res.StatusCode)
-			assertEqual(t, "/hello", req.URL.Path)
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Equal(t, "/hello", req.URL.Path)
 		}).
 		Handler(handler).
 		Get("/hello").
@@ -444,8 +445,8 @@ func TestApiTest_ReplicatesMocks(t *testing.T) {
 func TestApiTest_ExposesRequestAndResponse(t *testing.T) {
 	apiTest := New()
 
-	assertNotNil(t, apiTest.Request())
-	assertNotNil(t, apiTest.Response())
+	assert.NotNil(t, apiTest.Request())
+	assert.NotNil(t, apiTest.Response())
 }
 
 func TestApiTest_BuildQueryCollection(t *testing.T) {
@@ -488,11 +489,5 @@ func TestApiTest_BuildQueryCollection_EmptyIfNoParams(t *testing.T) {
 
 	if len(params) > 0 {
 		t.Fatalf("Expected params to be empty")
-	}
-}
-
-func assertNotNil(t *testing.T, actual interface{}) {
-	if actual == nil {
-		t.Fatalf("Expected value to not be nil")
 	}
 }
