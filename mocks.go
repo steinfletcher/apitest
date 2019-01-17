@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"net/textproto"
 	"net/url"
 	"reflect"
 	"regexp"
@@ -216,13 +217,15 @@ func (r *MockRequest) Body(b string) *MockRequest {
 }
 
 func (r *MockRequest) Header(key, value string) *MockRequest {
-	r.headers[key] = append(r.headers[key], value)
+	normalizedKey := textproto.CanonicalMIMEHeaderKey(key)
+	r.headers[normalizedKey] = append(r.headers[normalizedKey], value)
 	return r
 }
 
 func (r *MockRequest) Headers(headers map[string]string) *MockRequest {
 	for k, v := range headers {
-		r.headers[k] = append(r.headers[k], v)
+		normalizedKey := textproto.CanonicalMIMEHeaderKey(k)
+		r.headers[normalizedKey] = append(r.headers[normalizedKey], v)
 	}
 	return r
 }
@@ -248,14 +251,16 @@ func (r *MockRequest) RespondWith() *MockResponse {
 	return r.mock.response
 }
 
-func (r *MockResponse) Header(name string, value string) *MockResponse {
-	r.headers[name] = append(r.headers[name], value)
+func (r *MockResponse) Header(key string, value string) *MockResponse {
+	normalizedKey := textproto.CanonicalMIMEHeaderKey(key)
+	r.headers[normalizedKey] = append(r.headers[normalizedKey], value)
 	return r
 }
 
 func (r *MockResponse) Headers(headers map[string]string) *MockResponse {
 	for k, v := range headers {
-		r.headers[k] = append(r.headers[k], v)
+		normalizedKey := textproto.CanonicalMIMEHeaderKey(k)
+		r.headers[normalizedKey] = append(r.headers[normalizedKey], v)
 	}
 	return r
 }

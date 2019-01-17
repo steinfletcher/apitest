@@ -283,17 +283,17 @@ func TestMocks_Request_SetsTheMethod(t *testing.T) {
 	}
 }
 
-func TestMocks_Response_Headers(t *testing.T) {
+func TestMocks_Response_Headers_WithNormalizedKeys(t *testing.T) {
 	mockResponse := NewMock().
 		Get("test").
 		RespondWith().
 		Header("a", "1").
-		Headers(map[string]string{"b": "2"}).
+		Headers(map[string]string{"B": "2"}).
 		Header("c", "3")
 
 	response := buildResponseFromMock(mockResponse)
 
-	assertEqual(t, http.Header(map[string][]string{"a": {"1"}, "b": {"2"}, "c": {"3"}}), response.Header)
+	assertEqual(t, http.Header(map[string][]string{"A": {"1"}, "B": {"2"}, "C": {"3"}}), response.Header)
 }
 
 func TestMocks_Response_Cookies(t *testing.T) {
