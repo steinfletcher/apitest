@@ -35,8 +35,14 @@ type Observe func(*http.Response, *http.Request)
 func New(name ...string) *APITest {
 	apiTest := &APITest{}
 
-	request := &Request{apiTest: apiTest}
-	response := &Response{apiTest: apiTest}
+	request := &Request{
+		apiTest: apiTest,
+		headers: map[string][]string{},
+	}
+	response := &Response{
+		apiTest: apiTest,
+		headers: map[string]string{},
+	}
 	apiTest.request = request
 	apiTest.response = response
 
@@ -103,7 +109,7 @@ type Request struct {
 	body            string
 	query           map[string]string
 	queryCollection map[string][]string
-	headers         map[string]string
+	headers         map[string][]string
 	cookies         []*Cookie
 	basicAuth       string
 	apiTest         *APITest
@@ -190,9 +196,17 @@ func (r *Request) QueryCollection(q map[string][]string) *Request {
 	return r
 }
 
+// Header is a builder method to set the request headers
+func (r *Request) Header(key, value string) *Request {
+	r.headers[key] = append(r.headers[key], value)
+	return r
+}
+
 // Headers is a builder method to set the request headers
-func (r *Request) Headers(h map[string]string) *Request {
-	r.headers = h
+func (r *Request) Headers(headers map[string]string) *Request {
+	for k, v := range headers {
+		r.headers[k] = append(r.headers[k], v)
+	}
 	return r
 }
 
@@ -363,7 +377,9 @@ func (a *APITest) BuildRequest() *http.Request {
 	}
 
 	for k, v := range a.request.headers {
-		req.Header.Set(k, v)
+		for _, headerValue := range v {
+			req.Header.Add(k, headerValue)
+		}
 	}
 
 	for _, cookie := range a.request.cookies {

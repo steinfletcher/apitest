@@ -111,7 +111,8 @@ func TestApiTest_AddsQueryParamCollectionToRequest_HandlesEmpty(t *testing.T) {
 func TestApiTest_AddsHeadersToRequest(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		if "12345" != r.Header.Get("My-Header") {
+		header := r.Header["Authorization"]
+		if len(header) != 2 {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -121,7 +122,8 @@ func TestApiTest_AddsHeadersToRequest(t *testing.T) {
 	New().
 		Handler(handler).
 		Delete("/hello").
-		Headers(map[string]string{"My-Header": "12345"}).
+		Headers(map[string]string{"Authorization": "12345"}).
+		Header("Authorization", "098765").
 		Expect(t).
 		Status(http.StatusOK).
 		End()
