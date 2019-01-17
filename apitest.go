@@ -54,6 +54,7 @@ func New(name ...string) *APITest {
 	return apiTest
 }
 
+// Debug logs to the console the http wire representation of all http interactions that are intercepted by apitest. This includes the inbound request to the application under test, the response returned by the application and any interactions that are intercepted by the mock server.
 func (a *APITest) Debug() *APITest {
 	a.debugEnabled = true
 	return a
