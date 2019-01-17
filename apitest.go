@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
+	"net/textproto"
 	"strings"
 	"testing"
 )
@@ -41,7 +42,7 @@ func New(name ...string) *APITest {
 	}
 	response := &Response{
 		apiTest: apiTest,
-		headers: map[string]string{},
+		headers: map[string][]string{},
 	}
 	apiTest.request = request
 	apiTest.response = response
@@ -198,14 +199,16 @@ func (r *Request) QueryCollection(q map[string][]string) *Request {
 
 // Header is a builder method to set the request headers
 func (r *Request) Header(key, value string) *Request {
-	r.headers[key] = append(r.headers[key], value)
+	normalizedKey := textproto.CanonicalMIMEHeaderKey(key)
+	r.headers[normalizedKey] = append(r.headers[normalizedKey], value)
 	return r
 }
 
 // Headers is a builder method to set the request headers
 func (r *Request) Headers(headers map[string]string) *Request {
 	for k, v := range headers {
-		r.headers[k] = append(r.headers[k], v)
+		normalizedKey := textproto.CanonicalMIMEHeaderKey(k)
+		r.headers[normalizedKey] = append(r.headers[normalizedKey], v)
 	}
 	return r
 }
@@ -233,7 +236,7 @@ func (r *Request) Expect(t *testing.T) *Response {
 type Response struct {
 	status             int
 	body               string
-	headers            map[string]string
+	headers            map[string][]string
 	cookies            []*Cookie
 	cookiesPresent     []string
 	cookiesNotPresent  []string
@@ -271,9 +274,19 @@ func (r *Response) CookieNotPresent(cookieName string) *Response {
 	return r
 }
 
-// Headers is the expected response headers
+// Header is a builder method to set the request headers
+func (r *Response) Header(key, value string) *Response {
+	normalizedKey := textproto.CanonicalMIMEHeaderKey(key)
+	r.headers[normalizedKey] = append(r.headers[normalizedKey], value)
+	return r
+}
+
+// Headers is a builder method to set the request headers
 func (r *Response) Headers(headers map[string]string) *Response {
-	r.headers = headers
+	for k, v := range headers {
+		normalizedKey := textproto.CanonicalMIMEHeaderKey(k)
+		r.headers[normalizedKey] = append(r.headers[textproto.CanonicalMIMEHeaderKey(normalizedKey)], v)
+	}
 	return r
 }
 
@@ -469,10 +482,19 @@ func responseCookies(response *httptest.ResponseRecorder) []*http.Cookie {
 }
 
 func (a *APITest) assertHeaders(res *httptest.ResponseRecorder) {
-	if a.response.headers != nil {
-		for k, v := range a.response.headers {
-			header := res.Header().Get(k)
-			assertEqual(a.t, v, header, fmt.Sprintf("'%s' header should be equal", k))
+	for expectedHeader, expectedValues := range a.response.headers {
+		for _, expectedValue := range expectedValues {
+			found := false
+			result := res.Result()
+			for _, resValue := range result.Header[expectedHeader] {
+				if expectedValue == resValue {
+					found = true
+					break
+				}
+			}
+			if !found {
+				a.t.Fatalf("could not match header=%s", expectedHeader)
+			}
 		}
 	}
 }

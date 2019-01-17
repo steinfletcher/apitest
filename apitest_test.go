@@ -310,11 +310,13 @@ func TestApiTest_MatchesResponseHttpCookies_OnlySuppliedFields(t *testing.T) {
 		End()
 }
 
-func TestApiTest_MatchesResponseHeaders(t *testing.T) {
+func TestApiTest_MatchesResponseHeaders_WithMixedKeyCase(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("ABC", "12345")
 		w.Header().Set("DEF", "67890")
+		w.Header().Set("Authorization", "12345")
+		w.Header().Add("Authorization", "98765")
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -324,9 +326,11 @@ func TestApiTest_MatchesResponseHeaders(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		Headers(map[string]string{
-			"ABC": "12345",
-			"DEF": "67890",
+			"Abc": "12345",
+			"Def": "67890",
 		}).
+		Header("Authorization", "12345").
+		Header("authorization", "98765").
 		End()
 }
 
