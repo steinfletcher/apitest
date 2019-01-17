@@ -316,6 +316,7 @@ func TestApiTest_MatchesResponseHeaders_WithMixedKeyCase(t *testing.T) {
 		w.Header().Set("ABC", "12345")
 		w.Header().Set("DEF", "67890")
 		w.Header().Set("Authorization", "12345")
+		w.Header().Add("authorizATION", "00000")
 		w.Header().Add("Authorization", "98765")
 		w.WriteHeader(http.StatusOK)
 	})
@@ -330,6 +331,7 @@ func TestApiTest_MatchesResponseHeaders_WithMixedKeyCase(t *testing.T) {
 			"Def": "67890",
 		}).
 		Header("Authorization", "12345").
+		Header("Authorization", "00000").
 		Header("authorization", "98765").
 		End()
 }
