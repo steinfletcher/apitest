@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/steinfletcher/api-test/assert"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -424,14 +425,14 @@ func buildQueryCollection(params map[string][]string) []pair {
 
 func (a *APITest) assertResponse(res *httptest.ResponseRecorder) {
 	if a.response.status != 0 {
-		assertEqual(a.t, a.response.status, res.Code, fmt.Sprintf("Status code %d not equal to %d", res.Code, a.response.status))
+		assert.Equal(a.t, a.response.status, res.Code, fmt.Sprintf("Status code %d not equal to %d", res.Code, a.response.status))
 	}
 
 	if a.response.body != "" {
 		if isJSON(a.response.body) {
-			jsonEqual(a.t, a.response.body, res.Body.String())
+			assert.JsonEqual(a.t, a.response.body, res.Body.String())
 		} else {
-			assertEqual(a.t, a.response.body, res.Body.String())
+			assert.Equal(a.t, a.response.body, res.Body.String())
 		}
 	}
 }
@@ -448,8 +449,8 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 					mismatchedFields = append(mismatchedFields, errors...)
 				}
 			}
-			assertEqual(a.t, true, foundCookie, "ExpectedCookie not found - "+*expectedCookie.name)
-			assertEqual(a.t, 0, len(mismatchedFields), mismatchedFields...)
+			assert.Equal(a.t, true, foundCookie, "ExpectedCookie not found - "+*expectedCookie.name)
+			assert.Equal(a.t, 0, len(mismatchedFields), mismatchedFields...)
 		}
 	}
 
@@ -461,7 +462,7 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 					foundCookie = true
 				}
 			}
-			assertEqual(a.t, true, foundCookie, "ExpectedCookie not found - "+cookieName)
+			assert.Equal(a.t, true, foundCookie, "ExpectedCookie not found - "+cookieName)
 		}
 	}
 
@@ -473,7 +474,7 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 					foundCookie = true
 				}
 			}
-			assertEqual(a.t, false, foundCookie, "ExpectedCookie found - "+cookieName)
+			assert.Equal(a.t, false, foundCookie, "ExpectedCookie found - "+cookieName)
 		}
 	}
 }

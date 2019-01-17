@@ -1,6 +1,7 @@
 package apitest
 
 import (
+	"github.com/steinfletcher/api-test/assert"
 	"net/http"
 	"testing"
 	"time"
@@ -22,7 +23,7 @@ func TestApiTest_Cookies_ExpectedCookie(t *testing.T) {
 	boolt := true
 	boolf := false
 
-	assertEqual(t, Cookie{
+	assert.Equal(t, Cookie{
 		name:     toString("Tom"),
 		value:    toString("LovesBeers"),
 		path:     toString("/at-the-lyric"),
@@ -47,7 +48,7 @@ func TestApiTest_Cookies_ToHttpCookie(t *testing.T) {
 		HttpOnly(false).
 		ToHttpCookie()
 
-	assertEqual(t, http.Cookie{
+	assert.Equal(t, http.Cookie{
 		Name:     "Tom",
 		Value:    "LovesBeers",
 		Path:     "/at-the-lyric",
@@ -67,7 +68,7 @@ func TestApiTest_Cookies_ToHttpCookie_PartiallyCreated(t *testing.T) {
 		Expires(expiry).
 		ToHttpCookie()
 
-	assertEqual(t, http.Cookie{
+	assert.Equal(t, http.Cookie{
 		Name:     "Tom",
 		Value:    "LovesBeers",
 		Expires:  expiry,

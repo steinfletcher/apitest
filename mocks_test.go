@@ -3,6 +3,7 @@ package apitest
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/steinfletcher/api-test/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -26,7 +27,7 @@ func TestMocks_QueryPresent(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, test.requestUrl, nil)
 			mockRequest := NewMock().Get(test.requestUrl).QueryPresent(test.queryParam)
 			isPresent := queryPresentMatcher(req, mockRequest)
-			assertEqual(t, test.isPresent, isPresent)
+			assert.Equal(t, test.isPresent, isPresent)
 		})
 	}
 }
@@ -45,7 +46,7 @@ func TestMocks_HostMatcher(t *testing.T) {
 		t.Run(fmt.Sprintf("%s %s", test.requestUrl, test.mockUrl), func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, test.requestUrl, nil)
 			matches := hostMatcher(req, NewMock().Get(test.mockUrl))
-			assertEqual(t, test.shouldMatch, matches)
+			assert.Equal(t, test.shouldMatch, matches)
 		})
 	}
 }
@@ -63,16 +64,16 @@ func TestMocks_HeaderMatcher(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s %s", test.headerToMatchKey, test.headerToMatchValue), func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/test", nil)
+			req := httptest.NewRequest(http.MethodGet, "/assert", nil)
 			for k, v := range test.requestHeaders {
 				req.Header.Set(k, v)
 			}
-			mockRequest := NewMock().Get("/test")
+			mockRequest := NewMock().Get("/assert")
 			if test.headerToMatchKey != "" {
 				mockRequest.Header(test.headerToMatchKey, test.headerToMatchValue)
 			}
 			matches := headerMatcher(req, mockRequest)
-			assertEqual(t, test.shouldMatch, matches)
+			assert.Equal(t, test.shouldMatch, matches)
 		})
 	}
 }
@@ -88,7 +89,7 @@ func TestMocks_MockRequest_Header_WorksWithHeaders(t *testing.T) {
 
 	matches := headerMatcher(req, mock)
 
-	assertEqual(t, true, matches)
+	assert.Equal(t, true, matches)
 }
 
 func TestMocks_QueryMatcher(t *testing.T) {
@@ -107,7 +108,7 @@ func TestMocks_QueryMatcher(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, test.requestUrl, nil)
 			mockRequest := NewMock().Get(test.requestUrl).QueryParams(test.queryToMatch)
 			matches := queryParamMatcher(req, mockRequest)
-			assertEqual(t, test.shouldMatch, matches)
+			assert.Equal(t, test.shouldMatch, matches)
 		})
 	}
 }
@@ -121,8 +122,8 @@ func TestMocks_QueryParams_DoesNotOverwriteQuery(t *testing.T) {
 
 	matches := queryParamMatcher(req, mockRequest)
 
-	assertEqual(t, 2, len(mockRequest.query))
-	assertEqual(t, true, matches)
+	assert.Equal(t, 2, len(mockRequest.query))
+	assert.Equal(t, true, matches)
 }
 
 func TestMocks_SchemeMatcher(t *testing.T) {
@@ -171,7 +172,7 @@ func TestMocks_BodyMatcher(t *testing.T) {
 		t.Run(test.matchBody, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/path", strings.NewReader(test.requestBody))
 			matches := bodyMatcher(req, NewMock().Get("/path").Body(test.matchBody))
-			assertEqual(t, test.shouldMatch, matches)
+			assert.Equal(t, test.shouldMatch, matches)
 		})
 	}
 }
@@ -227,8 +228,8 @@ func TestMocks_Matches(t *testing.T) {
 
 	mockResponse := matches(req, []*Mock{getUser, getPreferences})
 
-	assertNotNil(t, mockResponse)
-	assertEqual(t, `{"is_contactable": true}`, mockResponse.body)
+	assert.NotNil(t, mockResponse)
+	assert.Equal(t, `{"is_contactable": true}`, mockResponse.body)
 }
 
 func TestMocks_Matches_NilIfNoMatch(t *testing.T) {
@@ -278,14 +279,14 @@ func TestMocks_Request_SetsTheMethod(t *testing.T) {
 		t.Run(test.expectedMethod, func(t *testing.T) {
 			mock := NewMock()
 			test.methodSetter(mock)
-			assertEqual(t, test.expectedMethod, mock.request.method)
+			assert.Equal(t, test.expectedMethod, mock.request.method)
 		})
 	}
 }
 
 func TestMocks_Response_Headers_WithNormalizedKeys(t *testing.T) {
 	mockResponse := NewMock().
-		Get("test").
+		Get("assert").
 		RespondWith().
 		Header("a", "1").
 		Headers(map[string]string{"B": "2"}).
@@ -293,7 +294,7 @@ func TestMocks_Response_Headers_WithNormalizedKeys(t *testing.T) {
 
 	response := buildResponseFromMock(mockResponse)
 
-	assertEqual(t, http.Header(map[string][]string{"A": {"1"}, "B": {"2"}, "C": {"3"}}), response.Header)
+	assert.Equal(t, http.Header(map[string][]string{"A": {"1"}, "B": {"2"}, "C": {"3"}}), response.Header)
 }
 
 func TestMocks_Response_Cookies(t *testing.T) {
@@ -306,7 +307,7 @@ func TestMocks_Response_Cookies(t *testing.T) {
 
 	response := buildResponseFromMock(mockResponse)
 
-	assertEqual(t, []*http.Cookie{
+	assert.Equal(t, []*http.Cookie{
 		{Name: "A", Value: "1", Raw: "A=1"},
 		{Name: "B", Value: "2", Raw: "B=2"},
 		{Name: "C", Value: "3", Raw: "C=3"},
