@@ -216,21 +216,20 @@ func TestApi(t *testing.T) {
 
 #### Provide query parameters in the request
 
-`Query` can be used in combination with `QueryCollection`
+`Query`, `QueryParams` and `QueryCollection` can all be used in combination 
 
 ```go
 func TestApi(t *testing.T) {
 	apitest.New().
 		Handler(handler).
 		Get("/hello").
-		Query(map[string]string{"a": "b"}).
+		QueryParams(map[string]string{"a": "1", "b": "2"}).
+		Query("c", "d").
 		Expect(t).
 		Status(http.StatusOK).
 		End()
 }
 ```
-
-#### Provide query parameters in collection format in the request
 
 Providing `{"a": {"b", "c", "d"}` results in parameters encoded as `a=b&a=c&a=d`.
 `QueryCollection` can be used in combination with `Query`

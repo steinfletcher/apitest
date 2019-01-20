@@ -63,7 +63,7 @@ func TestApiTest_AddsQueryParamsToRequest(t *testing.T) {
 	New().
 		Handler(handler).
 		Get("/hello").
-		Query(map[string]string{"a": "b"}).
+		QueryParams(map[string]string{"a": "b"}).
 		Expect(t).
 		Status(http.StatusOK).
 		End()
@@ -83,7 +83,7 @@ func TestApiTest_AddsQueryParamCollectionToRequest(t *testing.T) {
 		Handler(handler).
 		Get("/hello").
 		QueryCollection(map[string][]string{"a": {"b", "c", "d"}}).
-		Query(map[string]string{"e": "f"}).
+		QueryParams(map[string]string{"e": "f"}).
 		Expect(t).
 		Status(http.StatusOK).
 		End()
@@ -103,7 +103,31 @@ func TestApiTest_AddsQueryParamCollectionToRequest_HandlesEmpty(t *testing.T) {
 		Handler(handler).
 		Get("/hello").
 		QueryCollection(map[string][]string{}).
-		Query(map[string]string{"e": "f"}).
+		QueryParams(map[string]string{"e": "f"}).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestApiTest_CanCombineQueryParamMethods(t *testing.T) {
+	expectedQueryString := "a=1&a=2&a=9&a=22&b=2"
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		if expectedQueryString != r.URL.RawQuery {
+			fmt.Println(r.URL.RawQuery)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	New().
+		Handler(handler).
+		Get("/hello").
+		Query("a", "9").
+		Query("a", "22").
+		QueryCollection(map[string][]string{"a": {"1", "2"}}).
+		QueryParams(map[string]string{"b": "2"}).
 		Expect(t).
 		Status(http.StatusOK).
 		End()

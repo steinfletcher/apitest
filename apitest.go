@@ -40,6 +40,7 @@ func New(name ...string) *APITest {
 	request := &Request{
 		apiTest: apiTest,
 		headers: map[string][]string{},
+		query:   map[string][]string{},
 	}
 	response := &Response{
 		apiTest: apiTest,
@@ -110,7 +111,7 @@ type Request struct {
 	method          string
 	url             string
 	body            string
-	query           map[string]string
+	query           map[string][]string
 	queryCollection map[string][]string
 	headers         map[string][]string
 	cookies         []*Cookie
@@ -185,10 +186,18 @@ func (r *Request) Body(b string) *Request {
 	return r
 }
 
-// Query is a builder method to set the request query parameters.
+// Query is a convenience method to add a query parameter to the request.
+func (r *Request) Query(key, value string) *Request {
+	r.query[key] = append(r.query[key], value)
+	return r
+}
+
+// QueryParams is a builder method to set the request query parameters.
 // This can be used in combination with request.QueryCollection
-func (r *Request) Query(q map[string]string) *Request {
-	r.query = q
+func (r *Request) QueryParams(params map[string]string) *Request {
+	for k, v := range params {
+		r.query[k] = append(r.query[k], v)
+	}
 	return r
 }
 
@@ -383,7 +392,9 @@ func (a *APITest) BuildRequest() *http.Request {
 
 	if a.request.query != nil {
 		for k, v := range a.request.query {
-			query.Add(k, v)
+			for _, p := range v {
+				query.Add(k, p)
+			}
 		}
 	}
 
