@@ -19,19 +19,23 @@ var responseDebugPrefix = fmt.Sprintf("<%s", divider)
 
 // APITest is the top level struct holding the test spec
 type APITest struct {
-	debugEnabled bool
-	name         string
-	request      *Request
-	response     *Response
-	observers    []Observe
-	mocks        []*Mock
-	t            *testing.T
-	httpClient   *http.Client
-	transport    *Transport
+	debugEnabled  bool
+	name          string
+	request       *Request
+	response      *Response
+	observers     []Observe
+	mocksObserver ObserveMocks
+	mocks         []*Mock
+	t             *testing.T
+	httpClient    *http.Client
+	transport     *Transport
 }
 
 // Observe will be called by with the request and response on completion
 type Observe func(*http.Response, *http.Request)
+
+// ObserveMocks will be called by with the request, response and mock response for all requests that hit the mock server
+type ObserveMocks func(*http.Response, *http.Request, *MockResponse)
 
 // New creates a new api test. The name is optional and will appear in test reports
 func New(name ...string) *APITest {
@@ -85,6 +89,12 @@ func (a *APITest) HttpClient(cli *http.Client) *APITest {
 // Observe is a builder method for setting the observers
 func (a *APITest) Observe(observers ...Observe) *APITest {
 	a.observers = observers
+	return a
+}
+
+// ObserveMocks is a builder method for setting the mocks observers
+func (a *APITest) ObserveMocks(observer ObserveMocks) *APITest {
+	a.mocksObserver = observer
 	return a
 }
 
@@ -319,10 +329,11 @@ func (r *Response) End() {
 	apiTest := r.apiTest
 
 	if len(apiTest.mocks) > 0 {
-		apiTest.transport = NewTransport(
+		apiTest.transport = newTransport(
 			apiTest.mocks,
 			apiTest.httpClient,
-			r.apiTest.debugEnabled,
+			apiTest.debugEnabled,
+			apiTest.mocksObserver,
 		)
 		defer apiTest.transport.Reset()
 		apiTest.transport.Hijack()

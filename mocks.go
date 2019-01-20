@@ -23,13 +23,15 @@ type Transport struct {
 	mocks           []*Mock
 	nativeTransport http.RoundTripper
 	httpClient      *http.Client
+	observe         ObserveMocks
 }
 
-func NewTransport(mocks []*Mock, httpClient *http.Client, debugEnabled bool) *Transport {
+func newTransport(mocks []*Mock, httpClient *http.Client, debugEnabled bool, observe ObserveMocks) *Transport {
 	t := &Transport{
 		mocks:        mocks,
 		httpClient:   httpClient,
 		debugEnabled: debugEnabled,
+		observe:      observe,
 	}
 	if httpClient != nil {
 		t.nativeTransport = httpClient.Transport
@@ -41,13 +43,23 @@ func NewTransport(mocks []*Mock, httpClient *http.Client, debugEnabled bool) *Tr
 
 func (r *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	var responseMock *http.Response
+	var matchedMockResponse *MockResponse
+
 	if r.debugEnabled {
 		defer func() {
 			debugMock(responseMock, req)
 		}()
 	}
-	if matchedResponse := matches(req, r.mocks); matchedResponse != nil {
-		responseMock = buildResponseFromMock(matchedResponse)
+
+	if r.observe != nil {
+		defer func() {
+			r.observe(responseMock, req, matchedMockResponse)
+		}()
+	}
+
+	matchedMockResponse = matches(req, r.mocks)
+	if matchedMockResponse  != nil {
+		responseMock = buildResponseFromMock(matchedMockResponse)
 		return responseMock, nil
 	}
 	return nil, errors.New(ErrFailedToMatch)
