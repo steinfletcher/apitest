@@ -108,7 +108,7 @@ func TestApi(t *testing.T) {
 		Cookies(apitest.Cookie"ABC").Value("12345")).
 		CookiePresent("Session-Token").
 		CookieNotPresent("XXX").
-        	Cookies(
+			Cookies(
 			apitest.Cookie("ABC").Value("12345"),
 			apitest.Cookie("DEF").Value("67890")).
 		End()
@@ -253,7 +253,7 @@ func TestApi(t *testing.T) {
 	apitest.New().
 		Observe(func(res *http.Response, req *http.Request) {
 			// do something with res and req
-    	}).
+		}).
 		Handler(handler).
 		Get("/hello").
 		Expect(t).
