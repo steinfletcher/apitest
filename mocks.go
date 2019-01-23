@@ -58,7 +58,7 @@ func (r *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	matchedMockResponse = matches(req, r.mocks)
-	if matchedMockResponse  != nil {
+	if matchedMockResponse != nil {
 		responseMock = buildResponseFromMock(matchedMockResponse)
 		return responseMock, nil
 	}
