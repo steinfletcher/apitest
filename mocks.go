@@ -98,6 +98,22 @@ func (r *Transport) Reset() {
 }
 
 func buildResponseFromMock(mockResponse *MockResponse) *http.Response {
+	contentTypeHeader := mockResponse.headers["Content-Type"]
+	var contentType string
+
+	// if the content type isn't set and the body contains json, set content type as json
+	if len(mockResponse.body) > 0 {
+		if len(contentTypeHeader) == 0 {
+			if isJSON(mockResponse.body) {
+				contentType = "application/json"
+			} else {
+				contentType = "text/plain"
+			}
+		} else {
+			contentType = contentTypeHeader[0]
+		}
+	}
+
 	res := &http.Response{
 		Body:          ioutil.NopCloser(strings.NewReader(mockResponse.body)),
 		Header:        mockResponse.headers,
@@ -111,6 +127,10 @@ func buildResponseFromMock(mockResponse *MockResponse) *http.Response {
 		if v := cookie.ToHttpCookie().String(); v != "" {
 			res.Header.Add("Set-Cookie", v)
 		}
+	}
+
+	if contentType != "" {
+		res.Header.Set("Content-Type", contentType)
 	}
 
 	return res

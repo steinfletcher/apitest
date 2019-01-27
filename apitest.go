@@ -196,6 +196,13 @@ func (r *Request) Body(b string) *Request {
 	return r
 }
 
+// JSON is a convenience method for setting the request body and content type header as "application/json"
+func (r *Request) JSON(b string) *Request {
+	r.body = b
+	r.Header("Content-Type", "application/json")
+	return r
+}
+
 // Query is a convenience method to add a query parameter to the request.
 func (r *Request) Query(key, value string) *Request {
 	r.query[key] = append(r.query[key], value)

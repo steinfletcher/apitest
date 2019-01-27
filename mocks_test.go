@@ -284,6 +284,46 @@ func TestMocks_Request_SetsTheMethod(t *testing.T) {
 	}
 }
 
+func TestMocks_Response_SetsTextPlainIfNoContentTypeSet(t *testing.T) {
+	mockResponse := NewMock().
+		Get("assert").
+		RespondWith().
+		Body("abcdef")
+
+	response := buildResponseFromMock(mockResponse)
+
+	bytes, _ := ioutil.ReadAll(response.Body)
+	assert.Equal(t, string(bytes), "abcdef")
+	assert.Equal(t, "text/plain", response.Header.Get("Content-Type"))
+}
+
+func TestMocks_Response_SetsTheBodyAsJSON(t *testing.T) {
+	mockResponse := NewMock().
+		Get("assert").
+		RespondWith().
+		Body(`{"a": 123}`)
+
+	response := buildResponseFromMock(mockResponse)
+
+	bytes, _ := ioutil.ReadAll(response.Body)
+	assert.Equal(t, string(bytes), `{"a": 123}`)
+	assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
+}
+
+func TestMocks_Response_SetsTheBodyAsOther(t *testing.T) {
+	mockResponse := NewMock().
+		Get("assert").
+		RespondWith().
+		Body(`<html>123</html>`).
+		Header("Content-Type", "text/html")
+
+	response := buildResponseFromMock(mockResponse)
+
+	bytes, _ := ioutil.ReadAll(response.Body)
+	assert.Equal(t, string(bytes), `<html>123</html>`)
+	assert.Equal(t, "text/html", response.Header.Get("Content-Type"))
+}
+
 func TestMocks_Response_Headers_WithNormalizedKeys(t *testing.T) {
 	mockResponse := NewMock().
 		Get("assert").

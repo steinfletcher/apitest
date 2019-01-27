@@ -18,6 +18,10 @@ func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		if r.Header.Get("Content-Type") != "application/json" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -25,6 +29,31 @@ func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 		Handler(handler).
 		Post("/hello").
 		Body(`{"a": 12345}`).
+		Header("Content-Type", "application/json").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestApiTest_AddsJSONBodyToRequestUsingJSON(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		bytes, _ := ioutil.ReadAll(r.Body)
+		if string(bytes) != `{"a": 12345}` {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if r.Header.Get("Content-Type") != "application/json" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	New().
+		Handler(handler).
+		Post("/hello").
+		JSON(`{"a": 12345}`).
 		Expect(t).
 		Status(http.StatusOK).
 		End()
