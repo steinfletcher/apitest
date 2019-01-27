@@ -110,7 +110,8 @@ func TestApi(t *testing.T) {
 		CookieNotPresent("XXX").
 			Cookies(
 			apitest.Cookie("ABC").Value("12345"),
-			apitest.Cookie("DEF").Value("67890")).
+			apitest.Cookie("DEF").Value("67890"),
+		).
 		End()
 }
 ```

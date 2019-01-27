@@ -143,7 +143,6 @@ func TestApiTest_CanCombineQueryParamMethods(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
 		if expectedQueryString != r.URL.RawQuery {
-			fmt.Println(r.URL.RawQuery)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}

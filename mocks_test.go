@@ -156,20 +156,20 @@ func TestMocks_BodyMatcher(t *testing.T) {
 		shouldMatch bool
 	}{
 		{`{"a": 1}`, "", true},
-		{``, `{"a": 1}`, false},
+		{``, `{"a":1}`, false},
 		{"golang\n", "go[lang]?", true},
 		{"golang\n", "go[lang]?", true},
 		{"golang", "goat", false},
 		{"go\n", "go[lang]?", true},
 		{`{"a":"12345"}\n`, `{"a":"12345"}`, true},
 		{`{"a":"12345"}`, `{"b":"12345"}`, false},
-		{`{"a":"12345"}`, `{"a":"12345"}`, true},
+		{`{"x":"12345"}`, `{"x":"12345"}`, true},
 		{`{"a": 12345, "b": [{"key": "c", "value": "result"}]}`,
-			`{"b": [{"key": "c", "value": "result"}], "a": 12345}`, true},
+			`{"b":[{"key":"c","value":"result"}],"a":12345}`, true},
 	}
 
 	for _, test := range tests {
-		t.Run(test.matchBody, func(t *testing.T) {
+		t.Run(fmt.Sprintf("body=%v", test.matchBody), func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/path", strings.NewReader(test.requestBody))
 			matches := bodyMatcher(req, NewMock().Get("/path").Body(test.matchBody))
 			assert.Equal(t, test.shouldMatch, matches)
@@ -393,7 +393,7 @@ func TestMocks_ApiTest_WithMocks(t *testing.T) {
 }
 
 func TestMocks_ApiTest_SupportsObservingMocks(t *testing.T) {
-	var observedMocks []*MockResponse
+	var observedMocks []*mockInteraction
 
 	getUser := NewMock().
 		Get("http://localhost:8080").
@@ -411,11 +411,11 @@ func TestMocks_ApiTest_SupportsObservingMocks(t *testing.T) {
 		End()
 
 	New().
-		ObserveMocks(func(res *http.Response, req *http.Request, mock *MockResponse) {
+		ObserveMocks(func(res *http.Response, req *http.Request) {
 			if res == nil || req == nil {
 				t.Fatal("expected request and response to be defined")
 			}
-			observedMocks = append(observedMocks, mock)
+			observedMocks = append(observedMocks, &mockInteraction{response: res, request: req})
 		}).
 		Mocks(getUser, getPreferences).
 		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

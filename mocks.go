@@ -23,10 +23,10 @@ type Transport struct {
 	mocks           []*Mock
 	nativeTransport http.RoundTripper
 	httpClient      *http.Client
-	observe         ObserveMocks
+	observe         Observe
 }
 
-func newTransport(mocks []*Mock, httpClient *http.Client, debugEnabled bool, observe ObserveMocks) *Transport {
+func newTransport(mocks []*Mock, httpClient *http.Client, debugEnabled bool, observe Observe) *Transport {
 	t := &Transport{
 		mocks:        mocks,
 		httpClient:   httpClient,
@@ -43,7 +43,6 @@ func newTransport(mocks []*Mock, httpClient *http.Client, debugEnabled bool, obs
 
 func (r *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	var responseMock *http.Response
-	var matchedMockResponse *MockResponse
 
 	if r.debugEnabled {
 		defer func() {
@@ -53,13 +52,12 @@ func (r *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	if r.observe != nil {
 		defer func() {
-			r.observe(responseMock, req, matchedMockResponse)
+			r.observe(responseMock, req)
 		}()
 	}
 
-	matchedMockResponse = matches(req, r.mocks)
-	if matchedMockResponse != nil {
-		responseMock = buildResponseFromMock(matchedMockResponse)
+	if matchedResponse := matches(req, r.mocks); matchedResponse != nil {
+		responseMock = buildResponseFromMock(matchedResponse)
 		return responseMock, nil
 	}
 	return nil, errors.New(ErrFailedToMatch)
@@ -98,6 +96,10 @@ func (r *Transport) Reset() {
 }
 
 func buildResponseFromMock(mockResponse *MockResponse) *http.Response {
+	if mockResponse == nil {
+		return nil
+	}
+
 	contentTypeHeader := mockResponse.headers["Content-Type"]
 	var contentType string
 

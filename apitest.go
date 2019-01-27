@@ -5,13 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/steinfletcher/api-test/assert"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/textproto"
+	"net/url"
 	"strings"
 	"testing"
 )
+
+const systemUnderTestDefaultName = "sut"
+const consumerName = "cli"
 
 var divider = strings.Repeat("-", 10)
 var requestDebugPrefix = fmt.Sprintf("%s>", divider)
@@ -24,7 +29,7 @@ type APITest struct {
 	request       *Request
 	response      *Response
 	observers     []Observe
-	mocksObserver ObserveMocks
+	mocksObserver Observe
 	mocks         []*Mock
 	t             *testing.T
 	httpClient    *http.Client
@@ -33,9 +38,6 @@ type APITest struct {
 
 // Observe will be called by with the request and response on completion
 type Observe func(*http.Response, *http.Request, *APITest)
-
-// ObserveMocks will be called by with the request, response and mock response for all requests that hit the mock server
-type ObserveMocks func(*http.Response, *http.Request, *MockResponse)
 
 // New creates a new api test. The name is optional and will appear in test reports
 func New(name ...string) *APITest {
@@ -93,7 +95,7 @@ func (a *APITest) Observe(observers ...Observe) *APITest {
 }
 
 // ObserveMocks is a builder method for setting the mocks observers
-func (a *APITest) ObserveMocks(observer ObserveMocks) *APITest {
+func (a *APITest) ObserveMocks(observer Observe) *APITest {
 	a.mocksObserver = observer
 	return a
 }
@@ -118,6 +120,7 @@ func (a *APITest) Handler(handler http.Handler) *Request {
 type Request struct {
 	handler         http.Handler
 	interceptor     Intercept
+	host            string
 	method          string
 	url             string
 	body            string
@@ -140,6 +143,12 @@ type pair struct {
 // Intercept is a builder method for setting the request interceptor
 func (r *Request) Intercept(interceptor Intercept) *Request {
 	r.interceptor = interceptor
+	return r
+}
+
+// Host is a builder method for setting the Host of the request
+func (r *Request) Host(host string) *Request {
+	r.host = host
 	return r
 }
 
@@ -260,6 +269,14 @@ func (r *Request) Expect(t *testing.T) *Response {
 	return r.apiTest.response
 }
 
+// GetHost returns the host or the default name if not set
+func (r *Request) GetHost() string {
+	if r.host == "" {
+		return systemUnderTestDefaultName
+	}
+	return r.host
+}
+
 // Response is the user defined expected response from the application under test
 type Response struct {
 	status             int
@@ -333,8 +350,75 @@ func (r *Response) Assert(fn func(*http.Response, *http.Request) error) *Respons
 
 // End runs the test and all defined assertions
 func (r *Response) End() {
+	r.finalize()
+}
+
+type mockInteraction struct {
+	request  *http.Request
+	response *http.Response
+}
+
+func (r *Response) Report(formatter ...ReportFormatter) {
 	apiTest := r.apiTest
 
+	var capturedInboundReq *http.Request
+	var capturedFinalRes *http.Response
+	var capturedMockInteractions []*mockInteraction
+
+	apiTest.observers = []Observe{
+		func(finalRes *http.Response, inboundReq *http.Request) {
+			capturedFinalRes = finalRes
+			capturedInboundReq = inboundReq
+		},
+	}
+	apiTest.mocksObserver = func(mockRes *http.Response, mockReq *http.Request) {
+		capturedMockInteractions = append(capturedMockInteractions, &mockInteraction{
+			request:  copyHttpRequest(mockReq),
+			response: copyHttpResponse(mockRes),
+		})
+	}
+
+	r.finalize()
+
+	recorder := NewTestRecorder().
+		AddTitle(fmt.Sprintf("%s %s", capturedInboundReq.Method, capturedInboundReq.URL.String())).
+		AddSubTitle(apiTest.name).
+		AddHttpRequest(HttpRequest{
+			Source: quoted(consumerName),
+			Target: quoted(apiTest.request.GetHost()),
+			Value:  capturedInboundReq,
+		})
+
+	for _, interaction := range capturedMockInteractions {
+		recorder.AddHttpRequest(HttpRequest{
+			Source: quoted(apiTest.request.GetHost()),
+			Target: quoted(interaction.request.Host),
+			Value:  interaction.request,
+		})
+		if interaction.response != nil {
+			recorder.AddHttpResponse(HttpResponse{
+				Source: quoted(interaction.request.Host),
+				Target: quoted(apiTest.request.GetHost()),
+				Value:  interaction.response,
+			})
+		}
+	}
+
+	recorder.AddHttpResponse(HttpResponse{
+		Source: quoted(apiTest.request.GetHost()),
+		Target: quoted(consumerName),
+		Value:  capturedFinalRes,
+	})
+
+	if len(formatter) == 0 {
+		NewSequenceDiagramFormatter().Format(recorder)
+	} else {
+		formatter[0].Format(recorder)
+	}
+}
+
+func (r *Response) finalize() {
+	apiTest := r.apiTest
 	if len(apiTest.mocks) > 0 {
 		apiTest.transport = newTransport(
 			apiTest.mocks,
@@ -345,7 +429,6 @@ func (r *Response) End() {
 		defer apiTest.transport.Reset()
 		apiTest.transport.Hijack()
 	}
-
 	apiTest.run()
 }
 
@@ -400,25 +483,8 @@ func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
 
 func (a *APITest) BuildRequest() *http.Request {
 	req, _ := http.NewRequest(a.request.method, a.request.url, bytes.NewBufferString(a.request.body))
-
-	query := req.URL.Query()
-	if a.request.queryCollection != nil {
-		for _, param := range buildQueryCollection(a.request.queryCollection) {
-			query.Add(param.l, param.r)
-		}
-	}
-
-	if a.request.query != nil {
-		for k, v := range a.request.query {
-			for _, p := range v {
-				query.Add(k, p)
-			}
-		}
-	}
-
-	if len(query) > 0 {
-		req.URL.RawQuery = query.Encode()
-	}
+	req.URL.RawQuery = formatQuery(a.request)
+	req.Host = "application"
 
 	for k, v := range a.request.headers {
 		for _, headerValue := range v {
@@ -436,6 +502,30 @@ func (a *APITest) BuildRequest() *http.Request {
 	}
 
 	return req
+}
+
+func formatQuery(request *Request) string {
+	var out url.Values = map[string][]string{}
+
+	if request.queryCollection != nil {
+		for _, param := range buildQueryCollection(request.queryCollection) {
+			out.Add(param.l, param.r)
+		}
+	}
+
+	if request.query != nil {
+		for k, v := range request.query {
+			for _, p := range v {
+				out.Add(k, p)
+			}
+		}
+	}
+
+	if len(out) > 0 {
+		return out.Encode()
+	}
+
+	return ""
 }
 
 func buildQueryCollection(params map[string][]string) []pair {
@@ -537,4 +627,58 @@ func isJSON(s string) bool {
 
 func debug(prefix, header, msg string) {
 	fmt.Printf("\n%s %s\n%s\n", prefix, header, msg)
+}
+
+func copyHttpResponse(response *http.Response) *http.Response {
+	all, _ := ioutil.ReadAll(response.Body)
+	response.Body = ioutil.NopCloser(bytes.NewBuffer(all))
+
+	resCopy := &http.Response{
+		Header:        map[string][]string{},
+		StatusCode:    response.StatusCode,
+		Status:        response.Status,
+		Body:          ioutil.NopCloser(bytes.NewBuffer(all)),
+		Proto:         response.Proto,
+		ProtoMinor:    response.ProtoMinor,
+		ProtoMajor:    response.ProtoMajor,
+		ContentLength: response.ContentLength,
+	}
+
+	for name, values := range response.Header {
+		resCopy.Header[name] = values
+	}
+
+	return resCopy
+}
+
+func copyHttpRequest(request *http.Request) *http.Request {
+	resCopy := &http.Request{
+		Method:        request.Method,
+		Host:          request.Host,
+		Proto:         request.Proto,
+		ProtoMinor:    request.ProtoMinor,
+		ProtoMajor:    request.ProtoMajor,
+		ContentLength: request.ContentLength,
+	}
+
+	if request.Body != nil {
+		bodyBytes, _ := ioutil.ReadAll(request.Body)
+		resCopy.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	}
+
+	if request.URL != nil {
+		r2URL := new(url.URL)
+		*r2URL = *request.URL
+		resCopy.URL = r2URL
+	}
+
+	for name, values := range request.Header {
+		resCopy.Header[name] = values
+	}
+
+	return resCopy
+}
+
+func quoted(in string) string {
+	return fmt.Sprintf("%q", in)
 }

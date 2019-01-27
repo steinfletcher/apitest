@@ -9,35 +9,51 @@ type testItem struct {
 	Drink string `json:"drink"`
 }
 
-func TestApiTest_Assert_AssertEquals_StringValue_WithMessage(t *testing.T) {
+func TestAssert_AssertEquals_StringValue_WithMessage(t *testing.T) {
 	Equal(t, "OneString", "OneString", "Should be equal")
 }
 
-func TestApiTest_Assert_AssertEquals_IntValue_WithoutMessage(t *testing.T) {
+func TestAssert_AssertEquals_IntValue_WithoutMessage(t *testing.T) {
 	Equal(t, 420, 420)
 }
 
-func TestApiTest_Assert_ObjectsAreEqual(t *testing.T) {
+func TestAssert_ObjectsAreEqual(t *testing.T) {
 	if !ObjectsAreEqual(420, 420) {
 		t.Fatalf("Objects should have been equal")
 	}
 }
 
-func TestApiTest_Assert_ObjectsAreEqual_ExpectFalse(t *testing.T) {
+func TestAssert_ObjectsAreEqual_ExpectFalse(t *testing.T) {
 	if ObjectsAreEqual(420, 421) {
 		t.Fatalf("Objects should not have been equal")
 	}
 }
 
-func TestApiTest_Assert_ObjectsAreEqual_MissmatchedType(t *testing.T) {
+func TestAssert_ObjectsAreEqual_MissmatchedType(t *testing.T) {
 	if ObjectsAreEqual(420, testItem{"Tom", "Beer"}) {
 		t.Fatalf("Objects should not have been equal")
 	}
 }
 
-func TestApiTest_Assert_JsonEqual(t *testing.T) {
+func TestAssert_JsonEqual(t *testing.T) {
 	jsonA := `{"name":"Tom","Drink":"Beer"}`
 	jsonB := `{"name":"Tom","Drink":"Beer"}`
 
 	JsonEqual(t, jsonA, jsonB)
+}
+
+func TestAssert_True(t *testing.T) {
+	True(t, true)
+}
+
+func TestAssert_False(t *testing.T) {
+	False(t, false)
+}
+
+func TestAssert_Len(t *testing.T) {
+	Len(t, []string{}, 0)
+	Len(t, []string{"1"}, 1)
+	Len(t, []string{"1", "4", "51"}, 3)
+	Len(t, map[string]string{"1": "13"}, 1)
+	Len(t, "hello", 5)
 }

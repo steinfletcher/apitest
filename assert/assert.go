@@ -9,6 +9,19 @@ import (
 	"testing"
 )
 
+func Len(t *testing.T, actual interface{}, expected int) {
+	v := reflect.ValueOf(actual)
+	defer func() {
+		if e := recover(); e != nil {
+			t.Fatal("could not determine length of actual")
+		}
+	}()
+
+	if v.Len() != expected {
+		t.Fatalf("expected len to be %d but was %d", expected, 1)
+	}
+}
+
 func Error(t *testing.T, actual error, expected string) {
 	if actual == nil {
 		t.Fatalf("expected an error but got nil.")
@@ -16,6 +29,18 @@ func Error(t *testing.T, actual error, expected string) {
 
 	if expected != actual.Error() {
 		t.Fatalf("Error message not equal:\nexpected: %q\nactual  : %q", expected, actual)
+	}
+}
+
+func True(t *testing.T, actual bool) {
+	if !actual {
+		t.Fatal("expected true but received false")
+	}
+}
+
+func False(t *testing.T, actual bool) {
+	if actual {
+		t.Fatal("expected false but received true")
 	}
 }
 
