@@ -32,7 +32,7 @@ type APITest struct {
 }
 
 // Observe will be called by with the request and response on completion
-type Observe func(*http.Response, *http.Request)
+type Observe func(*http.Response, *http.Request, *APITest)
 
 // ObserveMocks will be called by with the request, response and mock response for all requests that hit the mock server
 type ObserveMocks func(*http.Response, *http.Request, *MockResponse)
@@ -355,7 +355,7 @@ func (a *APITest) run() {
 	defer func() {
 		if len(a.observers) > 0 {
 			for _, observe := range a.observers {
-				observe(res.Result(), req)
+				observe(res.Result(), req, a)
 			}
 		}
 	}()

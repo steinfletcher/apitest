@@ -251,7 +251,7 @@ func TestApi(t *testing.T) {
 ```go
 func TestApi(t *testing.T) {
 	apitest.New().
-		Observe(func(res *http.Response, req *http.Request) {
+		Observe(func(res *http.Response, req *http.Request, apiTest *apitest.APITest) {
 			// do something with res and req
 		}).
 		Handler(handler).

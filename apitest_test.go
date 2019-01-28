@@ -411,10 +411,11 @@ func TestApiTest_Observe(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
-		Observe(func(res *http.Response, req *http.Request) {
+	New("observe test").
+		Observe(func(res *http.Response, req *http.Request, apiTest *APITest) {
 			assert.Equal(t, http.StatusOK, res.StatusCode)
 			assert.Equal(t, "/hello", req.URL.Path)
+			assert.Equal(t, "observe test", apiTest.name)
 		}).
 		Handler(handler).
 		Get("/hello").
