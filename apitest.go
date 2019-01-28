@@ -366,12 +366,12 @@ func (r *Response) Report(formatter ...ReportFormatter) {
 	var capturedMockInteractions []*mockInteraction
 
 	apiTest.observers = []Observe{
-		func(finalRes *http.Response, inboundReq *http.Request) {
+		func(finalRes *http.Response, inboundReq *http.Request, a *APITest) {
 			capturedFinalRes = finalRes
 			capturedInboundReq = inboundReq
 		},
 	}
-	apiTest.mocksObserver = func(mockRes *http.Response, mockReq *http.Request) {
+	apiTest.mocksObserver = func(mockRes *http.Response, mockReq *http.Request, a *APITest) {
 		capturedMockInteractions = append(capturedMockInteractions, &mockInteraction{
 			request:  copyHttpRequest(mockReq),
 			response: copyHttpResponse(mockRes),
@@ -425,6 +425,7 @@ func (r *Response) finalize() {
 			apiTest.httpClient,
 			apiTest.debugEnabled,
 			apiTest.mocksObserver,
+			r.apiTest,
 		)
 		defer apiTest.transport.Reset()
 		apiTest.transport.Hijack()

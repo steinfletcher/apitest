@@ -411,8 +411,8 @@ func TestMocks_ApiTest_SupportsObservingMocks(t *testing.T) {
 		End()
 
 	New().
-		ObserveMocks(func(res *http.Response, req *http.Request) {
-			if res == nil || req == nil {
+		ObserveMocks(func(res *http.Response, req *http.Request, a *APITest) {
+			if res == nil || req == nil || a == nil {
 				t.Fatal("expected request and response to be defined")
 			}
 			observedMocks = append(observedMocks, &mockInteraction{response: res, request: req})
