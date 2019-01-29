@@ -22,13 +22,14 @@ go get -u github.com/steinfletcher/api-test
 
 ### Framework and library integration examples
 
-| Example                                                                           | Comment                                 |
-| --------------------------------------------------------------------------------- | --------------------------------------- |
-| [gin](https://github.com/steinfletcher/api-test/tree/master/examples/gin)         | popular martini-like web framework      |
-| [gorilla](https://github.com/steinfletcher/api-test/tree/master/examples/gorilla) | the gorilla web toolkit                 |
-| [iris](https://github.com/steinfletcher/api-test/tree/master/examples/iris)       | iris web framework                      |
-| [echo](https://github.com/steinfletcher/api-test/tree/master/examples/echo)       | High performance, extensible, minimalist Go web framework
-| [mocks](https://github.com/steinfletcher/api-test/tree/master/examples/mocks)     | example mocking out external http calls |
+| Example                                                                                              | Comment                                                                                                    |
+| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| [gin](https://github.com/steinfletcher/api-test/tree/master/examples/gin)                            | popular martini-like web framework                                                                         |
+| [gorilla](https://github.com/steinfletcher/api-test/tree/master/examples/gorilla)                    | the gorilla web toolkit                                                                                    |
+| [iris](https://github.com/steinfletcher/api-test/tree/master/examples/iris)                          | iris web framework                                                                                         |
+| [echo](https://github.com/steinfletcher/api-test/tree/master/examples/echo)                          | High performance, extensible, minimalist Go web framework                                                  |
+| [mocks](https://github.com/steinfletcher/api-test/tree/master/examples/mocks)                        | example mocking out external http calls                                                                    |
+| [sequence diagrams](https://github.com/steinfletcher/api-test/tree/master/examples/sequence-diagrams) | generate sequence diagrams from tests. See the [demo](https://steinfletcher.github.io/api-test-examples/) |
 
 ### Companion libraries
 
@@ -156,6 +157,22 @@ func TestApi(t *testing.T) {
 		Status(http.StatusOK).
 		Body(`{"name": "jon", "id": "1234"}`).
 		End()
+}
+```
+
+#### Generating sequence diagrams from tests
+
+```go
+
+func TestApi(t *testing.T) {
+	apitest.New().
+		Mocks(getUser, getPreferences).
+		Handler(handler).
+		Get("/hello").
+		Expect(t).
+		Status(http.StatusOK).
+		Body(`{"name": "jon", "id": "1234"}`).
+		Report() // Pass in a custom reporter to configure the diagram storage directory (see examples)
 }
 ```
 
