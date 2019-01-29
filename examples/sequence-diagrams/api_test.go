@@ -13,7 +13,6 @@ func TestGetUser_Success(t *testing.T) {
 		Get("/user").
 		Host("user-service").
 		Query("name", "jan").
-		QueryCollection(map[string][]string{"hobbies": {"gardening", "knitting"}}).
 		Expect(t).
 		Status(http.StatusOK).
 		Header("Content-Type", "application/json").
@@ -22,15 +21,15 @@ func TestGetUser_Success(t *testing.T) {
 }
 
 var getPreferencesMock = apitest.NewMock().
-	Get("http://3rdparty.com/preferences/12345").
+	Get("http://preferences/api/preferences/12345").
 	RespondWith().
 	Body(`{"is_contactable": true}`).
 	Status(http.StatusOK).
 	End()
 
 var getUserMock = apitest.NewMock().
-	Get("http://3rdparty.com/user/12345").
+	Get("http://users/api/user/12345").
 	RespondWith().
 	Body(`{"name": "jon", "id": "1234"}`).
-	Status(http.StatusAccepted).
+	Status(http.StatusOK).
 	End()

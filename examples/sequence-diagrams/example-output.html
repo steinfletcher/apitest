@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js"></script>
+    <script src="https://bramp.github.io/js-sequence-diagrams/js/sequence-diagram-min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<div class="container-fluid">
+    <h2>GET /user?name=jan</h2>
+    <span class="badge badge-success">200</span>
+    <p class="lead">gets the user</p>
+    <div class="card text-center">
+        <div class="card-body">
+            <div id="d" class="justify-content-center"></div>
+        </div>
+    </div>
+    <br><br>
+    <p class="lead">Request/Response wire representation</p>
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Payload</th>
+        </tr>
+        </thead>
+        <tbody>
+        
+        <tr>
+            <th scope="row">1</th>
+            <td>
+<pre>GET /user?name=jan HTTP/1.1
+Host: application
+
+</pre>
+
+            </td>
+        </tr>
+        
+        <tr>
+            <th scope="row">2</th>
+            <td>
+<pre>GET /api/user/12345 HTTP/1.1
+Host: users
+
+</pre>
+
+            </td>
+        </tr>
+        
+        <tr>
+            <th scope="row">3</th>
+            <td>
+<pre>HTTP/1.1 200 OK
+Content-Length: 29
+Content-Type: application/json
+
+</pre>
+<pre><code class="json">{
+    &#34;name&#34;: &#34;jon&#34;,
+    &#34;id&#34;: &#34;1234&#34;
+}</code></pre>
+            </td>
+        </tr>
+        
+        <tr>
+            <th scope="row">4</th>
+            <td>
+<pre>GET /api/preferences/12345 HTTP/1.1
+Host: preferences
+
+</pre>
+
+            </td>
+        </tr>
+        
+        <tr>
+            <th scope="row">5</th>
+            <td>
+<pre>HTTP/1.1 200 OK
+Content-Length: 24
+Content-Type: application/json
+
+</pre>
+<pre><code class="json">{
+    &#34;is_contactable&#34;: true
+}</code></pre>
+            </td>
+        </tr>
+        
+        <tr>
+            <th scope="row">6</th>
+            <td>
+<pre>HTTP/1.1 200 OK
+Connection: close
+Content-Type: application/json
+
+</pre>
+<pre><code class="json">{
+    &#34;name&#34;: &#34;jon&#34;,
+    &#34;is_contactable&#34;: true
+}</code></pre>
+            </td>
+        </tr>
+        
+        </tbody>
+    </table>
+</div>
+<script>
+    Diagram.parse("\x22cli\x22-\x3e\x22user-service\x22: (1) GET \/user?name=jan\n\x22user-service\x22-\x3e\x22users\x22: (2) GET http:\/\/users\/api\/user\/12345\n\x22users\x22-\x3e\x3e\x22user-service\x22: (3) 200\n\x22user-service\x22-\x3e\x22preferences\x22: (4) GET http:\/\/preferences\/api\/preferences\/12345\n\x22preferences\x22-\x3e\x3e\x22user-service\x22: (5) 200\n\x22user-service\x22-\x3e\x3e\x22cli\x22: (6) 200\n").drawSVG("d", {theme: 'simple', 'font-size': 14});
+</script>
+<style>
+    body {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+</style>
+<script type="application/json" id="metaJson">null</script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.13.1/build/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>

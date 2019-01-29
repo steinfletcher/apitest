@@ -30,10 +30,10 @@ func (a *App) start() {
 func getUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var user User1
-		get("/user/12345", &user)
+		get("http://users/api/user/12345", &user)
 
 		var contactPreferences ContactPreferences1
-		get("/preferences/12345", &contactPreferences)
+		get("http://preferences/api/preferences/12345", &contactPreferences)
 
 		response := UserResponse1{
 			Name:          user.Name,
@@ -61,7 +61,7 @@ type UserResponse1 struct {
 }
 
 func get(path string, response interface{}) {
-	res, err := http.Get(fmt.Sprintf("http://3rdparty.com%s", path))
+	res, err := http.Get(path)
 	if err != nil {
 		panic(err)
 	}

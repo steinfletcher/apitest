@@ -82,7 +82,7 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 		panic(err)
 	}
 
-	fileName := "fixmelater.html"
+	fileName := "diagram.html"
 	err = os.MkdirAll(".sequence", os.ModePerm)
 	if err != nil {
 		panic(err)
