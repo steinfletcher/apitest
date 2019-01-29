@@ -83,11 +83,11 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 	}
 
 	fileName := "diagram.html"
-	err = os.MkdirAll(".sequence", os.ModePerm)
+	err = os.MkdirAll(r.storagePath, os.ModePerm)
 	if err != nil {
 		panic(err)
 	}
-	saveFilesTo := fmt.Sprintf("%s/.sequence/%s", r.storagePath, fileName)
+	saveFilesTo := fmt.Sprintf("%s/%s", r.storagePath, fileName)
 
 	f, err := os.Create(saveFilesTo)
 	if err != nil {
@@ -105,7 +105,7 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 func NewSequenceDiagramFormatter(path ...string) *SequenceDiagramFormatter {
 	var storagePath string
 	if len(path) == 0 {
-		storagePath = "."
+		storagePath = ".sequence"
 	} else {
 		storagePath = path[0]
 	}

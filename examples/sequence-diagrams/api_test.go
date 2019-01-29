@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestGetUser_Success(t *testing.T) {
+func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
 	apitest.New("gets the user").
 		Mocks(getPreferencesMock, getUserMock).
 		Handler(newApp().Router).
@@ -18,6 +18,20 @@ func TestGetUser_Success(t *testing.T) {
 		Header("Content-Type", "application/json").
 		Body(`{"name": "jon", "is_contactable": true}`).
 		Report()
+}
+
+func TestGetUser_With_Default_Report_Formatter_Overriding_Path(t *testing.T) {
+	apitest.New("gets the user").
+		Mocks(getPreferencesMock, getUserMock).
+		Handler(newApp().Router).
+		Get("/user").
+		Host("user-service").
+		Query("name", "jan").
+		Expect(t).
+		Status(http.StatusOK).
+		Header("Content-Type", "application/json").
+		Body(`{"name": "jon", "is_contactable": true}`).
+		Report(apitest.NewSequenceDiagramFormatter(".sequence-diagrams"))
 }
 
 var getPreferencesMock = apitest.NewMock().
