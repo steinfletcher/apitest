@@ -1,1 +1,1 @@
-module github.com/steinfletcher/api-test
+module github.com/steinfletcher/apitest

@@ -1,11 +1,10 @@
-module github.com/steinfletcher/api-test/examples
+module github.com/steinfletcher/apitest/examples
 
-replace github.com/steinfletcher/api-test => ../
+replace github.com/steinfletcher/apitest => ../
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/Joker/jade v1.0.0 // indirect
-	github.com/PaesslerAG/gval v0.1.1 // indirect
 	github.com/Shopify/goreferrer v0.0.0-20181106222321-ec9c9a553398 // indirect
 	github.com/aymerick/raymond v2.0.2+incompatible // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
@@ -33,8 +32,8 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/ryanuber/columnize v2.1.0+incompatible // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	github.com/steinfletcher/api-test v0.0.11
 	github.com/steinfletcher/api-test-jsonpath v0.0.1
+	github.com/steinfletcher/apitest v0.0.12
 	github.com/ugorji/go/codec v0.0.0-20190126102652-8fd0f8d918c8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4 // indirect

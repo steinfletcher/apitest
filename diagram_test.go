@@ -1,8 +1,8 @@
 package apitest
 
 import (
-	"github.com/steinfletcher/api-test/assert"
-	"github.com/steinfletcher/api-test/mocks"
+	"github.com/steinfletcher/apitest/assert"
+	"github.com/steinfletcher/apitest/mocks"
 	"html/template"
 	"io/ioutil"
 	"net/http"

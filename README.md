@@ -1,10 +1,10 @@
 **This library is on version 0 and we won't guarantee backwards compatible API changes until we go to version 1. The roadmap for version 1 includes mocking external http calls and sequence diagram generation.**
 
-# api-test
+# apitest
 
-[![GoDoc](https://godoc.org/github.com/steinfletcher/api-test?status.svg)](https://godoc.org/github.com/steinfletcher/api-test)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/023e062d720847e08c1065cbb65a4068)](https://app.codacy.com/app/steinfletcher/api-test?utm_source=github.com&utm_medium=referral&utm_content=steinfletcher/api-test&utm_campaign=Badge_Grade_Dashboard)
-[![Build Status](https://travis-ci.org/steinfletcher/api-test.svg?branch=master)](https://travis-ci.org/steinfletcher/api-test) [![Coverage Status](https://coveralls.io/repos/github/steinfletcher/api-test/badge.svg?branch=master&service=github)](https://coveralls.io/github/steinfletcher/api-test?branch=master)
+[![GoDoc](https://godoc.org/github.com/steinfletcher/apitest?status.svg)](https://godoc.org/github.com/steinfletcher/apitest)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/023e062d720847e08c1065cbb65a4068)](https://app.codacy.com/app/steinfletcher/apitest?utm_source=github.com&utm_medium=referral&utm_content=steinfletcher/apitest&utm_campaign=Badge_Grade_Dashboard)
+[![Build Status](https://travis-ci.org/steinfletcher/apitest.svg?branch=master)](https://travis-ci.org/steinfletcher/apitest) [![Coverage Status](https://coveralls.io/repos/github/steinfletcher/apitest/badge.svg?branch=master&service=github)](https://coveralls.io/github/steinfletcher/apitest?branch=master)
 
 Simple behavioural (black box) api testing library. 
 
@@ -15,7 +15,7 @@ In black box tests the internal structure of the app is not know by the tests. D
 ## Installation
 
 ```bash
-go get -u github.com/steinfletcher/api-test
+go get -u github.com/steinfletcher/apitest
 ```
 
 ## Examples
@@ -24,18 +24,18 @@ go get -u github.com/steinfletcher/api-test
 
 | Example                                                                                              | Comment                                                                                                    |
 | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| [gin](https://github.com/steinfletcher/api-test/tree/master/examples/gin)                            | popular martini-like web framework                                                                         |
-| [gorilla](https://github.com/steinfletcher/api-test/tree/master/examples/gorilla)                    | the gorilla web toolkit                                                                                    |
-| [iris](https://github.com/steinfletcher/api-test/tree/master/examples/iris)                          | iris web framework                                                                                         |
-| [echo](https://github.com/steinfletcher/api-test/tree/master/examples/echo)                          | High performance, extensible, minimalist Go web framework                                                  |
-| [mocks](https://github.com/steinfletcher/api-test/tree/master/examples/mocks)                        | example mocking out external http calls                                                                    |
-| [sequence diagrams](https://github.com/steinfletcher/api-test/tree/master/examples/sequence-diagrams) | generate sequence diagrams from tests. See the [demo](https://steinfletcher.github.io/api-test-examples/) |
+| [gin](https://github.com/steinfletcher/apitest/tree/master/examples/gin)                            | popular martini-like web framework                                                                         |
+| [gorilla](https://github.com/steinfletcher/apitest/tree/master/examples/gorilla)                    | the gorilla web toolkit                                                                                    |
+| [iris](https://github.com/steinfletcher/apitest/tree/master/examples/iris)                          | iris web framework                                                                                         |
+| [echo](https://github.com/steinfletcher/apitest/tree/master/examples/echo)                          | High performance, extensible, minimalist Go web framework                                                  |
+| [mocks](https://github.com/steinfletcher/apitest/tree/master/examples/mocks)                        | example mocking out external http calls                                                                    |
+| [sequence diagrams](https://github.com/steinfletcher/apitest/tree/master/examples/sequence-diagrams) | generate sequence diagrams from tests. See the [demo](https://steinfletcher.github.io/apitest-examples/) |
 
 ### Companion libraries
 
 | Library                                                        | Comment                   |
 | -------------------------------------------------------------- | ------------------------- |
-| [JSONPath](https://github.com/steinfletcher/api-test-jsonpath) | JSONPath assertion addons |
+| [JSONPath](https://github.com/steinfletcher/apitest-jsonpath) | JSONPath assertion addons |
 
 ### Code snippets
 
@@ -55,7 +55,7 @@ func TestApi(t *testing.T) {
 
 #### JSONPath
 
-For asserting on parts of the response body JSONPath may be used. A separate module must be installed which provides these assertions - `go get -u github.com/steinfletcher/api-test-jsonpath`. This is packaged separately to keep this library dependency free.
+For asserting on parts of the response body JSONPath may be used. A separate module must be installed which provides these assertions - `go get -u github.com/steinfletcher/apitest-jsonpath`. This is packaged separately to keep this library dependency free.
 
 Given the response is `{"a": 12345, "b": [{"key": "c", "value": "result"}]}`
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/steinfletcher/api-test"
+	"github.com/steinfletcher/apitest"
 	"net/http"
 	"testing"
 )

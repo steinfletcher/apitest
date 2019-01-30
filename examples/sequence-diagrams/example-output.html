@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/css/bootstrap.min.css">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js"></script>
     <script src="https://bramp.github.io/js-sequence-diagrams/js/sequence-diagram-min.js"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
@@ -32,7 +32,7 @@
         </tr>
         </thead>
         <tbody>
-        
+
         <tr>
             <th scope="row">1</th>
             <td>
@@ -43,7 +43,7 @@ Host: application
 
             </td>
         </tr>
-        
+
         <tr>
             <th scope="row">2</th>
             <td>
@@ -54,7 +54,7 @@ Host: users
 
             </td>
         </tr>
-        
+
         <tr>
             <th scope="row">3</th>
             <td>
@@ -63,13 +63,13 @@ Content-Length: 29
 Content-Type: application/json
 
 </pre>
-<pre><code class="json">{
+                <pre><code class="json">{
     &#34;name&#34;: &#34;jon&#34;,
     &#34;id&#34;: &#34;1234&#34;
 }</code></pre>
             </td>
         </tr>
-        
+
         <tr>
             <th scope="row">4</th>
             <td>
@@ -80,7 +80,7 @@ Host: preferences
 
             </td>
         </tr>
-        
+
         <tr>
             <th scope="row">5</th>
             <td>
@@ -89,12 +89,12 @@ Content-Length: 24
 Content-Type: application/json
 
 </pre>
-<pre><code class="json">{
+                <pre><code class="json">{
     &#34;is_contactable&#34;: true
 }</code></pre>
             </td>
         </tr>
-        
+
         <tr>
             <th scope="row">6</th>
             <td>
@@ -103,18 +103,21 @@ Connection: close
 Content-Type: application/json
 
 </pre>
-<pre><code class="json">{
+                <pre><code class="json">{
     &#34;name&#34;: &#34;jon&#34;,
     &#34;is_contactable&#34;: true
 }</code></pre>
             </td>
         </tr>
-        
+
         </tbody>
     </table>
 </div>
 <script>
-    Diagram.parse("\x22cli\x22-\x3e\x22user-service\x22: (1) GET \/user?name=jan\n\x22user-service\x22-\x3e\x22users\x22: (2) GET http:\/\/users\/api\/user\/12345\n\x22users\x22-\x3e\x3e\x22user-service\x22: (3) 200\n\x22user-service\x22-\x3e\x22preferences\x22: (4) GET http:\/\/preferences\/api\/preferences\/12345\n\x22preferences\x22-\x3e\x3e\x22user-service\x22: (5) 200\n\x22user-service\x22-\x3e\x3e\x22cli\x22: (6) 200\n").drawSVG("d", {theme: 'simple', 'font-size': 14});
+    Diagram.parse("\x22cli\x22-\x3e\x22user-service\x22: (1) GET \/user?name=jan\n\x22user-service\x22-\x3e\x22users\x22: (2) GET http:\/\/users\/api\/user\/12345\n\x22users\x22-\x3e\x3e\x22user-service\x22: (3) 200\n\x22user-service\x22-\x3e\x22preferences\x22: (4) GET http:\/\/preferences\/api\/preferences\/12345\n\x22preferences\x22-\x3e\x3e\x22user-service\x22: (5) 200\n\x22user-service\x22-\x3e\x3e\x22cli\x22: (6) 200\n").drawSVG("d", {
+        theme: 'simple',
+        'font-size': 14
+    });
 </script>
 <style>
     body {

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/steinfletcher/api-test/assert"
+	"github.com/steinfletcher/apitest/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"

@@ -1,7 +1,7 @@
 package apitest
 
 import (
-	"github.com/steinfletcher/api-test/assert"
+	"github.com/steinfletcher/apitest/assert"
 	"net/http"
 	"testing"
 )

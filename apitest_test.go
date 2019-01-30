@@ -2,7 +2,7 @@ package apitest
 
 import (
 	"fmt"
-	"github.com/steinfletcher/api-test/assert"
+	"github.com/steinfletcher/apitest/assert"
 	"io/ioutil"
 	"net/http"
 	"reflect"
