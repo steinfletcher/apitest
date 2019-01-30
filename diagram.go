@@ -15,33 +15,6 @@ import (
 	"strconv"
 )
 
-type WebSequenceDiagram struct {
-	data  bytes.Buffer
-	count int
-}
-
-func (r *WebSequenceDiagram) AddRequestRow(source, target, description string) {
-	r.addRow("->", source, target, description)
-}
-
-func (r *WebSequenceDiagram) AddResponseRow(source, target, description string) {
-	r.addRow("->>", source, target, description)
-}
-
-func (r *WebSequenceDiagram) addRow(operation, source, target, description string) {
-	r.count += 1
-	r.data.WriteString(fmt.Sprintf("%s%s%s: (%d) %s\n",
-		source,
-		operation,
-		target,
-		r.count,
-		description))
-}
-
-func (r *WebSequenceDiagram) ToString() string {
-	return r.data.String()
-}
-
 type (
 	HTMLTemplateModel struct {
 		Title          string
@@ -57,10 +30,53 @@ type (
 		Header string
 		Body   string
 	}
+
+	SequenceDiagramFormatter struct {
+		storagePath string
+		fs          fileSystem
+	}
+
+	fileSystem interface {
+		Create(name string) (*os.File, error)
+		MkdirAll(path string, perm os.FileMode) error
+	}
+
+	osFileSystem struct{}
+
+	WebSequenceDiagramDSL struct {
+		data  bytes.Buffer
+		count int
+	}
 )
 
-type SequenceDiagramFormatter struct {
-	storagePath string
+func (r *osFileSystem) Create(name string) (*os.File, error) {
+	return os.Create(name)
+}
+
+func (r *osFileSystem) MkdirAll(path string, perm os.FileMode) error {
+	return os.MkdirAll(path, perm)
+}
+
+func (r *WebSequenceDiagramDSL) AddRequestRow(source, target, description string) {
+	r.addRow("->", source, target, description)
+}
+
+func (r *WebSequenceDiagramDSL) AddResponseRow(source, target, description string) {
+	r.addRow("->>", source, target, description)
+}
+
+func (r *WebSequenceDiagramDSL) addRow(operation, source, target, description string) {
+	r.count += 1
+	r.data.WriteString(fmt.Sprintf("%s%s%s: (%d) %s\n",
+		source,
+		operation,
+		target,
+		r.count,
+		description))
+}
+
+func (r *WebSequenceDiagramDSL) ToString() string {
+	return r.data.String()
 }
 
 func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
@@ -83,13 +99,13 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 	}
 
 	fileName := "diagram.html"
-	err = os.MkdirAll(r.storagePath, os.ModePerm)
+	err = r.fs.MkdirAll(r.storagePath, os.ModePerm)
 	if err != nil {
 		panic(err)
 	}
 	saveFilesTo := fmt.Sprintf("%s/%s", r.storagePath, fileName)
 
-	f, err := os.Create(saveFilesTo)
+	f, err := r.fs.Create(saveFilesTo)
 	if err != nil {
 		panic(err)
 	}
@@ -99,7 +115,7 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Created sequence diagram (%s): file://%s\n", fileName, s)
+	fmt.Printf("Created sequence diagram (%s): %s\n", fileName, filepath.FromSlash(s))
 }
 
 func NewSequenceDiagramFormatter(path ...string) *SequenceDiagramFormatter {
@@ -109,7 +125,7 @@ func NewSequenceDiagramFormatter(path ...string) *SequenceDiagramFormatter {
 	} else {
 		storagePath = path[0]
 	}
-	return &SequenceDiagramFormatter{storagePath: storagePath}
+	return &SequenceDiagramFormatter{storagePath: storagePath, fs: &osFileSystem{}}
 }
 
 var incTemplateFunc = &template.FuncMap{
@@ -133,7 +149,7 @@ func NewHTMLTemplateModel(r *Recorder) (HTMLTemplateModel, error) {
 		return HTMLTemplateModel{}, errors.New("no events are defined")
 	}
 	var logs []LogEntry
-	webSequenceDiagram := &WebSequenceDiagram{}
+	webSequenceDiagram := &WebSequenceDiagramDSL{}
 
 	for _, event := range r.Events {
 		switch v := event.(type) {

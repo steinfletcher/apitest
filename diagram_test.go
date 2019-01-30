@@ -2,6 +2,7 @@ package apitest
 
 import (
 	"github.com/steinfletcher/api-test/assert"
+	"github.com/steinfletcher/api-test/mocks"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -29,7 +30,7 @@ func TestDiagram_BadgeCSSClass(t *testing.T) {
 }
 
 func TestWebSequenceDiagram_GeneratesDSL(t *testing.T) {
-	wsd := WebSequenceDiagram{}
+	wsd := WebSequenceDiagramDSL{}
 	wsd.AddRequestRow("A", "B", "request1")
 	wsd.AddRequestRow("B", "C", "request2")
 	wsd.AddResponseRow("C", "B", "response1")
@@ -41,6 +42,33 @@ func TestWebSequenceDiagram_GeneratesDSL(t *testing.T) {
 	if expected != actual {
 		t.Fatalf("expected=%s != actual=%s", expected, actual)
 	}
+}
+
+func TestNewSequenceDiagramFormatter_SetsDefaultPath(t *testing.T) {
+	formatter := NewSequenceDiagramFormatter()
+
+	assert.Equal(t, ".sequence", formatter.storagePath)
+}
+
+func TestNewSequenceDiagramFormatter_OverridesPath(t *testing.T) {
+	formatter := NewSequenceDiagramFormatter(".sequence-diagram")
+
+	assert.Equal(t, ".sequence-diagram", formatter.storagePath)
+}
+
+func TestSequenceDiagramFormatter_Format(t *testing.T) {
+	mockFS := &mocks.FS{}
+	formatter := SequenceDiagramFormatter{storagePath: ".sequence", fs: mockFS}
+
+	formatter.Format(aRecorder())
+
+	assert.Equal(t, ".sequence", mockFS.CapturedMkdirAllPath)
+	assert.Equal(t, ".sequence/diagram.html", mockFS.CapturedCreateName)
+
+	expected, _ := ioutil.ReadFile("testdata/sequence_diagram_snapshot.html")
+	actual, _ := ioutil.ReadFile(mockFS.CapturedCreateFile)
+
+	assert.Equal(t, string(expected), string(actual))
 }
 
 func TestRecorderBuilder(t *testing.T) {
