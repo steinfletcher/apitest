@@ -24,7 +24,6 @@ github.com/gin-contrib/sse v0.0.0-20190125020943-a7658810eb74/go.mod h1:VJ0WA2NB
 github.com/gin-gonic/gin v1.3.0 h1:kCmZyPklC0gVdL728E6Aj20uYBJV93nj/TkwBTKhFbs=
 github.com/gin-gonic/gin v1.3.0/go.mod h1:7cKuhb5qV2ggCFctp2fJQ+ErvciLZrIeoOSOm6mUr7Y=
 github.com/go-check/check v1.0.0-20180628173108-788fd7840127/go.mod h1:9ES+weclKsC9YodN5RgxqK/VD9HM9JsCSh7rNhMZE98=
-github.com/golang/mock v1.2.0/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
 github.com/golang/protobuf v1.2.0 h1:P3YflyNX/ehuJFLhxviNdFxQPkGK5cDcApsge1SqnvM=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/gorilla/mux v1.6.2 h1:Pgr17XVTNXAk3q/r4CpKzC5xBM/qW1uVLV+IhRZpIIk=
@@ -77,7 +76,6 @@ github.com/shurcooL/sanitized_anchor_name v1.0.0 h1:PdmoCO6wvbs+7yrJyMORt4/BmY5I
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
 github.com/steinfletcher/api-test v0.0.2 h1:TuyUgzRgIyt++8fcQrKac2XxMS/TDTa3LBHLGPD91R4=
 github.com/steinfletcher/api-test v0.0.2/go.mod h1:R0atcIHszAq+I8try5JurXJoqCTdVyaz4cwBdKjeBtQ=
-github.com/steinfletcher/api-test v0.0.11/go.mod h1:GP0O4+OBJTlWrNCEUN9Pnp0OoWtPpWsLWYEqGMBQ4O4=
 github.com/steinfletcher/api-test-jsonpath v0.0.1 h1:kQuZzE6n8HkyvUmw5MDTDOElYueY8crJU+RwjIi7GkA=
 github.com/steinfletcher/api-test-jsonpath v0.0.1/go.mod h1:CiTtJEgXWOZ9T4vOfYi3JYdW1GiD5oMLVnigJFJxEV8=
 github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1w=

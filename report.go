@@ -78,7 +78,7 @@ func (r *Recorder) AddSubTitle(subTitle string) *Recorder {
 	return r
 }
 
-func (r *Recorder) AddMetaJSON(meta map[string]interface{}) *Recorder {
+func (r *Recorder) AddMeta(meta map[string]interface{}) *Recorder {
 	r.Meta = meta
 	return r
 }

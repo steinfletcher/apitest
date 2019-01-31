@@ -2,11 +2,11 @@ package apitest
 
 import (
 	"github.com/steinfletcher/apitest/assert"
-	"github.com/steinfletcher/apitest/mocks"
 	"html/template"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -57,7 +57,7 @@ func TestNewSequenceDiagramFormatter_OverridesPath(t *testing.T) {
 }
 
 func TestSequenceDiagramFormatter_Format(t *testing.T) {
-	mockFS := &mocks.FS{}
+	mockFS := &FS{}
 	formatter := SequenceDiagramFormatter{storagePath: ".sequence", fs: mockFS}
 
 	formatter.Format(aRecorder())
@@ -114,7 +114,7 @@ func aRecorder() *Recorder {
 		AddMessageRequest(MessageRequest{Header: "A", Body: "B", Source: "mesReqSource"}).
 		AddMessageResponse(MessageResponse{Header: "C", Body: "D", Source: "mesResSource"}).
 		AddHttpResponse(aResponse()).
-		AddMetaJSON(map[string]interface{}{"Z": "1"})
+		AddMeta(map[string]interface{}{"Z": "1"})
 }
 
 func TestNewHttpRequestLogEntry(t *testing.T) {
@@ -176,4 +176,25 @@ func aResponse() HttpResponse {
 		Source: "resSource",
 		Target: "resTarget",
 	}
+}
+
+type FS struct {
+	CapturedCreateName   string
+	CapturedCreateFile   string
+	CapturedMkdirAllPath string
+}
+
+func (m *FS) Create(name string) (*os.File, error) {
+	m.CapturedCreateName = name
+	file, err := ioutil.TempFile("/tmp", "apitest")
+	if err != nil {
+		panic(err)
+	}
+	m.CapturedCreateFile = file.Name()
+	return file, nil
+}
+
+func (m *FS) MkdirAll(path string, perm os.FileMode) error {
+	m.CapturedMkdirAllPath = path
+	return nil
 }

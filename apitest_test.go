@@ -404,6 +404,42 @@ func TestApiTest_CustomAssert(t *testing.T) {
 		End()
 }
 
+func TestApiTest_Report(t *testing.T) {
+	getUser := NewMock().
+		Get("http://localhost:8080").
+		RespondWith().
+		Status(http.StatusOK).
+		Body("1").
+		Times(2).
+		End()
+
+	recorder := &RecorderCaptor{}
+
+	New("some test").
+		Mocks(getUser).
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			getUserData()
+			w.WriteHeader(http.StatusOK)
+		})).
+		Host("abc.com").
+		Post("/hello").
+		Body(`{"a": 12345}`).
+		Headers(map[string]string{"Content-Type": "application/json"}).
+		Expect(t).
+		Status(http.StatusOK).
+		Report(recorder)
+
+	r := recorder.capturedRecorder
+	assert.Equal(t, "POST /hello", r.Title)
+	assert.Equal(t, "some test", r.SubTitle)
+	assert.Len(t, r.Events, 4)
+	assert.Equal(t, 200, r.Meta["status_code"])
+	assert.Equal(t, "/hello", r.Meta["path"])
+	assert.Equal(t, "POST", r.Meta["method"])
+	assert.Equal(t, "some test", r.Meta["name"])
+	assert.Equal(t, "abc.com", r.Meta["host"])
+}
+
 func TestApiTest_Observe(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
@@ -543,4 +579,12 @@ func TestApiTest_BuildQueryCollection_EmptyIfNoParams(t *testing.T) {
 	if len(params) > 0 {
 		t.Fatalf("Expected params to be empty")
 	}
+}
+
+type RecorderCaptor struct {
+	capturedRecorder *Recorder
+}
+
+func (r *RecorderCaptor) Format(recorder *Recorder) {
+	r.capturedRecorder = recorder
 }

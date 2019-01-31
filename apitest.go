@@ -410,6 +410,15 @@ func (r *Response) Report(formatter ...ReportFormatter) {
 		Value:  capturedFinalRes,
 	})
 
+	meta := map[string]interface{}{}
+	meta["status_code"] = 200
+	meta["path"] = capturedInboundReq.URL.String()
+	meta["method"] = capturedInboundReq.Method
+	meta["name"] = apiTest.name
+	meta["host"] = apiTest.request.GetHost()
+
+	recorder.Meta = meta
+
 	if len(formatter) == 0 {
 		NewSequenceDiagramFormatter().Format(recorder)
 	} else {
