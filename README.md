@@ -4,7 +4,7 @@
 
 [![GoDoc](https://godoc.org/github.com/steinfletcher/apitest?status.svg)](https://godoc.org/github.com/steinfletcher/apitest)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/023e062d720847e08c1065cbb65a4068)](https://app.codacy.com/app/steinfletcher/apitest?utm_source=github.com&utm_medium=referral&utm_content=steinfletcher/apitest&utm_campaign=Badge_Grade_Dashboard)
-[![Build Status](https://travis-ci.org/steinfletcher/apitest.svg?branch=master)](https://travis-ci.org/steinfletcher/apitest) [![Coverage Status](https://coveralls.io/repos/github/steinfletcher/apitest/badge.svg?branch=v1.0.0-alpha.8)](https://coveralls.io/github/steinfletcher/apitest?branch=master)
+[![Build Status](https://travis-ci.org/steinfletcher/apitest.svg?branch=master)](https://travis-ci.org/steinfletcher/apitest) [![Coverage Status](https://coveralls.io/repos/github/steinfletcher/apitest/badge.svg?branch=master)](https://coveralls.io/github/steinfletcher/apitest?branch=master)
 
 Simple behavioural (black box) api testing library. 
 
