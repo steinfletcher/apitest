@@ -35,6 +35,30 @@ func TestAssert_ObjectsAreEqual_MissmatchedType(t *testing.T) {
 	}
 }
 
+func TestAssert_ObjectsAreEqual_BytesEqual(t *testing.T) {
+	if !ObjectsAreEqual([]byte("i_am_worraz"), []byte("i_am_worraz")) {
+		t.Fatalf("Objects should have been equal")
+	}
+}
+
+func TestAssert_ObjectsAreEqual_BytesStringNotEqual(t *testing.T) {
+	if ObjectsAreEqual([]byte("i_am_worraz"), "i_am_worraz") {
+		t.Fatalf("Objects should not have been equal")
+	}
+}
+
+func TestAssert_ObjectsAreEqual_BytesNotEqual(t *testing.T) {
+	if ObjectsAreEqual([]byte("i_am_worraz"), []byte("the_emu")) {
+		t.Fatalf("Objects should not have been equal")
+	}
+}
+
+func TestAssert_ObjectsAreEqual_TrueIfBothNil(t *testing.T) {
+	if !ObjectsAreEqual(nil, nil) {
+		t.Fatalf("Objects should have been equal")
+	}
+}
+
 func TestAssert_JsonEqual(t *testing.T) {
 	jsonA := `{"name":"Tom","Drink":"Beer"}`
 	jsonB := `{"name":"Tom","Drink":"Beer"}`
