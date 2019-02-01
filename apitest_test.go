@@ -189,6 +189,10 @@ func TestApiTest_AddsCookiesToRequest(t *testing.T) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		if cookie, err := r.Cookie("Cookie"); err != nil || cookie.Value != "Nom" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -196,8 +200,8 @@ func TestApiTest_AddsCookiesToRequest(t *testing.T) {
 		Handler(handler).
 		Method(http.MethodGet).
 		URL("/hello").
-		Cookies(NewCookie("Cookie1").
-			Value("Yummy")).
+		Cookie("Cookie", "Nom").
+		Cookies(NewCookie("Cookie1").Value("Yummy")).
 		Expect(t).
 		Status(http.StatusOK).
 		End()

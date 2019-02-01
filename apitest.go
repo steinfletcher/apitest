@@ -250,9 +250,15 @@ func (r *Request) Headers(headers map[string]string) *Request {
 	return r
 }
 
+// Cookie is a convenience method for setting a single request cookies by name and value
+func (r *Request) Cookie(name, value string) *Request {
+	r.cookies = append(r.cookies, &Cookie{name: &name, value: &value})
+	return r
+}
+
 // Cookies is a builder method to set the request cookies
 func (r *Request) Cookies(c ...*Cookie) *Request {
-	r.cookies = c
+	r.cookies = append(r.cookies, c...)
 	return r
 }
 
