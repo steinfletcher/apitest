@@ -49,7 +49,7 @@ func Equal(t *testing.T, expected, actual interface{}, message ...string) {
 		if len(message) > 0 {
 			t.Fatalf(strings.Join(message, ", "))
 		} else {
-			t.Fatalf("Expected %+v but recevied %+v", expected, actual)
+			t.Fatalf("Expected '%+v' but recevied '%+v'", expected, actual)
 		}
 	}
 }

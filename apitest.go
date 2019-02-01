@@ -485,7 +485,7 @@ func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
 		}
 	}
 
-	a.request.handler.ServeHTTP(res, req)
+	a.serveHttp(res, req)
 
 	if a.debugEnabled {
 		responseDump, err := httputil.DumpResponse(res.Result(), true)
@@ -495,6 +495,16 @@ func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
 	}
 
 	return res, req
+}
+
+func (a *APITest) serveHttp(res *httptest.ResponseRecorder, req *http.Request) {
+	defer func() {
+		if err := recover(); err != nil {
+			a.t.Fatal(err)
+		}
+	}()
+
+	a.request.handler.ServeHTTP(res, req)
 }
 
 func (a *APITest) BuildRequest() *http.Request {
