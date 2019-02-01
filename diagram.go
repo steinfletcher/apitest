@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 )
 
 type (
@@ -27,8 +28,9 @@ type (
 	}
 
 	LogEntry struct {
-		Header string
-		Body   string
+		Header    string
+		Body      string
+		Timestamp time.Time
 	}
 
 	SequenceDiagramFormatter struct {
@@ -57,15 +59,15 @@ func (r *osFileSystem) MkdirAll(path string, perm os.FileMode) error {
 	return os.MkdirAll(path, perm)
 }
 
-func (r *WebSequenceDiagramDSL) AddRequestRow(source, target, description string) {
+func (r *WebSequenceDiagramDSL) AddRequestRow(source string, target string, description string) {
 	r.addRow("->", source, target, description)
 }
 
-func (r *WebSequenceDiagramDSL) AddResponseRow(source, target, description string) {
+func (r *WebSequenceDiagramDSL) AddResponseRow(source string, target string, description string) {
 	r.addRow("->>", source, target, description)
 }
 
-func (r *WebSequenceDiagramDSL) addRow(operation, source, target, description string) {
+func (r *WebSequenceDiagramDSL) addRow(operation, source string, target string, description string) {
 	r.count += 1
 	r.data.WriteString(fmt.Sprintf("%s%s%s: (%d) %s\n",
 		source,
@@ -160,6 +162,7 @@ func NewHTMLTemplateModel(r *Recorder) (HTMLTemplateModel, error) {
 			if err != nil {
 				return HTMLTemplateModel{}, err
 			}
+			entry.Timestamp = v.Timestamp
 			logs = append(logs, entry)
 		case HttpResponse:
 			webSequenceDiagram.AddResponseRow(v.Source, v.Target, strconv.Itoa(v.Value.StatusCode))
@@ -167,13 +170,14 @@ func NewHTMLTemplateModel(r *Recorder) (HTMLTemplateModel, error) {
 			if err != nil {
 				return HTMLTemplateModel{}, err
 			}
+			entry.Timestamp = v.Timestamp
 			logs = append(logs, entry)
 		case MessageRequest:
 			webSequenceDiagram.AddRequestRow(v.Source, v.Target, v.Header)
-			logs = append(logs, LogEntry{Header: v.Header, Body: v.Body})
+			logs = append(logs, LogEntry{Header: v.Header, Body: v.Body, Timestamp: v.Timestamp})
 		case MessageResponse:
 			webSequenceDiagram.AddResponseRow(v.Source, v.Target, v.Header)
-			logs = append(logs, LogEntry{Header: v.Header, Body: v.Body})
+			logs = append(logs, LogEntry{Header: v.Header, Body: v.Body, Timestamp: v.Timestamp})
 		default:
 			panic("received unknown event type")
 		}

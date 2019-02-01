@@ -3,6 +3,7 @@ package apitest
 import (
 	"errors"
 	"net/http"
+	"time"
 )
 
 type (
@@ -10,39 +11,52 @@ type (
 		Format(*Recorder)
 	}
 
+	Event interface {
+		GetTime() time.Time
+	}
+
 	Recorder struct {
 		Title    string
 		SubTitle string
 		Meta     map[string]interface{}
-		Events   []interface{}
+		Events   []Event
 	}
 
 	MessageRequest struct {
-		Source string
-		Target string
-		Header string
-		Body   string
+		Source    string
+		Target    string
+		Header    string
+		Body      string
+		Timestamp time.Time
 	}
 
 	MessageResponse struct {
-		Source string
-		Target string
-		Header string
-		Body   string
+		Source    string
+		Target    string
+		Header    string
+		Body      string
+		Timestamp time.Time
 	}
 
 	HttpRequest struct {
-		Source string
-		Target string
-		Value  *http.Request
+		Source    string
+		Target    string
+		Value     *http.Request
+		Timestamp time.Time
 	}
 
 	HttpResponse struct {
-		Source string
-		Target string
-		Value  *http.Response
+		Source    string
+		Target    string
+		Value     *http.Response
+		Timestamp time.Time
 	}
 )
+
+func (r HttpRequest) GetTime() time.Time     { return r.Timestamp }
+func (r HttpResponse) GetTime() time.Time    { return r.Timestamp }
+func (r MessageRequest) GetTime() time.Time  { return r.Timestamp }
+func (r MessageResponse) GetTime() time.Time { return r.Timestamp }
 
 func NewTestRecorder() *Recorder {
 	return &Recorder{}

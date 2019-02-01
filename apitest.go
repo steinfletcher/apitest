@@ -12,8 +12,10 @@ import (
 	"net/textproto"
 	"net/url"
 	"runtime/debug"
+	"sort"
 	"strings"
 	"testing"
+	"time"
 )
 
 const systemUnderTestDefaultName = "sut"
@@ -31,14 +33,27 @@ type APITest struct {
 	response      *Response
 	observers     []Observe
 	mocksObserver Observe
+	recorderHook  RecorderHook
 	mocks         []*Mock
 	t             *testing.T
 	httpClient    *http.Client
 	transport     *Transport
 }
 
+type InboundRequest struct {
+	request   *http.Request
+	timestamp time.Time
+}
+
+type FinalResponse struct {
+	response  *http.Response
+	timestamp time.Time
+}
+
 // Observe will be called by with the request and response on completion
 type Observe func(*http.Response, *http.Request, *APITest)
+
+type RecorderHook func(*Recorder, string)
 
 // New creates a new api test. The name is optional and will appear in test reports
 func New(name ...string) *APITest {
@@ -98,6 +113,13 @@ func (a *APITest) Observe(observers ...Observe) *APITest {
 // ObserveMocks is a builder method for setting the mocks observers
 func (a *APITest) ObserveMocks(observer Observe) *APITest {
 	a.mocksObserver = observer
+	return a
+}
+
+// RecorderHook allows the consumer to provider a function that will receive the recorder instance before the
+// test runs. This can be used to inject custom events which can then be rendered in diagrams
+func (a *APITest) RecorderHook(hook RecorderHook) *APITest {
+	a.recorderHook = hook
 	return a
 }
 
@@ -357,12 +379,13 @@ func (r *Response) Assert(fn func(*http.Response, *http.Request) error) *Respons
 
 // End runs the test and all defined assertions
 func (r *Response) End() {
-	r.finalize()
+	r.execute()
 }
 
 type mockInteraction struct {
-	request  *http.Request
-	response *http.Response
+	request   *http.Request
+	response  *http.Response
+	timestamp time.Time
 }
 
 func (r *Response) Report(formatter ...ReportFormatter) {
@@ -380,41 +403,57 @@ func (r *Response) Report(formatter ...ReportFormatter) {
 	}
 	apiTest.mocksObserver = func(mockRes *http.Response, mockReq *http.Request, a *APITest) {
 		capturedMockInteractions = append(capturedMockInteractions, &mockInteraction{
-			request:  copyHttpRequest(mockReq),
-			response: copyHttpResponse(mockRes),
+			request:   copyHttpRequest(mockReq),
+			response:  copyHttpResponse(mockRes),
+			timestamp: time.Now().UTC(),
 		})
 	}
 
-	r.finalize()
+	recorder := NewTestRecorder()
+	if apiTest.recorderHook != nil {
+		apiTest.recorderHook(recorder, apiTest.request.GetHost())
+	}
 
-	recorder := NewTestRecorder().
+	execTime := time.Now().UTC()
+	r.execute()
+	finishTime := time.Now().UTC()
+
+	recorder.
 		AddTitle(fmt.Sprintf("%s %s", capturedInboundReq.Method, capturedInboundReq.URL.String())).
 		AddSubTitle(apiTest.name).
 		AddHttpRequest(HttpRequest{
-			Source: quoted(consumerName),
-			Target: quoted(apiTest.request.GetHost()),
-			Value:  capturedInboundReq,
+			Source:    quoted(consumerName),
+			Target:    quoted(apiTest.request.GetHost()),
+			Value:     capturedInboundReq,
+			Timestamp: execTime,
 		})
 
 	for _, interaction := range capturedMockInteractions {
 		recorder.AddHttpRequest(HttpRequest{
-			Source: quoted(apiTest.request.GetHost()),
-			Target: quoted(interaction.request.Host),
-			Value:  interaction.request,
+			Source:    quoted(apiTest.request.GetHost()),
+			Target:    quoted(interaction.request.Host),
+			Value:     interaction.request,
+			Timestamp: interaction.timestamp,
 		})
 		if interaction.response != nil {
 			recorder.AddHttpResponse(HttpResponse{
-				Source: quoted(interaction.request.Host),
-				Target: quoted(apiTest.request.GetHost()),
-				Value:  interaction.response,
+				Source:    quoted(interaction.request.Host),
+				Target:    quoted(apiTest.request.GetHost()),
+				Value:     interaction.response,
+				Timestamp: interaction.timestamp,
 			})
 		}
 	}
 
 	recorder.AddHttpResponse(HttpResponse{
-		Source: quoted(apiTest.request.GetHost()),
-		Target: quoted(consumerName),
-		Value:  capturedFinalRes,
+		Source:    quoted(apiTest.request.GetHost()),
+		Target:    quoted(consumerName),
+		Value:     capturedFinalRes,
+		Timestamp: finishTime,
+	})
+
+	sort.Slice(recorder.Events, func(i, j int) bool {
+		return recorder.Events[i].GetTime().Before(recorder.Events[j].GetTime())
 	})
 
 	meta := map[string]interface{}{}
@@ -433,7 +472,7 @@ func (r *Response) Report(formatter ...ReportFormatter) {
 	}
 }
 
-func (r *Response) finalize() {
+func (r *Response) execute() {
 	apiTest := r.apiTest
 	if len(apiTest.mocks) > 0 {
 		apiTest.transport = newTransport(
@@ -657,14 +696,21 @@ func debugLog(prefix, header, msg string) {
 }
 
 func copyHttpResponse(response *http.Response) *http.Response {
-	all, _ := ioutil.ReadAll(response.Body)
-	response.Body = ioutil.NopCloser(bytes.NewBuffer(all))
+	if response == nil {
+		return nil
+	}
+
+	var resBodyBytes []byte
+	if response.Body != nil {
+		resBodyBytes, _ = ioutil.ReadAll(response.Body)
+		response.Body = ioutil.NopCloser(bytes.NewBuffer(resBodyBytes))
+	}
 
 	resCopy := &http.Response{
 		Header:        map[string][]string{},
 		StatusCode:    response.StatusCode,
 		Status:        response.Status,
-		Body:          ioutil.NopCloser(bytes.NewBuffer(all)),
+		Body:          ioutil.NopCloser(bytes.NewBuffer(resBodyBytes)),
 		Proto:         response.Proto,
 		ProtoMinor:    response.ProtoMinor,
 		ProtoMajor:    response.ProtoMajor,
@@ -711,5 +757,5 @@ func copyHttpRequest(request *http.Request) *http.Request {
 }
 
 func quoted(in string) string {
-	return fmt.Sprintf("%q", in)
+	return string(fmt.Sprintf("%q", in))
 }

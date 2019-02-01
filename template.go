@@ -25,7 +25,7 @@ const Template = `<!DOCTYPE html>
         </div>
     </div>
     <br><br>
-    <p class="lead">Request/Response wire representation</p>
+    <p class="lead">Event Log</p>
     <table class="table">
         <thead>
         <tr>
