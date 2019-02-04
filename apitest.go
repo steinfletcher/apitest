@@ -699,9 +699,13 @@ func copyHttpRequest(request *http.Request) *http.Request {
 		resCopy.URL = r2URL
 	}
 
-	for name, values := range request.Header {
-		resCopy.Header[name] = values
+	headers := make(http.Header)
+	for k, values := range request.Header {
+		for _, hValue := range values {
+			headers.Add(k, hValue)
+		}
 	}
+	resCopy.Header = headers
 
 	return resCopy
 }

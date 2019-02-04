@@ -5,6 +5,7 @@ import (
 	"github.com/steinfletcher/apitest/assert"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 	"time"
@@ -561,7 +562,7 @@ func TestApiTest_BuildQueryCollection(t *testing.T) {
 		t.Fatalf("Expected lengths not the same")
 	}
 
-	//Filter out expected pairs when found and remove
+	// Filter out expected pairs when found and remove
 	for _, param := range params {
 		for i, expectedPair := range expectedPairs {
 			if reflect.DeepEqual(param, expectedPair) {
@@ -583,6 +584,20 @@ func TestApiTest_BuildQueryCollection_EmptyIfNoParams(t *testing.T) {
 	if len(params) > 0 {
 		t.Fatalf("Expected params to be empty")
 	}
+}
+
+func TestApiTest_CopyHttpRequest(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Add("a", "1")
+	req.Header.Add("b", "2")
+
+	reqCopy := copyHttpRequest(req)
+
+	assert.Equal(t, reqCopy.Method, req.Method)
+	assert.Equal(t, reqCopy.URL, req.URL)
+	assert.Equal(t, reqCopy.Host, req.Host)
+	assert.Equal(t, reqCopy.ContentLength, req.ContentLength)
+	assert.Equal(t, reqCopy.Header, req.Header)
 }
 
 type RecorderCaptor struct {
