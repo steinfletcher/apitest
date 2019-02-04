@@ -2,51 +2,72 @@ package apitest
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/steinfletcher/apitest/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 )
 
 func TestMocks_QueryPresent(t *testing.T) {
 	tests := []struct {
-		requestUrl string
-		queryParam string
-		isPresent  bool
+		requestUrl    string
+		queryParam    string
+		expectedError error
 	}{
-		{"http://test.com/v1/path?a=1", "a", true},
-		{"http://test.com/v1/path", "a", false},
-		{"http://test.com/v1/path?b=1", "a", false},
-		{"http://test.com/v2/path?b=2&a=1", "a", true},
+		{"http://test.com/v1/path?a=1", "a", nil},
+		{"http://test.com/v1/path", "a", errors.New("expected query param a not received")},
+		{"http://test.com/v1/path?c=1", "b", errors.New("expected query param b not received")},
+		{"http://test.com/v2/path?b=2&a=1", "a", nil},
 	}
 	for _, test := range tests {
 		t.Run(test.requestUrl, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, test.requestUrl, nil)
 			mockRequest := NewMock().Get(test.requestUrl).QueryPresent(test.queryParam)
-			isPresent := queryPresentMatcher(req, mockRequest)
-			assert.Equal(t, test.isPresent, isPresent)
+			matchError := queryPresentMatcher(req, mockRequest)
+			assert.Equal(t, test.expectedError, matchError)
 		})
 	}
 }
 
+func TestMocks_NewUnmatchedMockError_Empty(t *testing.T) {
+	mockError := newUnmatchedMockError()
+
+	assert.NotNil(t, mockError)
+	assert.Len(t, mockError.errors, 0)
+}
+
+func TestMocks_NewEmptyUnmatchedMockError_ExpectedErrorsString(t *testing.T) {
+	mockError := newUnmatchedMockError().
+		addErrors(1, errors.New("a boo boo has occurred")).
+		addErrors(2, errors.New("tom drank too much beer"))
+
+	assert.NotNil(t, mockError)
+	assert.Len(t, mockError.errors, 2)
+	assert.Equal(t,
+		"received request did not match any mocks\n\nMock 1 mismatches:\n• a boo boo has occurred\n\nMock 2 mismatches:\n• tom drank too much beer\n\n",
+		mockError.Error())
+}
+
 func TestMocks_HostMatcher(t *testing.T) {
 	tests := []struct {
-		requestUrl  string
-		mockUrl     string
-		shouldMatch bool
+		requestUrl    string
+		mockUrl       string
+		expectedError error
 	}{
-		{"http://test.com", "https://test.com", true},
-		{"https://test.com", "https://testa.com", false},
-		{"https://test.com", "", true},
+		{"http://test.com", "https://test.com", nil},
+		{"https://test.com", "https://testa.com", errors.New("received host test.com did not match mock host testa.com")},
+		{"https://test.com", "", nil},
 	}
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s %s", test.requestUrl, test.mockUrl), func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, test.requestUrl, nil)
-			matches := hostMatcher(req, NewMock().Get(test.mockUrl))
-			assert.Equal(t, test.shouldMatch, matches)
+			matchError := hostMatcher(req, NewMock().Get(test.mockUrl))
+			assert.Equal(t, test.expectedError, matchError)
 		})
 	}
 }
@@ -56,11 +77,11 @@ func TestMocks_HeaderMatcher(t *testing.T) {
 		requestHeaders     map[string]string
 		headerToMatchKey   string
 		headerToMatchValue string
-		shouldMatch        bool
+		expectedError      error
 	}{
-		{map[string]string{"B": "5", "A": "123"}, "A", "123", true},
-		{map[string]string{"A": "123"}, "C", "3", false},
-		{map[string]string{}, "", "", true},
+		{map[string]string{"B": "5", "A": "123"}, "A", "123", nil},
+		{map[string]string{"A": "123"}, "C", "3", errors.New("not all of received headers map[A:[123]] matched expected mock headers map[C:[3]]")},
+		{map[string]string{}, "", "", nil},
 	}
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s %s", test.headerToMatchKey, test.headerToMatchValue), func(t *testing.T) {
@@ -72,8 +93,8 @@ func TestMocks_HeaderMatcher(t *testing.T) {
 			if test.headerToMatchKey != "" {
 				mockRequest.Header(test.headerToMatchKey, test.headerToMatchValue)
 			}
-			matches := headerMatcher(req, mockRequest)
-			assert.Equal(t, test.shouldMatch, matches)
+			matchError := headerMatcher(req, mockRequest)
+			assert.Equal(t, test.expectedError, matchError)
 		})
 	}
 }
@@ -87,28 +108,28 @@ func TestMocks_MockRequest_Header_WorksWithHeaders(t *testing.T) {
 	req.Header.Set("A", "12345")
 	req.Header.Set("B", "67890")
 
-	matches := headerMatcher(req, mock)
+	matchError := headerMatcher(req, mock)
 
-	assert.Equal(t, true, matches)
+	assert.Nil(t, matchError)
 }
 
 func TestMocks_QueryMatcher(t *testing.T) {
 	tests := []struct {
-		requestUrl   string
-		queryToMatch map[string]string
-		shouldMatch  bool
+		requestUrl    string
+		queryToMatch  map[string]string
+		expectedError error
 	}{
-		{"http://test.com/v1/path?a=1", map[string]string{"a": "1"}, true},
-		{"http://test.com/v1/path", map[string]string{"a": "1"}, false},
-		{"http://test.com/v2/path?a=1", map[string]string{"b": "1"}, false},
-		{"http://test.com/v2/path?b=2&a=1", map[string]string{"a": "1"}, true},
+		{"http://test.com/v1/path?a=1", map[string]string{"a": "1"}, nil},
+		{"http://test.com/v1/path", map[string]string{"a": "1"}, errors.New("not all of received query params map[] matched expected mock query params map[a:[1]]")},
+		{"http://test.com/v2/path?a=1", map[string]string{"b": "1"}, errors.New("not all of received query params map[a:[1]] matched expected mock query params map[b:[1]]")},
+		{"http://test.com/v2/path?b=2&a=1", map[string]string{"a": "1"}, nil},
 	}
 	for _, test := range tests {
 		t.Run(test.requestUrl, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, test.requestUrl, nil)
 			mockRequest := NewMock().Get(test.requestUrl).QueryParams(test.queryToMatch)
-			matches := queryParamMatcher(req, mockRequest)
-			assert.Equal(t, test.shouldMatch, matches)
+			matchError := queryParamMatcher(req, mockRequest)
+			assert.Equal(t, test.expectedError, matchError)
 		})
 	}
 }
@@ -120,30 +141,30 @@ func TestMocks_QueryParams_DoesNotOverwriteQuery(t *testing.T) {
 		Query("b", "2").
 		QueryParams(map[string]string{"a": "1"})
 
-	matches := queryParamMatcher(req, mockRequest)
+	matchError := queryParamMatcher(req, mockRequest)
 
 	assert.Equal(t, 2, len(mockRequest.query))
-	assert.Equal(t, true, matches)
+	assert.Nil(t, matchError)
 }
 
 func TestMocks_SchemeMatcher(t *testing.T) {
 	tests := []struct {
-		requestUrl  string
-		mockUrl     string
-		shouldMatch bool
+		requestUrl    string
+		mockUrl       string
+		expectedError error
 	}{
-		{"http://test.com", "https://test.com", false},
-		{"https://test.com", "https://test.com", true},
-		{"https://test.com", "test.com", true},
-		{"localhost:80", "localhost:80", true},
+		{"http://test.com", "https://test.com", errors.New("received scheme http did not match mock scheme https")},
+		{"https://test.com", "https://test.com", nil},
+		{"https://test.com", "test.com", nil},
+		{"localhost:80", "localhost:80", nil},
 	}
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s %s", test.requestUrl, test.mockUrl), func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, test.requestUrl, nil)
-			matches := schemeMatcher(req, NewMock().Get(test.mockUrl))
-			if !matches == test.shouldMatch {
-				t.Fatalf("mockUrl='%s' requestUrl='%s' shouldMatch=%v",
-					test.mockUrl, test.requestUrl, test.shouldMatch)
+			matchError := schemeMatcher(req, NewMock().Get(test.mockUrl))
+			if !reflect.DeepEqual(matchError, test.expectedError) {
+				t.Fatalf("mockUrl='%s' requestUrl='%s' actual=%v shouldMatch=%v",
+					test.mockUrl, test.requestUrl, matchError, test.expectedError)
 			}
 		})
 	}
@@ -151,51 +172,51 @@ func TestMocks_SchemeMatcher(t *testing.T) {
 
 func TestMocks_BodyMatcher(t *testing.T) {
 	tests := []struct {
-		requestBody string
-		matchBody   string
-		shouldMatch bool
+		requestBody   string
+		matchBody     string
+		expectedError error
 	}{
-		{`{"a": 1}`, "", true},
-		{``, `{"a":1}`, false},
-		{"golang\n", "go[lang]?", true},
-		{"golang\n", "go[lang]?", true},
-		{"golang", "goat", false},
-		{"go\n", "go[lang]?", true},
-		{`{"a":"12345"}\n`, `{"a":"12345"}`, true},
-		{`{"a":"12345"}`, `{"b":"12345"}`, false},
-		{`{"x":"12345"}`, `{"x":"12345"}`, true},
+		{`{"a": 1}`, "", nil},
+		{``, `{"a":1}`, errors.New("expected a body but received none")},
+		{"golang\n", "go[lang]?", nil},
+		{"golang\n", "go[lang]?", nil},
+		{"golang", "goat", errors.New("received body golang did not match expected mock body goat")},
+		{"go\n", "go[lang]?", nil},
+		{`{"a":"12345"}\n`, `{"a":"12345"}`, nil},
+		{`{"a":"12345"}`, `{"b":"12345"}`, errors.New(`received body {"a":"12345"} did not match expected mock body {"b":"12345"}`)},
+		{`{"x":"12345"}`, `{"x":"12345"}`, nil},
 		{`{"a": 12345, "b": [{"key": "c", "value": "result"}]}`,
-			`{"b":[{"key":"c","value":"result"}],"a":12345}`, true},
+			`{"b":[{"key":"c","value":"result"}],"a":12345}`, nil},
 	}
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("body=%v", test.matchBody), func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/path", strings.NewReader(test.requestBody))
-			matches := bodyMatcher(req, NewMock().Get("/path").Body(test.matchBody))
-			assert.Equal(t, test.shouldMatch, matches)
+			matchError := bodyMatcher(req, NewMock().Get("/path").Body(test.matchBody))
+			assert.Equal(t, test.expectedError, matchError)
 		})
 	}
 }
 
 func TestMocks_PathMatcher(t *testing.T) {
 	tests := []struct {
-		requestUrl  string
-		pathToMatch string
-		shouldMatch bool
+		requestUrl    string
+		pathToMatch   string
+		expectedError error
 	}{
-		{"http://test.com/v1/path", "/v1/path", true},
-		{"http://test.com/v1/path", "/v1/not", false},
-		{"http://test.com/v1/path", "", true},
-		{"http://test.com", "", true},
-		{"http://test.com/v2/path", "/v2/.+th", true},
+		{"http://test.com/v1/path", "/v1/path", nil},
+		{"http://test.com/v1/path", "/v1/not", errors.New("received path /v1/path did not match mock path /v1/not")},
+		{"http://test.com/v1/path", "", nil},
+		{"http://test.com", "", nil},
+		{"http://test.com/v2/path", "/v2/.+th", nil},
 	}
 	for _, test := range tests {
 		t.Run(test.pathToMatch, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, test.requestUrl, nil)
-			matches := pathMatcher(req, NewMock().Get(test.pathToMatch))
-			if !matches == test.shouldMatch {
+			matchError := pathMatcher(req, NewMock().Get(test.pathToMatch))
+			if matchError != nil && !reflect.DeepEqual(matchError, test.expectedError) {
 				t.Fatalf("methodToMatch='%s' requestUrl='%s' shouldMatch=%v",
-					test.pathToMatch, test.requestUrl, test.shouldMatch)
+					test.pathToMatch, test.requestUrl, matchError)
 			}
 		})
 	}
@@ -213,6 +234,7 @@ func TestMocks_PanicsIfUrlInvalid(t *testing.T) {
 
 func TestMocks_Matches(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/preferences/12345", nil)
+
 	getPreferences := NewMock().
 		Get("/preferences/12345").
 		RespondWith().
@@ -226,8 +248,9 @@ func TestMocks_Matches(t *testing.T) {
 		Body(`{"name": "jon", "id": "1234"}`).
 		End()
 
-	mockResponse := matches(req, []*Mock{getUser, getPreferences})
+	mockResponse, matchErrors := matches(req, []*Mock{getUser, getPreferences})
 
+	assert.Nil(t, matchErrors)
 	assert.NotNil(t, mockResponse)
 	assert.Equal(t, `{"is_contactable": true}`, mockResponse.body)
 }
@@ -235,30 +258,67 @@ func TestMocks_Matches(t *testing.T) {
 func TestMocks_Matches_NilIfNoMatch(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/preferences/12345", nil)
 
-	mockResponse := matches(req, []*Mock{})
+	mockResponse, matchErrors := matches(req, []*Mock{})
 
 	if mockResponse != nil {
-		t.Fatal("expected mockResponse to be nil")
+		t.Fatal("Expected nil")
 	}
+
+	assert.NotNil(t, matchErrors)
+	assert.Equal(t, newUnmatchedMockError(), matchErrors)
+}
+
+func TestMocks_UnmatchedMockErrorOrderedMockKeys(t *testing.T) {
+	unmatchedMockError := newUnmatchedMockError().
+		addErrors(3, errors.New("oh no")).
+		addErrors(1, errors.New("oh shoot")).
+		addErrors(4, errors.New("gah"))
+
+	assert.Equal(t,
+		"received request did not match any mocks\n\nMock 1 mismatches:\n• oh shoot\n\nMock 3 mismatches:\n• oh no\n\nMock 4 mismatches:\n• gah\n\n",
+		unmatchedMockError.Error())
+}
+
+func TestMocks_Matches_ErrorsMatchUnmatchedMocks(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/preferences/12345", nil)
+
+	mockResponse, matchErrors := matches(req,
+		[]*Mock{
+			NewMock().
+				Get("/preferences/123456").
+				RespondWith().
+				End()})
+
+	if mockResponse != nil {
+		t.Fatal("Expected nil")
+	}
+
+	assert.NotNil(t, matchErrors)
+	assert.Equal(t, "received request did not match any mocks\n\nMock 1 mismatches:\n• received path /preferences/12345 did not match mock path /preferences/123456\n\n",
+		matchErrors.Error())
 }
 
 func TestMocks_MethodMatcher(t *testing.T) {
 	tests := []struct {
 		requestMethod string
 		methodToMatch string
-		shouldMatch   bool
+		expectedError error
 	}{
-		{http.MethodGet, http.MethodGet, true},
-		{http.MethodDelete, "", true},
-		{http.MethodPut, http.MethodGet, false},
+		{http.MethodGet, http.MethodGet, nil},
+		{http.MethodPost, http.MethodPost, nil},
+		{http.MethodDelete, "", nil},
+		{http.MethodPut, http.MethodGet, errors.New("received method PUT did not match mock method GET")},
+		{"", http.MethodGet, nil},
+		{"", "", nil},
+		{http.MethodOptions, http.MethodGet, errors.New("received method OPTIONS did not match mock method GET")},
 	}
 	for _, test := range tests {
 		t.Run(test.requestMethod, func(t *testing.T) {
 			req := httptest.NewRequest(test.requestMethod, "/path", nil)
-			matches := methodMatcher(req, NewMock().Method(test.methodToMatch))
-			if !matches == test.shouldMatch {
-				t.Fatalf("methodToMatch='%s' requestMethod='%s' shouldMatch=%v",
-					test.methodToMatch, test.requestMethod, test.shouldMatch)
+			matchError := methodMatcher(req, NewMock().Method(test.methodToMatch))
+			if !reflect.DeepEqual(matchError, test.expectedError) {
+				t.Fatalf("methodToMatch='%s' requestMethod='%s' actual=%v shouldMatch=%v",
+					test.methodToMatch, test.requestMethod, matchError, test.expectedError)
 			}
 		})
 	}

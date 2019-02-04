@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -11,11 +12,8 @@ import (
 	"net/url"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
-)
-
-var (
-	ErrFailedToMatch = "failed to match any of the defined mocks"
 )
 
 type Transport struct {
@@ -49,26 +47,63 @@ func newTransport(
 	return t
 }
 
-func (r *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	var responseMock *http.Response
+type unmatchedMockError struct {
+	errors map[int][]error
+}
 
+func newUnmatchedMockError() *unmatchedMockError {
+	return &unmatchedMockError{
+		errors: map[int][]error{},
+	}
+}
+
+func (u *unmatchedMockError) addErrors(mockNumber int, errors ...error) *unmatchedMockError {
+	u.errors[mockNumber] = append(u.errors[mockNumber], errors...)
+	return u
+}
+
+func (u *unmatchedMockError) Error() string {
+	var strBuilder strings.Builder
+	strBuilder.WriteString("received request did not match any mocks\n\n")
+	for _, mockNumber := range u.orderedMockKeys() {
+		strBuilder.WriteString(fmt.Sprintf("Mock %d mismatches:\n", mockNumber))
+		for _, err := range u.errors[mockNumber] {
+			strBuilder.WriteString("• ")
+			strBuilder.WriteString(err.Error())
+			strBuilder.WriteString("\n")
+		}
+		strBuilder.WriteString("\n")
+	}
+	return strBuilder.String()
+}
+
+func (u *unmatchedMockError) orderedMockKeys() []int {
+	var mockKeys []int
+	for mockKey := range u.errors {
+		mockKeys = append(mockKeys, mockKey)
+	}
+	sort.Ints(mockKeys)
+	return mockKeys
+}
+
+// RoundTrip implementation intended to match a given expected mock request or throw an error with a list of reasons why no match was found.
+func (r *Transport) RoundTrip(req *http.Request) (mockResponse *http.Response, matchErrors error) {
 	if r.debugEnabled {
 		defer func() {
-			debugMock(responseMock, req)
+			debugMock(mockResponse, req)
 		}()
 	}
 
 	if r.observe != nil {
 		defer func() {
-			r.observe(responseMock, req, r.apiTest)
+			r.observe(mockResponse, req, r.apiTest)
 		}()
 	}
 
-	if matchedResponse := matches(req, r.mocks); matchedResponse != nil {
-		responseMock = buildResponseFromMock(matchedResponse)
-		return responseMock, nil
+	if matchedResponse, matchErrors := matches(req, r.mocks); matchErrors == nil {
+		return buildResponseFromMock(matchedResponse), nil
 	}
-	return nil, errors.New(ErrFailedToMatch)
+	return nil, matchErrors
 }
 
 func debugMock(res *http.Response, req *http.Request) {
@@ -231,26 +266,29 @@ func (m *Mock) Method(method string) *MockRequest {
 	return m.request
 }
 
-func matches(req *http.Request, mocks []*Mock) *MockResponse {
-	for _, mock := range mocks {
+func matches(req *http.Request, mocks []*Mock) (*MockResponse, error) {
+	mockError := newUnmatchedMockError()
+	for mockNumber, mock := range mocks {
 		if mock.isUsed {
 			continue
 		}
 
-		matches := true
+		var mockMatchErrors []error
 		for _, matcher := range matchers {
-			if !matcher(req, mock.request) {
-				matches = false
-				break
+			if matcherError := matcher(req, mock.request); matcherError != nil {
+				mockMatchErrors = append(mockMatchErrors, matcherError)
 			}
 		}
 
-		if matches {
+		if len(mockMatchErrors) == 0 {
 			mock.isUsed = true
-			return mock.response
+			return mock.response, nil
 		}
+
+		mockError = mockError.addErrors(mockNumber+1, mockMatchErrors...)
 	}
-	return nil
+
+	return nil, mockError
 }
 
 func (r *MockRequest) Body(b string) *MockRequest {
@@ -336,56 +374,74 @@ func (r *MockResponse) End() *Mock {
 	return r.mock
 }
 
-type Matcher func(*http.Request, *MockRequest) bool
+// Matcher type accepts the actual request and a mock request to match against.
+// Will return an error that describes why there was a mismatch if the inputs do not match or nil if they do.
+type Matcher func(*http.Request, *MockRequest) error
 
-var pathMatcher Matcher = func(r *http.Request, spec *MockRequest) bool {
-	if r.URL.Path == spec.url.Path {
-		return true
+var pathMatcher Matcher = func(r *http.Request, spec *MockRequest) error {
+	receivedPath := r.URL.Path
+	mockPath := spec.url.Path
+	if receivedPath == mockPath {
+		return nil
 	}
-	matched, err := regexp.MatchString(spec.url.Path, r.URL.Path)
-	return matched && err == nil
+	matched, err := regexp.MatchString(mockPath, receivedPath)
+	return errorOrNil(matched && err == nil, func() string {
+		return fmt.Sprintf("received path %s did not match mock path %s", receivedPath, mockPath)
+	})
 }
 
-var hostMatcher Matcher = func(r *http.Request, spec *MockRequest) bool {
-	if spec.url.Host == "" {
-		return true
+var hostMatcher Matcher = func(r *http.Request, spec *MockRequest) error {
+	receivedHost := r.Host
+	mockHost := spec.url.Host
+	if mockHost == "" {
+		return nil
 	}
-	if r.Host == spec.url.Host {
-		return true
+	if receivedHost == mockHost {
+		return nil
 	}
-	matched, err := regexp.MatchString(spec.url.Host, r.URL.Path)
-	return matched && err != nil
+	matched, err := regexp.MatchString(mockHost, r.URL.Path)
+	return errorOrNil(matched && err != nil, func() string {
+		return fmt.Sprintf("received host %s did not match mock host %s", receivedHost, mockHost)
+	})
 }
 
-var methodMatcher Matcher = func(r *http.Request, spec *MockRequest) bool {
-	if r.Method == spec.method {
-		return true
+var methodMatcher Matcher = func(r *http.Request, spec *MockRequest) error {
+	receivedMethod := r.Method
+	mockMethod := spec.method
+	if receivedMethod == mockMethod {
+		return nil
 	}
-	if spec.method == "" {
-		return true
+	if mockMethod == "" {
+		return nil
 	}
-	return false
+	return fmt.Errorf("received method %s did not match mock method %s", receivedMethod, mockMethod)
 }
 
-var schemeMatcher Matcher = func(r *http.Request, spec *MockRequest) bool {
-	if r.URL.Scheme == "" {
-		return true
+var schemeMatcher Matcher = func(r *http.Request, spec *MockRequest) error {
+	receivedScheme := r.URL.Scheme
+	mockScheme := spec.url.Scheme
+	if receivedScheme == "" {
+		return nil
 	}
-	if spec.url.Scheme == "" {
-		return true
+	if mockScheme == "" {
+		return nil
 	}
-	return r.URL.Scheme == spec.url.Scheme
+	return errorOrNil(receivedScheme == mockScheme, func() string {
+		return fmt.Sprintf("received scheme %s did not match mock scheme %s", receivedScheme, mockScheme)
+	})
 }
 
-var headerMatcher = func(req *http.Request, spec *MockRequest) bool {
-	for key, values := range spec.headers {
+var headerMatcher = func(req *http.Request, spec *MockRequest) error {
+	mockHeaders := spec.headers
+	for key, values := range mockHeaders {
 		var match bool
 		var err error
-		for _, field := range req.Header[key] {
+		receivedHeaders := req.Header
+		for _, field := range receivedHeaders[key] {
 			for _, value := range values {
 				match, err = regexp.MatchString(value, field)
 				if err != nil {
-					return false
+					return fmt.Errorf("unable to match received header value %s against expected value %s", value, field)
 				}
 			}
 
@@ -395,22 +451,25 @@ var headerMatcher = func(req *http.Request, spec *MockRequest) bool {
 		}
 
 		if !match {
-			return false
+			return fmt.Errorf("not all of received headers %s matched expected mock headers %s", receivedHeaders, mockHeaders)
 		}
 	}
-	return true
+	return nil
 }
 
-var queryParamMatcher = func(req *http.Request, spec *MockRequest) bool {
-	for key, values := range spec.query {
+var queryParamMatcher = func(req *http.Request, spec *MockRequest) error {
+	mockQueryParams := spec.query
+	for key, values := range mockQueryParams {
 		var err error
 		var match bool
 
-		for _, field := range req.URL.Query()[key] {
+		receivedQueryParams := req.URL.Query()
+
+		for _, field := range receivedQueryParams[key] {
 			for _, value := range values {
 				match, err = regexp.MatchString(value, field)
 				if err != nil {
-					return false
+					return fmt.Errorf("unable to match received query param value %s against expected value %s", value, field)
 				}
 			}
 
@@ -420,24 +479,26 @@ var queryParamMatcher = func(req *http.Request, spec *MockRequest) bool {
 		}
 
 		if !match {
-			return false
+			return fmt.Errorf("not all of received query params %s matched expected mock query params %s", receivedQueryParams, mockQueryParams)
 		}
 	}
-	return true
+	return nil
 }
 
-var queryPresentMatcher = func(req *http.Request, spec *MockRequest) bool {
+var queryPresentMatcher = func(req *http.Request, spec *MockRequest) error {
 	for _, query := range spec.queryPresent {
 		if req.URL.Query().Get(query) == "" {
-			return false
+			return fmt.Errorf("expected query param %s not received", query)
 		}
 	}
-	return true
+	return nil
 }
 
-var bodyMatcher = func(req *http.Request, spec *MockRequest) bool {
-	if len(spec.body) == 0 {
-		return true
+var bodyMatcher = func(req *http.Request, spec *MockRequest) error {
+	mockBody := spec.body
+
+	if len(mockBody) == 0 {
+		return nil
 	}
 
 	body, err := ioutil.ReadAll(req.Body)
@@ -445,7 +506,7 @@ var bodyMatcher = func(req *http.Request, spec *MockRequest) bool {
 		panic(err)
 	}
 	if len(body) == 0 {
-		return false
+		return errors.New("expected a body but received none")
 	}
 
 	// replace body so it can be read again
@@ -453,14 +514,14 @@ var bodyMatcher = func(req *http.Request, spec *MockRequest) bool {
 
 	// Perform exact string match
 	bodyStr := string(body)
-	if bodyStr == spec.body {
-		return true
+	if bodyStr == mockBody {
+		return nil
 	}
 
 	// Perform regexp match
-	match, _ := regexp.MatchString(spec.body, bodyStr)
+	match, _ := regexp.MatchString(mockBody, bodyStr)
 	if match == true {
-		return true
+		return nil
 	}
 
 	// Perform JSON match
@@ -468,14 +529,21 @@ var bodyMatcher = func(req *http.Request, spec *MockRequest) bool {
 	reqJSONErr := json.Unmarshal(body, &reqJSON)
 
 	var matchJSON map[string]interface{}
-	specJSONErr := json.Unmarshal([]byte(spec.body), &matchJSON)
+	specJSONErr := json.Unmarshal([]byte(mockBody), &matchJSON)
 
 	isJSON := reqJSONErr == nil && specJSONErr == nil
 	if isJSON && reflect.DeepEqual(reqJSON, matchJSON) {
-		return true
+		return nil
 	}
 
-	return false
+	return fmt.Errorf("received body %s did not match expected mock body %s", bodyStr, mockBody)
+}
+
+func errorOrNil(statement bool, errorMessage func() string) error {
+	if statement {
+		return nil
+	}
+	return errors.New(errorMessage())
 }
 
 var matchers = []Matcher{
