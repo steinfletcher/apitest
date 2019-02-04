@@ -11,6 +11,7 @@ import (
 	"net/http/httputil"
 	"net/textproto"
 	"net/url"
+	"runtime/debug"
 	"strings"
 	"testing"
 )
@@ -481,7 +482,7 @@ func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
 	if a.debugEnabled {
 		requestDump, err := httputil.DumpRequest(req, true)
 		if err == nil {
-			debug(requestDebugPrefix, "inbound http request", string(requestDump))
+			debugLog(requestDebugPrefix, "inbound http request", string(requestDump))
 		}
 	}
 
@@ -490,7 +491,7 @@ func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
 	if a.debugEnabled {
 		responseDump, err := httputil.DumpResponse(res.Result(), true)
 		if err == nil {
-			debug(responseDebugPrefix, "final response", string(responseDump))
+			debugLog(responseDebugPrefix, "final response", string(responseDump))
 		}
 	}
 
@@ -500,7 +501,7 @@ func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
 func (a *APITest) serveHttp(res *httptest.ResponseRecorder, req *http.Request) {
 	defer func() {
 		if err := recover(); err != nil {
-			a.t.Fatal(err)
+			a.t.Fatalf("%s: %s", err, debug.Stack())
 		}
 	}()
 
@@ -651,7 +652,7 @@ func isJSON(s string) bool {
 	return json.Unmarshal([]byte(s), &js) == nil
 }
 
-func debug(prefix, header, msg string) {
+func debugLog(prefix, header, msg string) {
 	fmt.Printf("\n%s %s\n%s\n", prefix, header, msg)
 }
 
