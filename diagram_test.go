@@ -56,28 +56,18 @@ func TestNewSequenceDiagramFormatter_OverridesPath(t *testing.T) {
 	assert.Equal(t, ".sequence-diagram", formatter.storagePath)
 }
 
-func TestSequenceDiagramFormatter_Format(t *testing.T) {
-	mockFS := &FS{}
-	formatter := SequenceDiagramFormatter{storagePath: ".sequence", fs: mockFS}
-
-	formatter.Format(aRecorder())
-
-	assert.Equal(t, ".sequence", mockFS.CapturedMkdirAllPath)
-	assert.Equal(t, ".sequence/diagram.html", mockFS.CapturedCreateName)
-
-	expected, _ := ioutil.ReadFile("testdata/sequence_diagram_snapshot.html")
-	actual, _ := ioutil.ReadFile(mockFS.CapturedCreateFile)
-
-	assert.Equal(t, string(expected), string(actual))
-}
-
 func TestRecorderBuilder(t *testing.T) {
 	recorder := aRecorder()
 
 	assert.Len(t, recorder.Events, 4)
 	assert.Equal(t, "title", recorder.Title)
 	assert.Equal(t, "subTitle", recorder.SubTitle)
-	assert.Equal(t, map[string]interface{}{"Z": "1"}, recorder.Meta)
+	assert.Equal(t, map[string]interface{}{
+		"path":   "/user",
+		"name":   "some test",
+		"host":   "example.com",
+		"method": "GET",
+	}, recorder.Meta)
 	assert.Equal(t, "reqSource", recorder.Events[0].(HttpRequest).Source)
 	assert.Equal(t, "mesReqSource", recorder.Events[1].(MessageRequest).Source)
 	assert.Equal(t, "mesResSource", recorder.Events[2].(MessageResponse).Source)
@@ -101,7 +91,7 @@ func TestNewHTMLTemplateModel_Success(t *testing.T) {
 	assert.Len(t, model.LogEntries, 4)
 	assert.Equal(t, "title", model.Title)
 	assert.Equal(t, "subTitle", model.SubTitle)
-	assert.Equal(t, template.JS(`{"Z":"1"}`), model.MetaJSON)
+	assert.Equal(t, template.JS( `{"host":"example.com","method":"GET","name":"some test","path":"/user"}`), model.MetaJSON)
 	assert.Equal(t, http.StatusNoContent, model.StatusCode)
 	assert.Equal(t, "badge badge-success", model.BadgeClass)
 }
@@ -114,7 +104,12 @@ func aRecorder() *Recorder {
 		AddMessageRequest(MessageRequest{Header: "A", Body: "B", Source: "mesReqSource"}).
 		AddMessageResponse(MessageResponse{Header: "C", Body: "D", Source: "mesResSource"}).
 		AddHttpResponse(aResponse()).
-		AddMeta(map[string]interface{}{"Z": "1"})
+		AddMeta(map[string]interface{}{
+			"path":   "/user",
+			"name":   "some test",
+			"host":   "example.com",
+			"method": "GET",
+		})
 }
 
 func TestNewHttpRequestLogEntry(t *testing.T) {

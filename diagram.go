@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -100,7 +102,7 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 		panic(err)
 	}
 
-	fileName := "diagram.html"
+	fileName := createFileName(recorder.Meta)
 	err = r.fs.MkdirAll(r.storagePath, os.ModePerm)
 	if err != nil {
 		panic(err)
@@ -118,6 +120,26 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 		panic(err)
 	}
 	fmt.Printf("Created sequence diagram (%s): %s\n", fileName, filepath.FromSlash(s))
+}
+
+func createFileName(meta map[string]interface{}) string {
+	path := meta["path"]
+	method := meta["method"]
+	name := meta["name"]
+	host := meta["host"]
+
+	prefix := fnv.New32a()
+	_, err := prefix.Write([]byte(fmt.Sprintf("%s%s%s", host, strings.ToUpper(method.(string)), path)))
+	if err != nil {
+		panic(err)
+	}
+
+	suffix := fnv.New32a()
+	_, err = suffix.Write([]byte(name.(string)))
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%d_%d.html", prefix.Sum32(), suffix.Sum32())
 }
 
 func NewSequenceDiagramFormatter(path ...string) *SequenceDiagramFormatter {

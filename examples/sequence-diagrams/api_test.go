@@ -7,7 +7,7 @@ import (
 )
 
 func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
-	apitest.New("gets the user").
+	apitest.New("gets the user 1").
 		Mocks(getPreferencesMock, getUserMock).
 		Handler(newApp().Router).
 		Get("/user").
@@ -21,7 +21,7 @@ func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
 }
 
 func TestGetUser_With_Default_Report_Formatter_Overriding_Path(t *testing.T) {
-	apitest.New("gets the user").
+	apitest.New("gets the user 2").
 		Mocks(getPreferencesMock, getUserMock).
 		Handler(newApp().Router).
 		Get("/user").
