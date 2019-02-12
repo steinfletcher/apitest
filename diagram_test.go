@@ -91,7 +91,7 @@ func TestNewHTMLTemplateModel_Success(t *testing.T) {
 	assert.Len(t, model.LogEntries, 4)
 	assert.Equal(t, "title", model.Title)
 	assert.Equal(t, "subTitle", model.SubTitle)
-	assert.Equal(t, template.JS( `{"host":"example.com","method":"GET","name":"some test","path":"/user"}`), model.MetaJSON)
+	assert.Equal(t, template.JS(`{"host":"example.com","method":"GET","name":"some test","path":"/user"}`), model.MetaJSON)
 	assert.Equal(t, http.StatusNoContent, model.StatusCode)
 	assert.Equal(t, "badge badge-success", model.BadgeClass)
 }
