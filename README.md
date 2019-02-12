@@ -4,9 +4,9 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/steinfletcher/apitest)](https://goreportcard.com/report/github.com/steinfletcher/apitest)
 [![Build Status](https://travis-ci.org/steinfletcher/apitest.svg?branch=master)](https://travis-ci.org/steinfletcher/apitest) [![Coverage Status](https://coveralls.io/repos/github/steinfletcher/apitest/badge.svg?branch=master)](https://coveralls.io/github/steinfletcher/apitest?branch=master)
 
-Simple behavioural (black box) api testing library. 
+A simple and extensible behavioural testing library in golang. Supports mocking external http calls and renders sequence diagrams on completion.
 
-In black box tests the internal structure of the app is not know by the tests. Data is input to the system and the outputs are expected to meet certain conditions.
+In behavioural tests the internal structure of the app is not know by the tests. Data is input to the system and the outputs are expected to meet certain conditions.
 
 **This library is dependency free and we intend to keep it that way**
 
