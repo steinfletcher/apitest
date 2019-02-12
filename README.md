@@ -1,5 +1,3 @@
-**This library is on version 0 and we won't guarantee backwards compatible API changes until we go to version 1. The roadmap for version 1 includes mocking external http calls and sequence diagram generation.**
-
 # apitest
 
 [![GoDoc](https://godoc.org/github.com/steinfletcher/apitest?status.svg)](https://godoc.org/github.com/steinfletcher/apitest)
