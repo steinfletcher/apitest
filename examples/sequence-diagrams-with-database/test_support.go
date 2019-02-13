@@ -10,10 +10,9 @@ import (
 const dbAddr = "host=localhost port=5432 user=postgres password=postgres dbname=apitest sslmode=disable"
 
 func RecordingHook(db DB) apitest.RecorderHook {
-	return func(recorder *apitest.Recorder, appName string) {
+	return func(recorder *apitest.Recorder) {
 		if v, ok := db.(*recordingDB); ok {
 			v.recorder = recorder
-			v.sourceName = appName
 		}
 	}
 }

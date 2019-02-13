@@ -503,11 +503,11 @@ func TestApiTest_Intercept(t *testing.T) {
 
 	New().
 		Handler(handler).
-		Get("/hello").
 		Intercept(func(req *http.Request) {
 			req.URL.RawQuery = "a[]=xxx&a[]=yyy"
 			req.Header.Set("Auth-Token", req.Header.Get("authtoken"))
 		}).
+		Get("/hello").
 		Headers(map[string]string{"authtoken": "12345"}).
 		Expect(t).
 		Status(http.StatusOK).

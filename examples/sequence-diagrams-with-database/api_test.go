@@ -25,6 +25,7 @@ func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
 
 	apitest.New("gets the user").
 		Mocks(getUserMock(username)).
+		Report(apitest.SequenceDiagram()).
 		RecorderHook(RecordingHook(testDB)).
 		Handler(app.Router).
 		Get("/user").
@@ -33,7 +34,7 @@ func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
 		Status(http.StatusOK).
 		Header("Content-Type", "application/json").
 		Body(fmt.Sprintf(`{"name": "%s", "is_contactable": true}`, username)).
-		Report()
+		End()
 }
 
 func getUserMock(username string) *apitest.Mock {

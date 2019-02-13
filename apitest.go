@@ -30,6 +30,7 @@ var responseDebugPrefix = fmt.Sprintf("<%s", divider)
 type APITest struct {
 	debugEnabled  bool
 	reporter      ReportFormatter
+	handler       http.Handler
 	name          string
 	request       *Request
 	response      *Response
@@ -101,6 +102,12 @@ func (a *APITest) Meta(meta map[string]interface{}) *APITest {
 	return a
 }
 
+// Handler defines the http handler that is invoked when the test is run
+func (a *APITest) Handler(handler http.Handler) *APITest {
+	a.handler = handler
+	return a
+}
+
 // Mocks is a builder method for setting the mocks
 func (a *APITest) Mocks(mocks ...*Mock) *APITest {
 	var m []*Mock
@@ -150,15 +157,8 @@ func (a *APITest) Response() *Response {
 	return a.response
 }
 
-// Handler defines the http handler that is invoked when the test is run
-func (a *APITest) Handler(handler http.Handler) *Request {
-	a.request.handler = handler
-	return a.request
-}
-
 // Request is the user defined request that will be invoked on the handler under test
 type Request struct {
-	handler         http.Handler
 	interceptor     Intercept
 	method          string
 	url             string
@@ -180,54 +180,56 @@ type pair struct {
 }
 
 // Intercept is a builder method for setting the request interceptor
-func (r *Request) Intercept(interceptor Intercept) *Request {
-	r.interceptor = interceptor
-	return r
+func (a *APITest) Intercept(interceptor Intercept) *APITest {
+	a.request.interceptor = interceptor
+	return a
 }
 
 // Method is a builder method for setting the http method of the request
-func (r *Request) Method(method string) *Request {
-	r.method = method
-	return r
-}
-
-// URL is a builder method for setting the url of the request
-func (r *Request) URL(url string) *Request {
-	r.url = url
-	return r
+func (a *APITest) Method(method string) *Request {
+	a.request.method = method
+	return a.request
 }
 
 // Get is a convenience method for setting the request as http.MethodGet
-func (r *Request) Get(url string) *Request {
-	r.method = http.MethodGet
-	r.url = url
-	return r
+func (a *APITest) Get(url string) *Request {
+	a.request.method = http.MethodGet
+	a.request.url = url
+	return a.request
 }
 
 // Post is a convenience method for setting the request as http.MethodPost
-func (r *Request) Post(url string) *Request {
+func (a *APITest) Post(url string) *Request {
+	r := a.request
 	r.method = http.MethodPost
 	r.url = url
 	return r
 }
 
 // Put is a convenience method for setting the request as http.MethodPut
-func (r *Request) Put(url string) *Request {
+func (a *APITest) Put(url string) *Request {
+	r := a.request
 	r.method = http.MethodPut
 	r.url = url
 	return r
 }
 
 // Delete is a convenience method for setting the request as http.MethodDelete
-func (r *Request) Delete(url string) *Request {
-	r.method = http.MethodDelete
-	r.url = url
-	return r
+func (a *APITest) Delete(url string) *Request {
+	a.request.method = http.MethodDelete
+	a.request.url = url
+	return a.request
 }
 
 // Patch is a convenience method for setting the request as http.MethodPatch
-func (r *Request) Patch(url string) *Request {
-	r.method = http.MethodPatch
+func (a *APITest) Patch(url string) *Request {
+	a.request.method = http.MethodPatch
+	a.request.url = url
+	return a.request
+}
+
+// URL is a builder method for setting the url of the request
+func (r *Request) URL(url string) *Request {
 	r.url = url
 	return r
 }
@@ -568,7 +570,7 @@ func (a *APITest) serveHttp(res *httptest.ResponseRecorder, req *http.Request) {
 		}
 	}()
 
-	a.request.handler.ServeHTTP(res, req)
+	a.handler.ServeHTTP(res, req)
 }
 
 func (a *APITest) BuildRequest() *http.Request {
