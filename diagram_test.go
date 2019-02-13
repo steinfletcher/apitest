@@ -11,6 +11,21 @@ import (
 	"testing"
 )
 
+func TestSequenceDiagramFormatter_Format(t *testing.T) {
+	mockFS := &FS{}
+	formatter := SequenceDiagramFormatter{storagePath: ".sequence", fs: mockFS}
+
+	formatter.Format(aRecorder())
+
+	assert.Equal(t, ".sequence", mockFS.CapturedMkdirAllPath)
+	assert.True(t, strings.HasSuffix(mockFS.CapturedCreateName, "html"))
+
+	expected, _ := ioutil.ReadFile("testdata/sequence_diagram_snapshot.html")
+	actual, _ := ioutil.ReadFile(mockFS.CapturedCreateFile)
+
+	assert.Equal(t, string(expected), string(actual))
+}
+
 func TestDiagram_BadgeCSSClass(t *testing.T) {
 	tests := []struct {
 		status int
@@ -158,7 +173,7 @@ func TestNewHttpResponseLogEntry_PlainText(t *testing.T) {
 }
 
 func aRequest() HttpRequest {
-	req, _ := http.NewRequest(http.MethodGet, "http://example.com/abcdef", nil)
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/abcdef", nil)
 	req.Header.Set("Content-Type", "application/json")
 	return HttpRequest{Value: req, Source: "reqSource", Target: "reqTarget"}
 }
@@ -166,7 +181,10 @@ func aRequest() HttpRequest {
 func aResponse() HttpResponse {
 	return HttpResponse{
 		Value: &http.Response{
-			StatusCode: http.StatusNoContent,
+			StatusCode:    http.StatusNoContent,
+			ProtoMajor:    1,
+			ProtoMinor:    1,
+			ContentLength: 0,
 		},
 		Source: "resSource",
 		Target: "resTarget",
