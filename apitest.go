@@ -482,10 +482,10 @@ func createHash(meta map[string]interface{}) string {
 	path := meta["path"]
 	method := meta["method"]
 	name := meta["name"]
-	host := meta["host"]
+	app := meta["app"]
 
 	prefix := fnv.New32a()
-	_, err := prefix.Write([]byte(fmt.Sprintf("%s%s%s", host, strings.ToUpper(method.(string)), path)))
+	_, err := prefix.Write([]byte(fmt.Sprintf("%s%s%s", app, strings.ToUpper(method.(string)), path)))
 	if err != nil {
 		panic(err)
 	}
