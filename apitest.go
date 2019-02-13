@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/steinfletcher/apitest/assert"
+	"hash/fnv"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -462,6 +463,7 @@ func (r *Response) Report(formatter ...ReportFormatter) {
 	meta["method"] = capturedInboundReq.Method
 	meta["name"] = apiTest.name
 	meta["host"] = apiTest.request.GetHost()
+	meta["hash"] = createHash(meta)
 
 	recorder.AddMeta(meta)
 
@@ -470,6 +472,26 @@ func (r *Response) Report(formatter ...ReportFormatter) {
 	} else {
 		formatter[0].Format(recorder)
 	}
+}
+
+func createHash(meta map[string]interface{}) string {
+	path := meta["path"]
+	method := meta["method"]
+	name := meta["name"]
+	host := meta["host"]
+
+	prefix := fnv.New32a()
+	_, err := prefix.Write([]byte(fmt.Sprintf("%s%s%s", host, strings.ToUpper(method.(string)), path)))
+	if err != nil {
+		panic(err)
+	}
+
+	suffix := fnv.New32a()
+	_, err = suffix.Write([]byte(name.(string)))
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%d_%d", prefix.Sum32(), suffix.Sum32())
 }
 
 func (r *Response) execute() {
