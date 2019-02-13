@@ -418,23 +418,24 @@ func TestApiTest_Report(t *testing.T) {
 		Times(2).
 		End()
 
-	recorder := &RecorderCaptor{}
+	reporter := &RecorderCaptor{}
 
 	New("some test").
+		Meta(map[string]interface{}{"host": "abc.com"}).
+		Report(reporter).
 		Mocks(getUser).
 		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			getUserData()
 			w.WriteHeader(http.StatusOK)
 		})).
-		Host("abc.com").
 		Post("/hello").
 		Body(`{"a": 12345}`).
 		Headers(map[string]string{"Content-Type": "application/json"}).
 		Expect(t).
 		Status(http.StatusOK).
-		Report(recorder)
+		End()
 
-	r := recorder.capturedRecorder
+	r := reporter.capturedRecorder
 	assert.Equal(t, "POST /hello", r.Title)
 	assert.Equal(t, "some test", r.SubTitle)
 	assert.Len(t, r.Events, 4)

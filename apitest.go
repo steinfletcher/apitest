@@ -29,6 +29,7 @@ var responseDebugPrefix = fmt.Sprintf("<%s", divider)
 // APITest is the top level struct holding the test spec
 type APITest struct {
 	debugEnabled  bool
+	reporter      ReportFormatter
 	name          string
 	request       *Request
 	response      *Response
@@ -39,6 +40,7 @@ type APITest struct {
 	t             *testing.T
 	httpClient    *http.Client
 	transport     *Transport
+	meta          map[string]interface{}
 }
 
 type InboundRequest struct {
@@ -54,11 +56,13 @@ type FinalResponse struct {
 // Observe will be called by with the request and response on completion
 type Observe func(*http.Response, *http.Request, *APITest)
 
-type RecorderHook func(*Recorder, string)
+type RecorderHook func(*Recorder)
 
 // New creates a new api test. The name is optional and will appear in test reports
 func New(name ...string) *APITest {
-	apiTest := &APITest{}
+	apiTest := &APITest{
+		meta: map[string]interface{}{},
+	}
 
 	request := &Request{
 		apiTest: apiTest,
@@ -82,6 +86,18 @@ func New(name ...string) *APITest {
 // Debug logs to the console the http wire representation of all http interactions that are intercepted by apitest. This includes the inbound request to the application under test, the response returned by the application and any interactions that are intercepted by the mock server.
 func (a *APITest) Debug() *APITest {
 	a.debugEnabled = true
+	return a
+}
+
+// Reporter provides a hook to add custom formatting to the output of the test
+func (a *APITest) Report(reporter ReportFormatter) *APITest {
+	a.reporter = reporter
+	return a
+}
+
+// Meta provides a hook to add custom meta data to the test which can be picked up when defining a custom reporter
+func (a *APITest) Meta(meta map[string]interface{}) *APITest {
+	a.meta = meta
 	return a
 }
 
@@ -144,7 +160,6 @@ func (a *APITest) Handler(handler http.Handler) *Request {
 type Request struct {
 	handler         http.Handler
 	interceptor     Intercept
-	host            string
 	method          string
 	url             string
 	body            string
@@ -167,12 +182,6 @@ type pair struct {
 // Intercept is a builder method for setting the request interceptor
 func (r *Request) Intercept(interceptor Intercept) *Request {
 	r.interceptor = interceptor
-	return r
-}
-
-// Host is a builder method for setting the Host of the request
-func (r *Request) Host(host string) *Request {
-	r.host = host
 	return r
 }
 
@@ -299,14 +308,6 @@ func (r *Request) Expect(t *testing.T) *Response {
 	return r.apiTest.response
 }
 
-// GetHost returns the host or the default name if not set
-func (r *Request) GetHost() string {
-	if r.host == "" {
-		return systemUnderTestDefaultName
-	}
-	return r.host
-}
-
 // Response is the user defined expected response from the application under test
 type Response struct {
 	status             int
@@ -380,6 +381,10 @@ func (r *Response) Assert(fn func(*http.Response, *http.Request) error) *Respons
 
 // End runs the test and all defined assertions
 func (r *Response) End() {
+	if r.apiTest.reporter != nil {
+		r.apiTest.report()
+		return
+	}
 	r.execute()
 }
 
@@ -389,20 +394,18 @@ type mockInteraction struct {
 	timestamp time.Time
 }
 
-func (r *Response) Report(formatter ...ReportFormatter) {
-	apiTest := r.apiTest
-
+func (a *APITest) report() {
 	var capturedInboundReq *http.Request
 	var capturedFinalRes *http.Response
 	var capturedMockInteractions []*mockInteraction
 
-	apiTest.observers = []Observe{
+	a.observers = []Observe{
 		func(finalRes *http.Response, inboundReq *http.Request, a *APITest) {
 			capturedFinalRes = finalRes
 			capturedInboundReq = inboundReq
 		},
 	}
-	apiTest.mocksObserver = func(mockRes *http.Response, mockReq *http.Request, a *APITest) {
+	a.mocksObserver = func(mockRes *http.Response, mockReq *http.Request, a *APITest) {
 		capturedMockInteractions = append(capturedMockInteractions, &mockInteraction{
 			request:   copyHttpRequest(mockReq),
 			response:  copyHttpResponse(mockRes),
@@ -411,27 +414,27 @@ func (r *Response) Report(formatter ...ReportFormatter) {
 	}
 
 	recorder := NewTestRecorder()
-	if apiTest.recorderHook != nil {
-		apiTest.recorderHook(recorder, apiTest.request.GetHost())
+	if a.recorderHook != nil {
+		a.recorderHook(recorder)
 	}
 
 	execTime := time.Now().UTC()
-	r.execute()
+	a.response.execute()
 	finishTime := time.Now().UTC()
 
 	recorder.
 		AddTitle(fmt.Sprintf("%s %s", capturedInboundReq.Method, capturedInboundReq.URL.String())).
-		AddSubTitle(apiTest.name).
+		AddSubTitle(a.name).
 		AddHttpRequest(HttpRequest{
 			Source:    quoted(consumerName),
-			Target:    quoted(apiTest.request.GetHost()),
+			Target:    quoted(systemUnderTestDefaultName),
 			Value:     capturedInboundReq,
 			Timestamp: execTime,
 		})
 
 	for _, interaction := range capturedMockInteractions {
 		recorder.AddHttpRequest(HttpRequest{
-			Source:    quoted(apiTest.request.GetHost()),
+			Source:    quoted(systemUnderTestDefaultName),
 			Target:    quoted(interaction.request.Host),
 			Value:     interaction.request,
 			Timestamp: interaction.timestamp,
@@ -439,7 +442,7 @@ func (r *Response) Report(formatter ...ReportFormatter) {
 		if interaction.response != nil {
 			recorder.AddHttpResponse(HttpResponse{
 				Source:    quoted(interaction.request.Host),
-				Target:    quoted(apiTest.request.GetHost()),
+				Target:    quoted(systemUnderTestDefaultName),
 				Value:     interaction.response,
 				Timestamp: interaction.timestamp,
 			})
@@ -447,7 +450,7 @@ func (r *Response) Report(formatter ...ReportFormatter) {
 	}
 
 	recorder.AddHttpResponse(HttpResponse{
-		Source:    quoted(apiTest.request.GetHost()),
+		Source:    quoted(systemUnderTestDefaultName),
 		Target:    quoted(consumerName),
 		Value:     capturedFinalRes,
 		Timestamp: finishTime,
@@ -461,17 +464,16 @@ func (r *Response) Report(formatter ...ReportFormatter) {
 	meta["status_code"] = capturedFinalRes.StatusCode
 	meta["path"] = capturedInboundReq.URL.String()
 	meta["method"] = capturedInboundReq.Method
-	meta["name"] = apiTest.name
-	meta["host"] = apiTest.request.GetHost()
+	meta["name"] = a.name
 	meta["hash"] = createHash(meta)
+
+	for k, v := range a.meta {
+		meta[k] = v
+	}
 
 	recorder.AddMeta(meta)
 
-	if len(formatter) == 0 {
-		NewSequenceDiagramFormatter().Format(recorder)
-	} else {
-		formatter[0].Format(recorder)
-	}
+	a.reporter.Format(recorder)
 }
 
 func createHash(meta map[string]interface{}) string {

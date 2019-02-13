@@ -120,7 +120,7 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 	fmt.Printf("Created sequence diagram (%s): %s\n", fileName, filepath.FromSlash(s))
 }
 
-func NewSequenceDiagramFormatter(path ...string) *SequenceDiagramFormatter {
+func SequenceDiagram(path ...string) *SequenceDiagramFormatter {
 	var storagePath string
 	if len(path) == 0 {
 		storagePath = ".sequence"

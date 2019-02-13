@@ -60,13 +60,13 @@ func TestWebSequenceDiagram_GeneratesDSL(t *testing.T) {
 }
 
 func TestNewSequenceDiagramFormatter_SetsDefaultPath(t *testing.T) {
-	formatter := NewSequenceDiagramFormatter()
+	formatter := SequenceDiagram()
 
 	assert.Equal(t, ".sequence", formatter.storagePath)
 }
 
 func TestNewSequenceDiagramFormatter_OverridesPath(t *testing.T) {
-	formatter := NewSequenceDiagramFormatter(".sequence-diagram")
+	formatter := SequenceDiagram(".sequence-diagram")
 
 	assert.Equal(t, ".sequence-diagram", formatter.storagePath)
 }

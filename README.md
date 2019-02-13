@@ -164,6 +164,7 @@ func TestApi(t *testing.T) {
 
 func TestApi(t *testing.T) {
 	apitest.New().
+		Report(apitest.SequenceDiagram()).
 		Mocks(getUser, getPreferences).
 		Handler(handler).
 		Get("/hello").
