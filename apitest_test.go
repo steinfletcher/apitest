@@ -628,7 +628,6 @@ func TestCreateHash_GroupsByEndpoint(t *testing.T) {
 	}
 }
 
-
 type RecorderCaptor struct {
 	capturedRecorder *Recorder
 }
