@@ -463,15 +463,16 @@ func (a *APITest) report() {
 	})
 
 	meta := map[string]interface{}{}
+
+	for k, v := range a.meta {
+		meta[k] = v
+	}
+
 	meta["status_code"] = capturedFinalRes.StatusCode
 	meta["path"] = capturedInboundReq.URL.String()
 	meta["method"] = capturedInboundReq.Method
 	meta["name"] = a.name
 	meta["hash"] = createHash(meta)
-
-	for k, v := range a.meta {
-		meta[k] = v
-	}
 
 	recorder.AddMeta(meta)
 

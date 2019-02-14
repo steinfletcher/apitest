@@ -601,6 +601,34 @@ func TestApiTest_CopyHttpRequest(t *testing.T) {
 	assert.Equal(t, reqCopy.Header, req.Header)
 }
 
+func TestCreateHash_GroupsByEndpoint(t *testing.T) {
+	tests := []struct {
+		app      string
+		method   string
+		path     string
+		name     string
+		expected string
+	}{
+		{app: "a", method: "GET", path: "/v1/abc", name: "test1", expected: "1850189403_2569220284"},
+		{app: "a", method: "GET", path: "/v1/abc", name: "test2", expected: "1850189403_2619553141"},
+		{app: "b", method: "GET", path: "/v1/abc", name: "test1", expected: "547235502_2569220284"},
+		{app: "b", method: "GET", path: "/v1/abc", name: "test2", expected: "547235502_2619553141"},
+	}
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s %s %s %s", test.app, test.method, test.path, test.name), func(t *testing.T) {
+			meta := map[string]interface{}{
+				"app":    test.app,
+				"method": test.method,
+				"path":   test.path,
+				"name":   test.name,
+			}
+			hash := createHash(meta)
+			assert.Equal(t, test.expected, hash)
+		})
+	}
+}
+
+
 type RecorderCaptor struct {
 	capturedRecorder *Recorder
 }
