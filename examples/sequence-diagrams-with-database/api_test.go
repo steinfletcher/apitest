@@ -14,8 +14,6 @@ import (
 func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
 	t.SkipNow()
 
-	testDB := NewRecordingDB()
-	app := newApp(testDB)
 	username := uuid.NewV4().String()[0:7]
 
 	DBSetup(func(db *sqlx.DB) {
@@ -23,11 +21,8 @@ func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
 		db.MustExec(fmt.Sprintf(q, username, true))
 	})
 
-	apitest.New("gets the user").
+	apiTest("gets the user").
 		Mocks(getUserMock(username)).
-		Report(apitest.SequenceDiagram()).
-		RecorderHook(RecordingHook(testDB)).
-		Handler(app.Router).
 		Get("/user").
 		Query("name", username).
 		Expect(t).
@@ -45,4 +40,14 @@ func getUserMock(username string) *apitest.Mock {
 		Body(fmt.Sprintf(`{"name": "%s", "id": "1234"}`, username)).
 		Status(http.StatusOK).
 		End()
+}
+
+func apiTest(name string) *apitest.APITest {
+	testDB := NewRecordingDB()
+	app := newApp(testDB)
+
+	return apitest.New(name).
+		Report(apitest.SequenceDiagram()).
+		RecorderHook(RecordingHook(testDB)).
+		Handler(app.Router)
 }
