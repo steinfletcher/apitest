@@ -171,7 +171,7 @@ func TestApi(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		Body(`{"name": "jon", "id": "1234"}`).
-		Report()
+		End()
 }
 ```
 
