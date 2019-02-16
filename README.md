@@ -3,6 +3,7 @@
 [![GoDoc](https://godoc.org/github.com/steinfletcher/apitest?status.svg)](https://godoc.org/github.com/steinfletcher/apitest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/steinfletcher/apitest)](https://goreportcard.com/report/github.com/steinfletcher/apitest)
 [![Build Status](https://travis-ci.org/steinfletcher/apitest.svg?branch=master)](https://travis-ci.org/steinfletcher/apitest) [![Coverage Status](https://coveralls.io/repos/github/steinfletcher/apitest/badge.svg?branch=master)](https://coveralls.io/github/steinfletcher/apitest?branch=master)
+<span class="badge-buymeacoffee"><a href="https://buymeacoffee.com/25YexDsi7" title="Donate to this project using Buy Me A Coffee"><img src="https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg" alt="Buy Me A Coffee donate button" /></a></span>
 
 A simple and extensible behavioural testing library in golang. Supports mocking external http calls and renders sequence diagrams on completion.
 
