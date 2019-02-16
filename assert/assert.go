@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func Len(t *testing.T, actual interface{}, expected int) {
+func Len(t testing.TB, actual interface{}, expected int) {
 	v := reflect.ValueOf(actual)
 	defer func() {
 		if e := recover(); e != nil {
@@ -22,7 +22,7 @@ func Len(t *testing.T, actual interface{}, expected int) {
 	}
 }
 
-func Error(t *testing.T, actual error, expected string) {
+func Error(t testing.TB, actual error, expected string) {
 	if actual == nil {
 		t.Fatalf("expected an error but got nil.")
 	}
@@ -32,19 +32,19 @@ func Error(t *testing.T, actual error, expected string) {
 	}
 }
 
-func True(t *testing.T, actual bool) {
+func True(t testing.TB, actual bool) {
 	if !actual {
 		t.Fatal("expected true but received false")
 	}
 }
 
-func False(t *testing.T, actual bool) {
+func False(t testing.TB, actual bool) {
 	if actual {
 		t.Fatal("expected false but received true")
 	}
 }
 
-func Equal(t *testing.T, expected, actual interface{}, message ...string) {
+func Equal(t testing.TB, expected, actual interface{}, message ...string) {
 	if !ObjectsAreEqual(expected, actual) {
 		if len(message) > 0 {
 			t.Fatalf(strings.Join(message, ", "))
@@ -74,7 +74,7 @@ func ObjectsAreEqual(expected, actual interface{}) bool {
 	return bytes.Equal(exp, act)
 }
 
-func JsonEqual(t *testing.T, expected string, actual string) {
+func JsonEqual(t testing.TB, expected string, actual string) {
 	var expectedJSONAsInterface, actualJSONAsInterface interface{}
 
 	if err := json.Unmarshal([]byte(expected), &expectedJSONAsInterface); err != nil {
@@ -88,13 +88,13 @@ func JsonEqual(t *testing.T, expected string, actual string) {
 	Equal(t, expectedJSONAsInterface, actualJSONAsInterface)
 }
 
-func NotNil(t *testing.T, actual interface{}) {
+func NotNil(t testing.TB, actual interface{}) {
 	if actual == nil {
 		t.Fatalf("Expected value to not be nil")
 	}
 }
 
-func Nil(t *testing.T, actual interface{}) {
+func Nil(t testing.TB, actual interface{}) {
 	if actual != nil {
 		t.Fatalf("Expected value to be nil")
 	}
