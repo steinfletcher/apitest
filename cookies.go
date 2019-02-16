@@ -116,7 +116,7 @@ func compareCookies(expectedCookie *Cookie, actualCookie *http.Cookie) (bool, []
 		}
 
 		if expectedCookie.domain != nil && *expectedCookie.domain != actualCookie.Domain {
-			compareErrors = append(compareErrors, formatError("Domain", *expectedCookie.value, actualCookie.Domain))
+			compareErrors = append(compareErrors, formatError("Domain", *expectedCookie.domain, actualCookie.Domain))
 		}
 
 		if expectedCookie.path != nil && *expectedCookie.path != actualCookie.Path {
