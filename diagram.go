@@ -158,7 +158,7 @@ func NewHTMLTemplateModel(r *Recorder) (HTMLTemplateModel, error) {
 		case HttpRequest:
 			httpReq := v.Value
 			webSequenceDiagram.AddRequestRow(v.Source, v.Target, fmt.Sprintf("%s %s", httpReq.Method, httpReq.URL))
-			entry, err := newHttpRequestLogEntry(httpReq)
+			entry, err := NewHttpRequestLogEntry(httpReq)
 			if err != nil {
 				return HTMLTemplateModel{}, err
 			}
@@ -166,7 +166,7 @@ func NewHTMLTemplateModel(r *Recorder) (HTMLTemplateModel, error) {
 			logs = append(logs, entry)
 		case HttpResponse:
 			webSequenceDiagram.AddResponseRow(v.Source, v.Target, strconv.Itoa(v.Value.StatusCode))
-			entry, err := newHttpResponseLogEntry(v.Value)
+			entry, err := NewHttpResponseLogEntry(v.Value)
 			if err != nil {
 				return HTMLTemplateModel{}, err
 			}
@@ -204,7 +204,7 @@ func NewHTMLTemplateModel(r *Recorder) (HTMLTemplateModel, error) {
 	}, nil
 }
 
-func newHttpRequestLogEntry(req *http.Request) (LogEntry, error) {
+func NewHttpRequestLogEntry(req *http.Request) (LogEntry, error) {
 	reqHeader, err := httputil.DumpRequest(req, false)
 	if err != nil {
 		return LogEntry{}, err
@@ -216,7 +216,7 @@ func newHttpRequestLogEntry(req *http.Request) (LogEntry, error) {
 	return LogEntry{Header: string(reqHeader), Body: body}, err
 }
 
-func newHttpResponseLogEntry(res *http.Response) (LogEntry, error) {
+func NewHttpResponseLogEntry(res *http.Response) (LogEntry, error) {
 	resDump, err := httputil.DumpResponse(res, false)
 	if err != nil {
 		return LogEntry{}, err
