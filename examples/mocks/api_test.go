@@ -8,6 +8,7 @@ import (
 
 func TestGetUser_Success(t *testing.T) {
 	apitest.New().
+		Debug().
 		Mocks(getPreferencesMock, getUserMock).
 		Handler(newApp().Router).
 		Get("/user").

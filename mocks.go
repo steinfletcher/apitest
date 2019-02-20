@@ -100,9 +100,15 @@ func (r *Transport) RoundTrip(req *http.Request) (mockResponse *http.Response, m
 		}()
 	}
 
-	if matchedResponse, matchErrors := matches(req, r.mocks); matchErrors == nil {
+	matchedResponse, matchErrors := matches(req, r.mocks)
+	if matchErrors == nil {
 		return buildResponseFromMock(matchedResponse), nil
 	}
+
+	if r.debugEnabled {
+		fmt.Printf("failed to match mocks. Errors: %s\n", matchErrors)
+	}
+
 	return nil, matchErrors
 }
 
