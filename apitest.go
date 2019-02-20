@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/steinfletcher/apitest/assert"
 	"hash/fnv"
 	"io/ioutil"
 	"net/http"
@@ -17,6 +16,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const systemUnderTestDefaultName = "sut"
@@ -642,7 +643,7 @@ func (a *APITest) assertResponse(res *httptest.ResponseRecorder) {
 
 	if a.response.body != "" {
 		if isJSON(a.response.body) {
-			assert.JsonEqual(a.t, a.response.body, res.Body.String())
+			assert.JSONEq(a.t, a.response.body, res.Body.String())
 		} else {
 			assert.Equal(a.t, a.response.body, res.Body.String())
 		}
@@ -662,7 +663,7 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 				}
 			}
 			assert.Equal(a.t, true, foundCookie, "ExpectedCookie not found - "+*expectedCookie.name)
-			assert.Equal(a.t, 0, len(mismatchedFields), mismatchedFields...)
+			assert.Equal(a.t, 0, len(mismatchedFields), mismatchedFields)
 		}
 	}
 

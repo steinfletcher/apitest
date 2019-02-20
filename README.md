@@ -9,8 +9,6 @@ A simple and extensible behavioural testing library in golang. Supports mocking 
 
 In behavioural tests the internal structure of the app is not known by the tests. Data is input to the system and the outputs are expected to meet certain conditions.
 
-**This library is dependency free and we intend to keep it that way**
-
 ## Installation
 
 ```bash

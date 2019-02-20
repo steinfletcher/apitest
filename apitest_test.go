@@ -2,7 +2,7 @@ package apitest
 
 import (
 	"fmt"
-	"github.com/steinfletcher/apitest/assert"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"

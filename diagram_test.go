@@ -1,7 +1,7 @@
 package apitest
 
 import (
-	"github.com/steinfletcher/apitest/assert"
+	"github.com/stretchr/testify/assert"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -135,7 +135,7 @@ func TestNewHttpRequestLogEntry(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, strings.Contains(logEntry.Header, "GET /path"))
 	assert.True(t, strings.Contains(logEntry.Header, "HTTP/1.1"))
-	assert.JsonEqual(t, logEntry.Body, `{"a": 12345}`)
+	assert.JSONEq(t, logEntry.Body, `{"a": 12345}`)
 }
 
 func TestNewHttpResponseLogEntry_JSON(t *testing.T) {
@@ -152,7 +152,7 @@ func TestNewHttpResponseLogEntry_JSON(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, strings.Contains(logEntry.Header, `HTTP/1.1 200 OK`))
 	assert.True(t, strings.Contains(logEntry.Header, `Content-Length: 21`))
-	assert.JsonEqual(t, logEntry.Body, `{"a": 12345}`)
+	assert.JSONEq(t, logEntry.Body, `{"a": 12345}`)
 }
 
 func TestNewHttpResponseLogEntry_PlainText(t *testing.T) {
