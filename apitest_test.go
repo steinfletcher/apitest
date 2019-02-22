@@ -1,6 +1,7 @@
 package apitest
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -588,7 +589,7 @@ func TestApiTest_BuildQueryCollection_EmptyIfNoParams(t *testing.T) {
 }
 
 func TestApiTest_CopyHttpRequest(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", bytes.NewBufferString("12345"))
 	req.Header.Add("a", "1")
 	req.Header.Add("b", "2")
 
@@ -599,6 +600,7 @@ func TestApiTest_CopyHttpRequest(t *testing.T) {
 	assert.Equal(t, reqCopy.Host, req.Host)
 	assert.Equal(t, reqCopy.ContentLength, req.ContentLength)
 	assert.Equal(t, reqCopy.Header, req.Header)
+	assert.Equal(t, reqCopy.Body, req.Body)
 }
 
 func TestCreateHash_GroupsByEndpoint(t *testing.T) {

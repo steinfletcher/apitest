@@ -765,6 +765,7 @@ func copyHttpRequest(request *http.Request) *http.Request {
 	if request.Body != nil {
 		bodyBytes, _ := ioutil.ReadAll(request.Body)
 		resCopy.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+		request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 	}
 
 	if request.URL != nil {
