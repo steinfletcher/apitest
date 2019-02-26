@@ -30,9 +30,10 @@ go get -u github.com/steinfletcher/apitest
 
 ### Companion libraries
 
-| Library                                                        | Comment                   |
-| -------------------------------------------------------------- | ------------------------- |
-| [JSONPath](https://github.com/steinfletcher/api-test-jsonpath) | JSONPath assertion addons |
+| Library                                                        | Comment                              |
+| -------------------------------------------------------------- | ------------------------------------ |
+| [JSONPath](https://github.com/steinfletcher/api-test-jsonpath) | JSONPath assertion addons            |
+| [PlantUML](https://github.com/steinfletcher/apitest-plantuml)  | Export sequence diagrams as plantUML |
 
 ### Code snippets
 
