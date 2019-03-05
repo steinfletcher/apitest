@@ -433,7 +433,7 @@ func TestApiTest_AssertFunc(t *testing.T) {
 		t.Run(fmt.Sprintf("status: %d", test.statusCode), func(t *testing.T) {
 			res := httptest.NewRecorder()
 			res.Code = test.statusCode
-			apitTest:= New().
+			apitTest := New().
 				Patch("/hello").
 				Expect(t).
 				Assert(IsSuccess)
