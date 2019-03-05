@@ -322,7 +322,7 @@ type Response struct {
 	jsonPathExpression string
 	jsonPathAssert     func(interface{})
 	apiTest            *APITest
-	assert             Assert
+	assert             []Assert
 }
 
 // Assert is a user defined custom assertion function
@@ -378,7 +378,7 @@ func (r *Response) Status(s int) *Response {
 // Assert allows the consumer to provide a user defined function containing their own
 // custom assertions
 func (r *Response) Assert(fn func(*http.Response, *http.Request) error) *Response {
-	r.assert = fn
+	r.assert = append(r.assert, fn)
 	return r.apiTest.response
 }
 
@@ -530,13 +530,22 @@ func (a *APITest) run() {
 	a.assertResponse(res)
 	a.assertHeaders(res)
 	a.assertCookies(res)
+	err := a.assertFunc(res, req)
+	if err != nil {
+		a.t.Fatal(err.Error())
+	}
+}
 
-	if a.response.assert != nil {
-		err := a.response.assert(res.Result(), req)
-		if err != nil {
-			a.t.Fatal(err.Error())
+func (a *APITest) assertFunc(res *httptest.ResponseRecorder, req *http.Request) error {
+	if len(a.response.assert) > 0 {
+		for _, assertFn := range a.response.assert {
+			err := assertFn(res.Result(), req)
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {

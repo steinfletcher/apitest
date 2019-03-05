@@ -2,6 +2,7 @@ package apitest
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -408,6 +409,40 @@ func TestApiTest_CustomAssert(t *testing.T) {
 		Expect(t).
 		Assert(IsSuccess).
 		End()
+}
+
+func TestApiTest_SupportsMultipleCustomAsserts(t *testing.T) {
+	test := New().
+		Patch("/hello").
+		Expect(t).
+		Assert(IsSuccess).
+		Assert(IsSuccess)
+
+	assert.Len(t, test.assert, 2)
+}
+
+func TestApiTest_AssertFunc(t *testing.T) {
+	tests := []struct {
+		statusCode  int
+		expectedErr error
+	}{
+		{200, nil},
+		{400, errors.New("not success. Status code=400")},
+	}
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("status: %d", test.statusCode), func(t *testing.T) {
+			res := httptest.NewRecorder()
+			res.Code = test.statusCode
+			apitTest:= New().
+				Patch("/hello").
+				Expect(t).
+				Assert(IsSuccess)
+
+			err := apitTest.apiTest.assertFunc(res, nil)
+
+			assert.Equal(t, test.expectedErr, err)
+		})
+	}
 }
 
 func TestApiTest_Report(t *testing.T) {
