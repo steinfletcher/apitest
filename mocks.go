@@ -398,6 +398,9 @@ var pathMatcher Matcher = func(r *http.Request, spec *MockRequest) error {
 
 var hostMatcher Matcher = func(r *http.Request, spec *MockRequest) error {
 	receivedHost := r.Host
+	if receivedHost == "" {
+		receivedHost = r.URL.Host
+	}
 	mockHost := spec.url.Host
 	if mockHost == "" {
 		return nil
