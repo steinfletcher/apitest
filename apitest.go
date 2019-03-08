@@ -336,7 +336,13 @@ func (r *Response) Body(b string) *Response {
 
 // Cookies is the expected response cookies
 func (r *Response) Cookies(cookies ...*Cookie) *Response {
-	r.cookies = cookies
+	r.cookies = append(r.cookies, cookies...)
+	return r
+}
+
+// Cookie is used to match on an individual cookie name/value pair in the expected response cookies
+func (r *Response) Cookie(name, value string) *Response {
+	r.cookies = append(r.cookies, NewCookie(name).Value(value))
 	return r
 }
 
@@ -672,7 +678,7 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 				}
 			}
 			assert.Equal(a.t, true, foundCookie, "ExpectedCookie not found - "+*expectedCookie.name)
-			assert.Equal(a.t, 0, len(mismatchedFields), mismatchedFields)
+			assert.Equal(a.t, 0, len(mismatchedFields), strings.Join(mismatchedFields,","))
 		}
 	}
 
