@@ -294,6 +294,10 @@ func TestApiTest_MatchesResponseCookies(t *testing.T) {
 			Name:  "VVV",
 			Value: "9ig32g34g",
 		})
+		http.SetCookie(w, &http.Cookie{
+			Name:  "YYY",
+			Value: "kfiufhtne",
+		})
 
 		w.WriteHeader(http.StatusOK)
 	})
@@ -306,6 +310,7 @@ func TestApiTest_MatchesResponseCookies(t *testing.T) {
 		Cookies(
 			NewCookie("ABC").Value("12345"),
 			NewCookie("DEF").Value("67890")).
+		Cookie("YYY", "kfiufhtne").
 		CookiePresent("XXX").
 		CookiePresent("VVV").
 		CookieNotPresent("ZZZ").
