@@ -310,7 +310,7 @@ func TestApiTest_MatchesResponseCookies(t *testing.T) {
 		Cookies(
 			NewCookie("ABC").Value("12345"),
 			NewCookie("DEF").Value("67890")).
-		Cookie("YYY","kfiufhtne").
+		Cookie("YYY", "kfiufhtne").
 		CookiePresent("XXX").
 		CookiePresent("VVV").
 		CookieNotPresent("ZZZ").
