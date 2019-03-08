@@ -678,7 +678,7 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 				}
 			}
 			assert.Equal(a.t, true, foundCookie, "ExpectedCookie not found - "+*expectedCookie.name)
-			assert.Equal(a.t, 0, len(mismatchedFields), strings.Join(mismatchedFields,","))
+			assert.Equal(a.t, 0, len(mismatchedFields), strings.Join(mismatchedFields, ","))
 		}
 	}
 
