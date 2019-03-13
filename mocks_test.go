@@ -242,6 +242,77 @@ func TestMocks_PathMatcher(t *testing.T) {
 	}
 }
 
+func TestMocks_AddMatcher(t *testing.T) {
+	tests := map[string]struct {
+		matcherResponse error
+		mockResponse    *MockResponse
+		matchErrors     error
+	}{
+		"match": {
+			matcherResponse: nil,
+			mockResponse: &MockResponse{
+				body:       `{"ok": true}`,
+				statusCode: 200,
+				times:      1,
+			},
+			matchErrors: nil,
+		},
+		"no match": {
+			matcherResponse: errors.New("nope"),
+			mockResponse:    nil,
+			matchErrors: &unmatchedMockError{errors: map[int][]error{
+				1: {errors.New("nope")},
+			}},
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/test/mock", nil)
+			matcher := func(r *http.Request, mr *MockRequest) error {
+				return test.matcherResponse
+			}
+
+			testMock := NewMock().
+				Get("/test/mock").
+				AddMatcher(matcher).
+				RespondWith().
+				Body(`{"ok": true}`).
+				Status(http.StatusOK).
+				End()
+
+			mockResponse, matchErrors := matches(req, []*Mock{testMock})
+
+			assert.Equal(t, test.matchErrors, matchErrors)
+			if test.mockResponse == nil {
+				assert.Nil(t, mockResponse)
+			} else {
+				assert.Equal(t, test.mockResponse.body, mockResponse.body)
+				assert.Equal(t, test.mockResponse.statusCode, mockResponse.statusCode)
+				assert.Equal(t, test.mockResponse.times, mockResponse.times)
+			}
+		})
+	}
+}
+
+func TestMocks_AddMatcher_KeepsDefaultMocks(t *testing.T) {
+	testMock := NewMock()
+
+	// Default matchers present on new mock
+	assert.Equal(t, 8, len(testMock.request.matchers))
+
+	testMock.Get("/test/mock").
+		AddMatcher(func(r *http.Request, mr *MockRequest) error {
+			return nil
+		}).
+		RespondWith().
+		Body(`{"ok": true}`).
+		Status(http.StatusOK).
+		End()
+
+	// New matcher added successfully
+	assert.Equal(t, 9, len(testMock.request.matchers))
+}
+
 func TestMocks_PanicsIfUrlInvalid(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
@@ -273,6 +344,37 @@ func TestMocks_Matches(t *testing.T) {
 	assert.Nil(t, matchErrors)
 	assert.NotNil(t, mockResponse)
 	assert.Equal(t, `{"is_contactable": true}`, mockResponse.body)
+}
+
+func TestMocks_Matches_Errors(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/test/mock", nil)
+
+	testMock := NewMock().
+		Post("/test/mock").
+		Body(`{"bodyKey":"bodyVal"}`).
+		Query("queryKey", "queryVal").
+		QueryPresent("queryKey2").
+		QueryParams(map[string]string{"queryKey": "queryVal"}).
+		Header("headerKey", "headerVal").
+		Headers(map[string]string{"headerKey": "headerVal"}).
+		RespondWith().
+		Header("responseHeaderKey", "responseHeaderVal").
+		Body(`{"responseBodyKey": "responseBodyVal"}`).
+		Status(http.StatusOK).
+		End()
+
+	mockResponse, matchErrors := matches(req, []*Mock{testMock})
+
+	assert.Nil(t, mockResponse)
+	assert.Equal(t, &unmatchedMockError{errors: map[int][]error{
+		1: {
+			errors.New("received method GET did not match mock method POST"),
+			errors.New("not all of received headers map[] matched expected mock headers map[Headerkey:[headerVal headerVal]]"),
+			errors.New("not all of received query params map[] matched expected mock query params map[queryKey:[queryVal queryVal]]"),
+			errors.New("expected query param queryKey2 not received"),
+			errors.New("expected a body but received none"),
+		},
+	}}, matchErrors)
 }
 
 func TestMocks_Matches_NilIfNoMatch(t *testing.T) {
