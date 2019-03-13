@@ -201,6 +201,7 @@ type MockRequest struct {
 	query        map[string][]string
 	queryPresent []string
 	body         string
+	matchers     []Matcher
 }
 
 type MockResponse struct {
@@ -215,9 +216,10 @@ type MockResponse struct {
 func NewMock() *Mock {
 	mock := &Mock{}
 	req := &MockRequest{
-		mock:    mock,
-		headers: map[string][]string{},
-		query:   map[string][]string{},
+		mock:     mock,
+		headers:  map[string][]string{},
+		query:    map[string][]string{},
+		matchers: defaultMatchers,
 	}
 	res := &MockResponse{
 		mock:    mock,
@@ -280,7 +282,7 @@ func matches(req *http.Request, mocks []*Mock) (*MockResponse, error) {
 		}
 
 		var mockMatchErrors []error
-		for _, matcher := range matchers {
+		for _, matcher := range mock.request.matchers {
 			if matcherError := matcher(req, mock.request); matcherError != nil {
 				mockMatchErrors = append(mockMatchErrors, matcherError)
 			}
@@ -330,6 +332,11 @@ func (r *MockRequest) QueryParams(queryParams map[string]string) *MockRequest {
 
 func (r *MockRequest) QueryPresent(key string) *MockRequest {
 	r.queryPresent = append(r.queryPresent, key)
+	return r
+}
+
+func (r *MockRequest) AddMatcher(matcher Matcher) *MockRequest {
+	r.matchers = append(r.matchers, matcher)
 	return r
 }
 
@@ -555,7 +562,7 @@ func errorOrNil(statement bool, errorMessage func() string) error {
 	return errors.New(errorMessage())
 }
 
-var matchers = []Matcher{
+var defaultMatchers = []Matcher{
 	pathMatcher,
 	hostMatcher,
 	schemeMatcher,
