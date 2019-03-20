@@ -1,0 +1,24 @@
+{
+  "name": "apitestdocs",
+  "type": "static",
+  "static": {
+    "dir": "public"
+  },
+  "stages": {
+    "staging": {
+      "domain": "apitest.dev"
+    }
+  },
+  "lambda": {
+    "policy": [
+      {
+        "Effect": "Allow",
+        "Resource": "*",
+        "Action": [
+          "rds:*",
+          "cloudfront:UpdateDistribution"
+        ]
+      }
+    ]
+  }
+}

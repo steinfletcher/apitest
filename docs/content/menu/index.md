@@ -8,6 +8,6 @@ headless: true
     - [Reports]({{< relref "/docs/reports.md" >}})
 - [Request]({{< relref "/docs/request.md" >}})
 - [Expectations]({{< relref "/docs/response.md" >}})
-- [**Examples**](https://github.com/steinfletcher/apitest/examples) 
+- [**Examples**](https://github.com/steinfletcher/apitest/tree/master/examples) 
 
 [![GoDoc](https://godoc.org/github.com/steinfletcher/apitest?status.svg)](https://godoc.org/github.com/steinfletcher/apitest)
