@@ -3,47 +3,46 @@ title: Introduction
 type: docs
 ---
 
-# Acerbo datus maxime
+# Getting started
 
-## Tempora nisi nunc
+## Overview
+
+apitest is a simple and extensible behavioural testing library written in golang. It supports mocking external http calls and renders sequence diagrams on test completion.
+
+In behavioural tests the internal structure of the application is not known by the tests. Data is input to the system under test (SUT) and the outputs are expected to meet certain conditions.
+
+## Installation
+
+Using `go get`
+
+```bash
+go get -u github.com/steinfletcher/apitest
+```
+
+Using `dep`
+
+```bash
+dep ensure -add github.com/steinfletcher/apitest
+```
+
+apitest is tested against Go `1.11.x` and `stable` and follows semantic versioning managed through GitHub releases.
+
+## Anatomy of a test
+
+A test consists of three main parts
+
+- [Configuration](http://todo): defines the `http.handler` that will be tested and any specific test configurations
+- [Request](http://todo): defines the test input. This is typically a http request
+- [Expectations](http://todo): defines how the application under test should respond. This is typically a http response
 
 ```go
-// returns the user
 func TestGetUser(t *testing.T) {
-	apitest.New().
+	apitest.New().                              // configuration
 		Handler(newApp().app).
-		Get("/user/1234").
+		Get("/user/1234").                      // request
 		Expect(t).
-		Body(`{"id": "1234", "name": "Andy"}`).
+		Body(`{"id": "1234", "name": "Andy"}`). // expectations
 		Status(http.StatusOK).
 		End()
 }
 ```
-
-Lorem **markdownum** emicat gestu. Cannis sol pressit ducta. **Est** Idaei,
-tremens ausim se tutaeque, illi ulnis hausit, sed, lumina cutem. Quae avis
-sequens!
-
-## Locis suis novi cum suoque decidit eadem
-
-Idmoniae ripis, at aves, ali missa adest, ut *et autem*, et ab? Venit spes
-versus finis sermonibus patefecit murum nec est sine oculis. *Ille* inmota
-macies domoque caelestia cadit tantummodo scelus procul, corde!
-
-1. Dolentem capi parte rostro alvum habentem pudor
-2. Fulgentia sanguine paret
-3. E punior consurgit lentus
-4. Vox hasta eras micantes
-
-## Suis quot
-
-Ea *furtique* risere fratres edidit terrae magis. Colla tam mihi tenebat:
-miseram excita suadent es pecudes iam. Concilio *quam* velatus posset ait quod
-nunc!
-
-## Astris ipse furtiva vota collumque et habe
-
-Est in vagis et Pittheus tu arge accipiter regia iram vocatur nurus. Omnes ut
-olivae sensit **arma sorori** deducit, inesset **crudus**, ego vetuere aliis,
-modo arsit? Utinam rapta fiducia valuere litora *adicit cursu*, ad facies:
-fragosis suae dextra geruntur functus vulgata.
