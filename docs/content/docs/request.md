@@ -1,9 +1,6 @@
-# Request
-
-[![GoDoc](https://godoc.org/github.com/steinfletcher/apitest?status.svg)](https://godoc.org/github.com/steinfletcher/apitest#Request)
+# Request 
 
 To configure the initial request into the system under test, you can specify request parameters such as the http method, url, headers and cookies.
-
 
 ## Creating a request
 

@@ -33,7 +33,7 @@ A test consists of three main parts
 
 - [Configuration](http://todo): defines the `http.handler` that will be tested and any specific test configurations
 - [Request]({{< relref "/docs/request.md" >}}): defines the test input. This is typically a http request
-- [Expectations](http://todo): defines how the application under test should respond. This is typically a http response
+- [Assertions]({{< relref "/docs/assertions.md" >}}): defines how the application under test should respond. This is typically a http response
 
 ```go
 func TestGetUser(t *testing.T) {

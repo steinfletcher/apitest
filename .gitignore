@@ -1,3 +1,4 @@
 /bin/
 .idea/
 coverage.out
+resources/_gen/images/

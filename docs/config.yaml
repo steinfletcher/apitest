@@ -9,7 +9,9 @@ disablePathToLower: true
 enableGitInfo: true
 
 PygmentsCodeFences: true
-PygmentsStyle: tango
+PygmentsStyle: emacs
+
+disableKinds: ["taxonomy", "taxonomyTerm"]
 
 params:
   # (Optional, default true) Show or hide table of contents globally
