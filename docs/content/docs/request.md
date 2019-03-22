@@ -1,56 +1,132 @@
 # Request
 
-## Query Parameters
+[![GoDoc](https://godoc.org/github.com/steinfletcher/apitest?status.svg)](https://godoc.org/github.com/steinfletcher/apitest#Request)
 
-## Body
+To configure the initial request into the system under test, you can specify request parameters such as the http method, url, headers and cookies.
+
+
+## Creating a request
+
+```go
+apitest.New().
+	Handler(handler).
+	Method(http.MethodGet).
+	URL("/user/12345")
+```
+
+This is quite verbose, so there are some shortcuts defined for the common http verbs that wrap up the `Method` and `URL` functions. The example can be more concisely defined as
+
+```go
+apitest.New().
+	Handler(handler).
+	Get("/user/12345")
+```
+
+## Query parameters
+
+There are multiple ways to specify query parameters. These approaches are chainable.
+
+### params
+
+```go
+Query("param", "value")
+```
+
+### map
+
+```go
+QueryParams(map[string]string{"param1": "value1", "param2": "value2"})
+```
+
+### collection
+
+```go
+QueryCollection(map[string][]string{"a": {"1", "2"}})
+```
+
+Providing `{"a": {"1", "2"}` results in parameters encoded as `a=1&a=2`. 
+
+### custom
+
+If none of the above approaches is suitable, you can defined a request interceptor and implement custom logic.
+
+```go
+apitest.New().
+	Handler(handler).
+	Intercept(func(req *http.Request) {
+		req.URL.RawQuery = "a[]=xxx&a[]=yyy"
+	}).
+	Get("/path")
+```
 
 ## Headers
 
-Lorem **markdownum pignora pelle** est tota propiore conpellat pectoribus de
-pectora summo. Redit teque digerit hominumque toris verebor lumina non cervice
-subde tollit usus habet Arctonque, furores quas nec ferunt. Quoque montibus nunc
-caluere tempus inhospita parcite confusaque translucet patri vestro qui optatis
-lumine cognoscere flos nubis! Fronde ipsamque patulos Dryopen deorum.
+There are multiple ways to specify http request headers. These approaches are chainable.
 
-1. Exierant elisi ambit vivere dedere
-2. Duce pollice
-3. Eris modo
-4. Spargitque ferrea quos palude
+### params
 
-Rursus nulli murmur; hastile inridet ut ab gravi sententia! Nomine potitus
-silentia flumen, sustinet placuit petis in dilapsa erat sunt. [Atria
-tractus](http://agendo-dis.io/) malis.
+```go
+Header("name", "value")
+```
 
-1. Comas hunc haec pietate fetum procerum dixit
-2. Post torum vates letum Tiresia
-3. Flumen querellas
-4. Arcanaque montibus omnes
-5. Quidem et
+### map
+
+```go
+Headers(map[string]string{"name1": "value1", "name2": "value2"})
+```
 
 ## Cookies
 
-Victa caducifer, [malo vulnere](http://www.nec.org/iactorcolonos.php) contra
-dicere aurato, ludit regale, voca! Retorsit colit est profanae esse virescere
-furit nec; iaculi [matertera](http://iugis-thalamique.com/pecus) et visa est,
-viribus. Divesque creatis, tecta novat collumque vulnus
-[est](http://canentiet.net/lateri.php), parvas. **Faces illo pepulere** tempus
-adest. Tendit flamma, ab opes virum sustinet, sidus sequendo urbis.
+There are multiple ways to specify http request cookies. These approaches are chainable.
 
-    var multiplatform = cifs(illegal, zip, memory) / pcbPowerJavascript;
-    hdmi -= 3;
-    tunneling(constant(service_fi_hyper, avatarBar), matrixUmlMbps);
-    frequency /= nat(keyboardRecycle, programmingGnuPerl) + icfExbibyteCursor;
-    io_dithering(-5, markup / languageShortcut - driveHtml);
+### short form
 
-Iubar proles corpore raptos vero auctor imperium; sed et huic: manus caeli
-Lelegas tu lux. Verbis obstitit intus oblectamina fixis linguisque ausus sperare
-Echionides cornuaque tenent clausit possit. Omnia putatur. Praeteritae refert
-ausus; ferebant e primus lora nutat, vici quae mea ipse. Et iter nil spectatae
-vulnus haerentia iuste et exercebat, sui et.
+```go
+Cookie("name", "value")
+```
 
-Eurytus Hector, [materna](http://mandereevincitque.net/), ipsumque ut Politen,
-nec, nate, ignari, vernum cohaesit sequitur. Vel **mitis temploque** vocatus,
-inque alis, *oculos nomen* non silvis corpore coniunx ne displicet illa.
-Crescunt non unus, vidit visa quantum inmiti flumina mortis facto sic: undique a
-alios vincula sunt iactata abdita! Suspenderat ego fuit tendit: luna, ante urbem
-Propoetides **parte**.
+### struct
+
+`Cookies` is a variadic function that can be used to take a variable amount of cookies defined as a struct
+
+```go
+Cookies(apitest.NewCookie("name").
+	Value("value").
+	Path("/user").
+	Domain("example.com"))
+```
+
+The underlying fields of this struct are all pointer types. This allows the assertion library to ignore fields that are not defined in the struct.
+
+## Body
+
+There are two methods to set the request body - `Body` and `JSON`. `Body` will be copied to the raw request and wrapped in an `io.Reader`.
+
+```go
+Post("/message").
+Body("hello")
+``` 
+ 
+`JSON` does the same and copies the provided data to the body, but the `JSON` method also sets the content type to `application/json`.
+
+```go
+Post("/chat").
+JSON(`{"message": "hi"}`)
+```
+
+If you want to define other content types set the body using `Body(data)` and the header using `Header("Content-Type", "application/xml")`.
+
+```go
+Post("/path").
+Body("<html>content</html>").
+Header("Content-Type", "text/html")
+```
+
+## Basic auth
+
+A helper method is provided to add preemptive basic authentication to the request. 
+
+```go
+Get("/path").
+BasicAuth("username", "password").
+```

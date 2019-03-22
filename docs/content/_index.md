@@ -7,9 +7,9 @@ type: docs
 
 ## Overview
 
-apitest is a simple and extensible behavioural testing library written in golang. It supports mocking external http calls and renders sequence diagrams on test completion.
+apitest is a simple and extensible behavioural testing library written in golang. You can use `apitest` to simplify testing of REST based services or HTTP handlers. 
 
-In behavioural tests the internal structure of the application is not known by the tests. Data is input to the system under test (SUT) and the outputs are expected to meet certain conditions.
+`apitest` supports mocking external http calls and renders sequence diagrams on test completion.
 
 ## Installation
 
@@ -32,7 +32,7 @@ apitest is tested against Go `1.11.x` and `stable` and follows semantic versioni
 A test consists of three main parts
 
 - [Configuration](http://todo): defines the `http.handler` that will be tested and any specific test configurations
-- [Request](http://todo): defines the test input. This is typically a http request
+- [Request]({{< relref "/docs/request.md" >}}): defines the test input. This is typically a http request
 - [Expectations](http://todo): defines how the application under test should respond. This is typically a http response
 
 ```go
