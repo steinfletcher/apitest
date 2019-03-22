@@ -299,9 +299,8 @@ func (r *Request) Cookies(c ...*Cookie) *Request {
 }
 
 // BasicAuth is a builder method to sets basic auth on the request.
-// The credentials should be provided delimited by a colon, e.g. "username:password"
-func (r *Request) BasicAuth(auth string) *Request {
-	r.basicAuth = auth
+func (r *Request) BasicAuth(username, password string) *Request {
+	r.basicAuth = fmt.Sprintf("%s:%s", username, password)
 	return r
 }
 
