@@ -1,4 +1,4 @@
-# Request 
+# Request
 
 To configure the initial request into the system under test, you can specify request parameters such as the http method, url, headers and cookies.
 
@@ -41,11 +41,11 @@ QueryParams(map[string]string{"param1": "value1", "param2": "value2"})
 QueryCollection(map[string][]string{"a": {"1", "2"}})
 ```
 
-Providing `{"a": {"1", "2"}` results in parameters encoded as `a=1&a=2`. 
+which results in parameters encoded as `a=1&a=2`. 
 
 ### custom
 
-If none of the above approaches is suitable, you can defined a request interceptor and implement custom logic.
+If none of the above approaches are suitable, you can define a request interceptor and implement custom logic.
 
 ```go
 apitest.New().
@@ -58,7 +58,7 @@ apitest.New().
 
 ## Headers
 
-There are multiple ways to specify http request headers. These approaches are chainable.
+There are multiple ways to specify http request headers. The following approaches are chainable.
 
 ### params
 
@@ -126,4 +126,17 @@ A helper method is provided to add preemptive basic authentication to the reques
 ```go
 Get("/path").
 BasicAuth("username", "password").
+```
+
+## Intercept
+
+You can intercept the request before it is sent to the system under test. This can be useful for setting global http headers and custom query parameters.
+See [custom cookies]({{< relref "/docs/request.md#custom" >}})
+
+```go
+apitest.New(name).
+	Handler(router).
+	Intercept(func(request *http.Request) {
+		request.Header.Set("Authorization", "1234567890")
+	})
 ```
