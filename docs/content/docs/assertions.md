@@ -34,6 +34,36 @@ Body(`{"param": "value"}`)
 
 The assertion library checks if the content is `JSON` and if so performs the assertion using `testify's` [assert.JSONEq](https://godoc.org/github.com/stretchr/testify/assert#JSONEq) method. If the content is not `JSON`, `testify's` [assert.Equal](https://godoc.org/github.com/stretchr/testify/assert#Equal) method is used 
 
+### JSON Path
+
+You can use `JSONPath` to assert on partial content from the response body. This is useful when you are only interested in particular fields in the response.
+A separate module must be installed which provides these assertions - `go get -u github.com/steinfletcher/apitest-jsonpath`
+
+#### Equals
+
+When the selector returns a single value use `Equals`. Given the JSON body in the response is `{"id": 12345}`
+
+```go
+apitest.New(handler).
+	Get("/user").
+	Expect(t).
+	Assert(jsonpath.Equal(`$.id`, float64(12345))).
+	End()
+```
+
+#### Contains
+
+When the selector returns an array type use `Contains`. Given the JSON body in the response is `{"id": 12345, "items": [{"available": true, "color": "red"}, {"available": false, "color": "blue"}]}`, we can select all `color` values from the items array
+
+```go
+apitest.New().
+	Handler(handler).
+	Get("/hello").
+	Expect(t).
+	Assert(Contains(`$.items[?@.available==true].color`, "red")).
+	End()
+```
+
 ## Cookies
 
 Example:
