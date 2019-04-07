@@ -155,7 +155,7 @@ func buildResponseFromMock(mockResponse *MockResponse) *http.Response {
 	// if the content type isn't set and the body contains json, set content type as json
 	if len(mockResponse.body) > 0 {
 		if len(contentTypeHeader) == 0 {
-			if isJSON(mockResponse.body) {
+			if json.Valid([]byte(mockResponse.body)) {
 				contentType = "application/json"
 			} else {
 				contentType = "text/plain"

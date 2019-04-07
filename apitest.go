@@ -656,7 +656,7 @@ func (a *APITest) assertResponse(res *httptest.ResponseRecorder) {
 	}
 
 	if a.response.body != "" {
-		if isJSON(a.response.body) {
+		if json.Valid([]byte(a.response.body)) {
 			assert.JSONEq(a.t, a.response.body, res.Body.String())
 		} else {
 			assert.Equal(a.t, a.response.body, res.Body.String())
@@ -726,11 +726,6 @@ func (a *APITest) assertHeaders(res *httptest.ResponseRecorder) {
 			}
 		}
 	}
-}
-
-func isJSON(s string) bool {
-	var js map[string]interface{}
-	return json.Unmarshal([]byte(s), &js) == nil
 }
 
 func debugLog(prefix, header, msg string) {

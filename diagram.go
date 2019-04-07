@@ -240,7 +240,7 @@ func formatBodyContent(bodyReadCloser io.ReadCloser) (string, error) {
 	bodyReadCloser = ioutil.NopCloser(bytes.NewBuffer(body))
 
 	buf := new(bytes.Buffer)
-	if isJSON(string(body)) {
+	if json.Valid(body) {
 		jsonEncodeErr := json.Indent(buf, body, "", "    ")
 		if jsonEncodeErr != nil {
 			return "", jsonEncodeErr

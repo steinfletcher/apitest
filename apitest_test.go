@@ -254,6 +254,29 @@ func TestApiTest_MatchesJSONResponseBody(t *testing.T) {
 		End()
 }
 
+func TestApiTest_MatchesJSONResponseBodyWithWhitespace(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+		_, err := w.Write([]byte(`{"a": 12345, "b": "hi"}`))
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	New().
+		Handler(handler).
+		Get("/hello").
+		Expect(t).
+		Body(`{
+			"a": 12345,
+			"b": "hi"
+		}`).
+		Status(http.StatusCreated).
+		End()
+}
+
 func TestApiTest_MatchesTextResponseBody(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
