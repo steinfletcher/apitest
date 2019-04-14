@@ -51,6 +51,26 @@ Accept-Encoding: gzip
 
 ### Observe
 
+`Observe` can be used to inspect the request, response and `APITest` instance when the test completes. This method is used internally within `apitest` to capture all interactions that cross the mock server which enables rendering of the test results. 
+
+```go
+apitest.New().
+	Observe(func(res *http.Response, req *http.Request, apiTest *apitest.APITest) {
+		// do something with res and req
+	}).
+}
+```
+
 ### Intercept
+
+This is similar to `Observe` but is invoked pre request, allowing the implementer to mutate the request object before it is sent to the system under test. In this example we set the request params with a custom scheme
+
+```go
+apitest.New().
+	Handler(handler).
+	Intercept(func(req *http.Request) {
+	    req.URL.RawQuery = "a[]=xxx&a[]=yyy"
+	}).
+```
 
 ### Reporting
