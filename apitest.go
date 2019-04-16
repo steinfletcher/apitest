@@ -31,6 +31,7 @@ var responseDebugPrefix = fmt.Sprintf("<%s", divider)
 type APITest struct {
 	debugEnabled  bool
 	reporter      ReportFormatter
+	recorder      *Recorder
 	handler       http.Handler
 	name          string
 	request       *Request
@@ -97,6 +98,12 @@ func (a *APITest) Report(reporter ReportFormatter) *APITest {
 	return a
 }
 
+// Recorder provides a hook to add a recorder to the test
+func (a *APITest) Recorder(recorder *Recorder) *APITest {
+	a.recorder = recorder
+	return a
+}
+
 // Meta provides a hook to add custom meta data to the test which can be picked up when defining a custom reporter
 func (a *APITest) Meta(meta map[string]interface{}) *APITest {
 	a.meta = meta
@@ -143,6 +150,7 @@ func (a *APITest) ObserveMocks(observer Observe) *APITest {
 
 // RecorderHook allows the consumer to provider a function that will receive the recorder instance before the
 // test runs. This can be used to inject custom events which can then be rendered in diagrams
+// Deprecated: use Recorder() instead
 func (a *APITest) RecorderHook(hook RecorderHook) *APITest {
 	a.recorderHook = hook
 	return a
@@ -421,16 +429,19 @@ func (a *APITest) report() {
 		})
 	}
 
-	recorder := NewTestRecorder()
+	if a.recorder == nil {
+		a.recorder = NewTestRecorder()
+	}
+
 	if a.recorderHook != nil {
-		a.recorderHook(recorder)
+		a.recorderHook(a.recorder)
 	}
 
 	execTime := time.Now().UTC()
 	a.response.execute()
 	finishTime := time.Now().UTC()
 
-	recorder.
+	a.recorder.
 		AddTitle(fmt.Sprintf("%s %s", capturedInboundReq.Method, capturedInboundReq.URL.String())).
 		AddSubTitle(a.name).
 		AddHttpRequest(HttpRequest{
@@ -441,14 +452,14 @@ func (a *APITest) report() {
 		})
 
 	for _, interaction := range capturedMockInteractions {
-		recorder.AddHttpRequest(HttpRequest{
+		a.recorder.AddHttpRequest(HttpRequest{
 			Source:    quoted(systemUnderTestDefaultName),
 			Target:    quoted(interaction.request.Host),
 			Value:     interaction.request,
 			Timestamp: interaction.timestamp,
 		})
 		if interaction.response != nil {
-			recorder.AddHttpResponse(HttpResponse{
+			a.recorder.AddHttpResponse(HttpResponse{
 				Source:    quoted(interaction.request.Host),
 				Target:    quoted(systemUnderTestDefaultName),
 				Value:     interaction.response,
@@ -457,15 +468,15 @@ func (a *APITest) report() {
 		}
 	}
 
-	recorder.AddHttpResponse(HttpResponse{
+	a.recorder.AddHttpResponse(HttpResponse{
 		Source:    quoted(systemUnderTestDefaultName),
 		Target:    quoted(consumerName),
 		Value:     capturedFinalRes,
 		Timestamp: finishTime,
 	})
 
-	sort.Slice(recorder.Events, func(i, j int) bool {
-		return recorder.Events[i].GetTime().Before(recorder.Events[j].GetTime())
+	sort.Slice(a.recorder.Events, func(i, j int) bool {
+		return a.recorder.Events[i].GetTime().Before(a.recorder.Events[j].GetTime())
 	})
 
 	meta := map[string]interface{}{}
@@ -480,9 +491,9 @@ func (a *APITest) report() {
 	meta["name"] = a.name
 	meta["hash"] = createHash(meta)
 
-	recorder.AddMeta(meta)
+	a.recorder.AddMeta(meta)
 
-	a.reporter.Format(recorder)
+	a.reporter.Format(a.recorder)
 }
 
 func createHash(meta map[string]interface{}) string {

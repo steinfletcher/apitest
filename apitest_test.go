@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
@@ -508,6 +509,57 @@ func TestApiTest_Report(t *testing.T) {
 	assert.Equal(t, "POST", r.Meta["method"])
 	assert.Equal(t, "some test", r.Meta["name"])
 	assert.Equal(t, "abc.com", r.Meta["host"])
+}
+
+func TestApiTest_Recorder(t *testing.T) {
+	getUser := NewMock().
+		Get("http://localhost:8080").
+		RespondWith().
+		Status(http.StatusOK).
+		Body("1").
+		Times(2).
+		End()
+
+	reporter := &RecorderCaptor{}
+	messageRequest := MessageRequest{
+		Source:    "Source",
+		Target:    "Target",
+		Header:    "Header",
+		Body:      "Body",
+		Timestamp: time.Now().UTC(),
+	}
+	messageResponse := MessageResponse{
+		Source:    "Source",
+		Target:    "Target",
+		Header:    "Header",
+		Body:      "Body",
+		Timestamp: time.Now().UTC(),
+	}
+	recorder := NewTestRecorder()
+	recorder.AddMessageRequest(messageRequest)
+	recorder.AddMessageResponse(messageResponse)
+
+	New("some test").
+		Meta(map[string]interface{}{"host": "abc.com"}).
+		Report(reporter).
+		Recorder(recorder).
+		Mocks(getUser).
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			getUserData()
+			w.WriteHeader(http.StatusOK)
+		})).
+		Post("/hello").
+		Body(`{"a": 12345}`).
+		Headers(map[string]string{"Content-Type": "application/json"}).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	r := reporter.capturedRecorder
+	assert.Len(t, r.Events, 6)
+	assert.Equal(t, messageRequest, r.Events[0])
+	assert.Equal(t, messageResponse, r.Events[1])
+
 }
 
 func TestApiTest_Observe(t *testing.T) {
