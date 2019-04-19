@@ -544,7 +544,8 @@ func (a *APITest) run() {
 func (a *APITest) assertFunc(res *httptest.ResponseRecorder, req *http.Request) error {
 	if len(a.response.assert) > 0 {
 		for _, assertFn := range a.response.assert {
-			err := assertFn(res.Result(), req)
+			response := res.Result()
+			err := assertFn(copyHttpResponse(response), req)
 			if err != nil {
 				return err
 			}
