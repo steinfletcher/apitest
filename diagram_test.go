@@ -1,7 +1,6 @@
 package apitest
 
 import (
-	"github.com/stretchr/testify/assert"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -9,6 +8,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSequenceDiagramFormatter_Format(t *testing.T) {

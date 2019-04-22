@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/kataras/iris"
 	"log"
 	"net/http"
+
+	"github.com/kataras/iris"
 )
 
 type User struct {

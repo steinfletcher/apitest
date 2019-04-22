@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/satori/go.uuid"
 	"github.com/steinfletcher/apitest"
-	"net/http"
-	"testing"
 )
 
 // This test requires a postgres database to run

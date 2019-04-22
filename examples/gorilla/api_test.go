@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/steinfletcher/api-test-jsonpath"
-	"github.com/steinfletcher/apitest"
 	"net/http"
 	"testing"
+
+	"github.com/steinfletcher/apitest"
+	"github.com/steinfletcher/apitest-jsonpath"
 )
 
 func TestGetUser_CookieMatching(t *testing.T) {

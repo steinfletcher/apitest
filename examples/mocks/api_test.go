@@ -2,9 +2,10 @@ package main
 
 import (
 	"errors"
-	"github.com/steinfletcher/apitest"
 	"net/http"
 	"testing"
+
+	"github.com/steinfletcher/apitest"
 )
 
 func TestGetUser_Success(t *testing.T) {

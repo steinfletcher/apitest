@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/steinfletcher/apitest"
 	"net/http"
 	"testing"
+
+	"github.com/steinfletcher/apitest"
 )
 
 func TestGetUser_With_Default_Report_Formatter(t *testing.T) {

@@ -1,9 +1,10 @@
 package apitest
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRecorder_ResponseStatus_RecordsFinalResponseStatus(t *testing.T) {

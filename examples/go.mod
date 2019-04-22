@@ -49,8 +49,8 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
-	github.com/steinfletcher/api-test-jsonpath v0.0.1
-	github.com/steinfletcher/apitest v0.0.12
+	github.com/steinfletcher/apitest v1.1.4
+	github.com/steinfletcher/apitest-jsonpath v1.1.1
 	github.com/ugorji/go/codec v0.0.0-20190126102652-8fd0f8d918c8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4 // indirect

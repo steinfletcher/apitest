@@ -1,10 +1,11 @@
 package main
 
 import (
+	"time"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/jmoiron/sqlx"
 	"github.com/steinfletcher/apitest"
-	"time"
 )
 
 const dbAddr = "host=localhost port=5432 user=postgres password=postgres dbname=apitest sslmode=disable"

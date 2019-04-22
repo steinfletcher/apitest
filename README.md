@@ -21,18 +21,18 @@ go get -u github.com/steinfletcher/apitest
 
 | Example                                                                                              | Comment                                                                                                    |
 | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| [gin](https://github.com/steinfletcher/apitest/tree/master/examples/gin)                            | popular martini-like web framework                                                                         |
-| [gorilla](https://github.com/steinfletcher/apitest/tree/master/examples/gorilla)                    | the gorilla web toolkit                                                                                    |
-| [iris](https://github.com/steinfletcher/apitest/tree/master/examples/iris)                          | iris web framework                                                                                         |
-| [echo](https://github.com/steinfletcher/apitest/tree/master/examples/echo)                          | High performance, extensible, minimalist Go web framework                                                  |
-| [mocks](https://github.com/steinfletcher/apitest/tree/master/examples/mocks)                        | example mocking out external http calls                                                                    |
-| [sequence diagrams](https://github.com/steinfletcher/apitest/tree/master/examples/sequence-diagrams) | generate sequence diagrams from tests. See the [demo](https://steinfletcher.github.io/api-test-examples/) |
+| [gin](https://github.com/steinfletcher/apitest/tree/master/examples/gin)                             | popular martini-like web framework                                                                         |
+| [gorilla](https://github.com/steinfletcher/apitest/tree/master/examples/gorilla)                     | the gorilla web toolkit                                                                                    |
+| [iris](https://github.com/steinfletcher/apitest/tree/master/examples/iris)                           | iris web framework                                                                                         |
+| [echo](https://github.com/steinfletcher/apitest/tree/master/examples/echo)                           | High performance, extensible, minimalist Go web framework                                                  |
+| [mocks](https://github.com/steinfletcher/apitest/tree/master/examples/mocks)                         | example mocking out external http calls                                                                    |
+| [sequence diagrams](https://github.com/steinfletcher/apitest/tree/master/examples/sequence-diagrams) | generate sequence diagrams from tests. See the [demo](https://steinfletcher.github.io/api-test-examples/)  |
 
 ### Companion libraries
 
 | Library                                                        | Comment                              |
 | -------------------------------------------------------------- | ------------------------------------ |
-| [JSONPath](https://github.com/steinfletcher/api-test-jsonpath) | JSONPath assertion addons            |
+| [JSONPath](https://github.com/steinfletcher/apitest-jsonpath)  | JSONPath assertion addons            |
 | [PlantUML](https://github.com/steinfletcher/apitest-plantuml)  | Export sequence diagrams as plantUML |
 
 ### Code snippets
@@ -107,7 +107,7 @@ func TestApi(t *testing.T) {
 		Cookies(apitest.Cookie"ABC").Value("12345")).
 		CookiePresent("Session-Token").
 		CookieNotPresent("XXX").
-			Cookies(
+		Cookies(
 			apitest.Cookie("ABC").Value("12345"),
 			apitest.Cookie("DEF").Value("67890"),
 		).
