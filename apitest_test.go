@@ -425,6 +425,31 @@ func TestApiTest_MatchesResponseHeaders_WithMixedKeyCase(t *testing.T) {
 		End()
 }
 
+func TestApiTest_EndReturnsTheResult(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+		_, err := w.Write([]byte(`{"a": 12345, "b": "hi"}`))
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	res := New().
+		Handler(handler).
+		Get("/hello").
+		Expect(t).
+		Body(`{
+			"a": 12345,
+			"b": "hi"
+		}`).
+		Status(http.StatusCreated).
+		End()
+
+	assert.Equal(t, http.StatusCreated, res.Response.StatusCode)
+}
+
 func TestApiTest_CustomAssert(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {

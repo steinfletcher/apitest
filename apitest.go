@@ -395,13 +395,18 @@ func (r *Response) Assert(fn func(*http.Response, *http.Request) error) *Respons
 	return r.apiTest.response
 }
 
-// End runs the test and all defined assertions
-func (r *Response) End() {
+// End runs the test returning the result to the caller
+func (r *Response) End() Result {
 	if r.apiTest.reporter != nil {
-		r.apiTest.report()
-		return
+		res := r.apiTest.report()
+		return Result{Response: res}
 	}
-	r.execute()
+	res := r.execute()
+	return Result{Response: res}
+}
+
+type Result struct {
+	Response *http.Response
 }
 
 type mockInteraction struct {
@@ -418,7 +423,7 @@ func (r *mockInteraction) GetRequestHost() string {
 	return host
 }
 
-func (a *APITest) report() {
+func (a *APITest) report() *http.Response {
 	var capturedInboundReq *http.Request
 	var capturedFinalRes *http.Response
 	var capturedMockInteractions []*mockInteraction
@@ -446,7 +451,7 @@ func (a *APITest) report() {
 	}
 
 	execTime := time.Now().UTC()
-	a.response.execute()
+	res := a.response.execute()
 	finishTime := time.Now().UTC()
 
 	a.recorder.
@@ -502,6 +507,8 @@ func (a *APITest) report() {
 	a.recorder.AddMeta(meta)
 
 	a.reporter.Format(a.recorder)
+
+	return res
 }
 
 func createHash(meta map[string]interface{}) string {
@@ -524,7 +531,7 @@ func createHash(meta map[string]interface{}) string {
 	return fmt.Sprintf("%d_%d", prefix.Sum32(), suffix.Sum32())
 }
 
-func (r *Response) execute() {
+func (r *Response) execute() *http.Response {
 	apiTest := r.apiTest
 	if len(apiTest.mocks) > 0 {
 		apiTest.transport = newTransport(
@@ -537,10 +544,10 @@ func (r *Response) execute() {
 		defer apiTest.transport.Reset()
 		apiTest.transport.Hijack()
 	}
-	apiTest.run()
+	return apiTest.run()
 }
 
-func (a *APITest) run() {
+func (a *APITest) run() *http.Response {
 	res, req := a.runTest()
 
 	defer func() {
@@ -558,6 +565,8 @@ func (a *APITest) run() {
 	if err != nil {
 		a.t.Fatal(err.Error())
 	}
+
+	return copyHttpResponse(res.Result())
 }
 
 func (a *APITest) assertFunc(res *httptest.ResponseRecorder, req *http.Request) error {
