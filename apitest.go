@@ -410,6 +410,14 @@ type mockInteraction struct {
 	timestamp time.Time
 }
 
+func (r *mockInteraction) GetRequestHost() string {
+	host := r.request.Host
+	if host == "" {
+		host = r.request.URL.Host
+	}
+	return host
+}
+
 func (a *APITest) report() {
 	var capturedInboundReq *http.Request
 	var capturedFinalRes *http.Response
@@ -454,13 +462,13 @@ func (a *APITest) report() {
 	for _, interaction := range capturedMockInteractions {
 		a.recorder.AddHttpRequest(HttpRequest{
 			Source:    quoted(systemUnderTestDefaultName),
-			Target:    quoted(interaction.request.Host),
+			Target:    quoted(interaction.GetRequestHost()),
 			Value:     interaction.request,
 			Timestamp: interaction.timestamp,
 		})
 		if interaction.response != nil {
 			a.recorder.AddHttpResponse(HttpResponse{
-				Source:    quoted(interaction.request.Host),
+				Source:    quoted(interaction.GetRequestHost()),
 				Target:    quoted(systemUnderTestDefaultName),
 				Value:     interaction.response,
 				Timestamp: interaction.timestamp,
