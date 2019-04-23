@@ -588,7 +588,6 @@ func TestApiTest_Recorder(t *testing.T) {
 	assert.Len(t, r.Events, 6)
 	assert.Equal(t, messageRequest, r.Events[0])
 	assert.Equal(t, messageResponse, r.Events[1])
-
 }
 
 func TestApiTest_Observe(t *testing.T) {
