@@ -6,6 +6,7 @@ headless: true
 - [Configuration]({{< relref "/docs/configuration.md" >}})
 - [Request]({{< relref "/docs/request.md" >}})
 - [Assertions]({{< relref "/docs/assertions.md" >}})
+- [Mocks]({{< relref "/docs/mocks.md" >}})
 - [**Examples**](https://github.com/steinfletcher/apitest/tree/master/examples) 
 
 [![GoDoc](https://godoc.org/github.com/steinfletcher/apitest?status.svg)](https://godoc.org/github.com/steinfletcher/apitest)
