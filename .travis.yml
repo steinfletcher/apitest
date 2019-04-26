@@ -20,9 +20,7 @@ install:
   - hugo version
 
 script:
-  - diff -u <(echo -n) <(gofmt -s -d ./)
-  - diff -u <(echo -n) <(go vet ./...)
-  - go test ./... -v -race -covermode=atomic -coverprofile=coverage.out && cd examples && go test -v -race ./... && cd ..
+  - make test-all
 
 before_deploy: cd docs && hugo && cd ..
 
