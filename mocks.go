@@ -194,14 +194,17 @@ type Mock struct {
 }
 
 type MockRequest struct {
-	mock         *Mock
-	url          *url.URL
-	method       string
-	headers      map[string][]string
-	query        map[string][]string
-	queryPresent []string
-	body         string
-	matchers     []Matcher
+	mock             *Mock
+	url              *url.URL
+	method           string
+	headers          map[string][]string
+	query            map[string][]string
+	queryPresent     []string
+	cookie           []Cookie
+	cookiePresent    []string
+	cookieNotPresent []string
+	body             string
+	matchers         []Matcher
 }
 
 type MockResponse struct {
@@ -332,6 +335,21 @@ func (r *MockRequest) QueryParams(queryParams map[string]string) *MockRequest {
 
 func (r *MockRequest) QueryPresent(key string) *MockRequest {
 	r.queryPresent = append(r.queryPresent, key)
+	return r
+}
+
+func (r *MockRequest) Cookie(name, value string) *MockRequest {
+	r.cookie = append(r.cookie, Cookie{name: &name, value: &value})
+	return r
+}
+
+func (r *MockRequest) CookiePresent(name string) *MockRequest {
+	r.cookiePresent = append(r.cookiePresent, name)
+	return r
+}
+
+func (r *MockRequest) CookieNotPresent(name string) *MockRequest {
+	r.cookieNotPresent = append(r.cookieNotPresent, name)
 	return r
 }
 
@@ -510,6 +528,39 @@ var queryPresentMatcher = func(req *http.Request, spec *MockRequest) error {
 	return nil
 }
 
+var cookieMatcher = func(req *http.Request, spec *MockRequest) error {
+	for _, c := range spec.cookie {
+		foundCookie, _ := req.Cookie(*c.name)
+		if foundCookie == nil {
+			return fmt.Errorf("expected cookie with name '%s' not received", *c.name)
+		}
+		if _, mismatches := compareCookies(&c, foundCookie); len(mismatches) > 0 {
+			return fmt.Errorf("failed to match cookie: %v", mismatches)
+		}
+	}
+	return nil
+}
+
+var cookiePresentMatcher = func(req *http.Request, spec *MockRequest) error {
+	for _, c := range spec.cookiePresent {
+		foundCookie, _ := req.Cookie(c)
+		if foundCookie == nil {
+			return fmt.Errorf("expected cookie with name '%s' not received", c)
+		}
+	}
+	return nil
+}
+
+var cookieNotPresentMatcher = func(req *http.Request, spec *MockRequest) error {
+	for _, c := range spec.cookieNotPresent {
+		foundCookie, _ := req.Cookie(c)
+		if foundCookie != nil {
+			return fmt.Errorf("did not expect a cookie with name '%s'", c)
+		}
+	}
+	return nil
+}
+
 var bodyMatcher = func(req *http.Request, spec *MockRequest) error {
 	mockBody := spec.body
 
@@ -571,4 +622,7 @@ var defaultMatchers = []Matcher{
 	queryParamMatcher,
 	queryPresentMatcher,
 	bodyMatcher,
+	cookieMatcher,
+	cookiePresentMatcher,
+	cookieNotPresentMatcher,
 }

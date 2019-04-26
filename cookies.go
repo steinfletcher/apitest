@@ -105,7 +105,7 @@ func compareCookies(expectedCookie *Cookie, actualCookie *http.Cookie) (bool, []
 	if cookieFound {
 
 		formatError := func(name string, expectedValue, actualValue interface{}) string {
-			return fmt.Sprintf("Missmatched field %s. Expected %v but received %v",
+			return fmt.Sprintf("Mismatched field %s. Expected %v but received %v",
 				name,
 				expectedValue,
 				actualValue)
