@@ -36,6 +36,85 @@ func TestMocks_QueryPresent(t *testing.T) {
 	}
 }
 
+func TestMocks_Cookie_Matches(t *testing.T) {
+	reqURL := "http://test.com/v1/path"
+	req := httptest.NewRequest(http.MethodGet, reqURL, nil)
+	req.Header.Set("Cookie", "k=v")
+	mockRequest := NewMock().Get(reqURL).Cookie("k", "v")
+
+	matchError := cookieMatcher(req, mockRequest)
+
+	assert.NoError(t, matchError)
+}
+
+func TestMocks_Cookie_NameFailsToMatch(t *testing.T) {
+	reqURL := "http://test.com/v1/path"
+	req := httptest.NewRequest(http.MethodGet, reqURL, nil)
+	req.Header.Set("Cookie", "a=c")
+	mockRequest := NewMock().Get(reqURL).Cookie("x", "y")
+
+	matchError := cookieMatcher(req, mockRequest)
+
+	assert.EqualError(t, matchError,
+		"expected cookie with name 'x' not received")
+}
+
+func TestMocks_Cookie_ValueFailsToMatch(t *testing.T) {
+	reqURL := "http://test.com/v1/path"
+	req := httptest.NewRequest(http.MethodGet, reqURL, nil)
+	req.Header.Set("Cookie", "a=c")
+	mockRequest := NewMock().Get(reqURL).Cookie("a", "v")
+
+	matchError := cookieMatcher(req, mockRequest)
+
+	assert.EqualError(t, matchError,
+		"failed to match cookie: [Mismatched field Value. Expected v but received c]")
+}
+
+func TestMocks_CookiePresent_Matches(t *testing.T) {
+	reqURL := "http://test.com/v1/path"
+	req := httptest.NewRequest(http.MethodGet, reqURL, nil)
+	req.Header.Set("Cookie", "k=v")
+	mockRequest := NewMock().Get(reqURL).CookiePresent("k")
+
+	matchError := cookiePresentMatcher(req, mockRequest)
+
+	assert.NoError(t, matchError)
+}
+
+func TestMocks_CookiePresent_FailsToMatch(t *testing.T) {
+	reqURL := "http://test.com/v1/path"
+	req := httptest.NewRequest(http.MethodGet, reqURL, nil)
+	req.Header.Set("Cookie", "k=v")
+	mockRequest := NewMock().Get(reqURL).CookiePresent("a")
+
+	matchError := cookiePresentMatcher(req, mockRequest)
+
+	assert.EqualError(t, matchError, "expected cookie with name 'a' not received")
+}
+
+func TestMocks_CookieNotPresent_Matches(t *testing.T) {
+	reqURL := "http://test.com/v1/path"
+	req := httptest.NewRequest(http.MethodGet, reqURL, nil)
+	req.Header.Set("Cookie", "k=v")
+	mockRequest := NewMock().Get(reqURL).CookieNotPresent("a")
+
+	matchError := cookieNotPresentMatcher(req, mockRequest)
+
+	assert.NoError(t, matchError)
+}
+
+func TestMocks_CookieNotPresent_FailsToMatch(t *testing.T) {
+	reqURL := "http://test.com/v1/path"
+	req := httptest.NewRequest(http.MethodGet, reqURL, nil)
+	req.Header.Set("Cookie", "k=v")
+	mockRequest := NewMock().Get(reqURL).CookieNotPresent("k")
+
+	matchError := cookieNotPresentMatcher(req, mockRequest)
+
+	assert.EqualError(t, matchError, "did not expect a cookie with name 'k'")
+}
+
 func TestMocks_NewUnmatchedMockError_Empty(t *testing.T) {
 	mockError := newUnmatchedMockError()
 
@@ -299,7 +378,7 @@ func TestMocks_AddMatcher_KeepsDefaultMocks(t *testing.T) {
 	testMock := NewMock()
 
 	// Default matchers present on new mock
-	assert.Equal(t, 8, len(testMock.request.matchers))
+	assert.Equal(t, len(defaultMatchers), len(testMock.request.matchers))
 
 	testMock.Get("/test/mock").
 		AddMatcher(func(r *http.Request, mr *MockRequest) error {
@@ -311,7 +390,7 @@ func TestMocks_AddMatcher_KeepsDefaultMocks(t *testing.T) {
 		End()
 
 	// New matcher added successfully
-	assert.Equal(t, 9, len(testMock.request.matchers))
+	assert.Equal(t, len(defaultMatchers)+1, len(testMock.request.matchers))
 }
 
 func TestMocks_PanicsIfUrlInvalid(t *testing.T) {
@@ -562,7 +641,6 @@ func TestMocks_ApiTest_WithMocks(t *testing.T) {
 				End()
 
 			New().
-				Debug().
 				HttpClient(test.httpCli).
 				Mocks(getUser, getPreferences).
 				Handler(getUserHandler(NewHttpGet(test.httpCli))).

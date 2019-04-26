@@ -511,6 +511,7 @@ func TestApiTest_Report(t *testing.T) {
 	reporter := &RecorderCaptor{}
 
 	New("some test").
+		Debug().
 		Meta(map[string]interface{}{"host": "abc.com"}).
 		Report(reporter).
 		Mocks(getUser).
