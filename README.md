@@ -1,13 +1,22 @@
-# apitest
+<p align="center">
+    <img src="https://apitest.dev/svg/dummy.svg" width="150">
+</p>
 
-[![GoDoc](https://godoc.org/github.com/steinfletcher/apitest?status.svg)](https://godoc.org/github.com/steinfletcher/apitest)
-[![Go Report Card](https://goreportcard.com/badge/github.com/steinfletcher/apitest)](https://goreportcard.com/report/github.com/steinfletcher/apitest)
-[![Build Status](https://travis-ci.org/steinfletcher/apitest.svg?branch=master)](https://travis-ci.org/steinfletcher/apitest) [![Coverage Status](https://coveralls.io/repos/github/steinfletcher/apitest/badge.svg?branch=master)](https://coveralls.io/github/steinfletcher/apitest?branch=master&service=github)
-<span class="badge-buymeacoffee"><a href="https://buymeacoffee.com/25YexDsi7" title="Donate to this project using Buy Me A Coffee"><img src="https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg" alt="Buy Me A Coffee donate button" /></a></span>
+<p align="center">
+<a href="https://godoc.org/github.com/steinfletcher/apitest"><img src="https://godoc.org/github.com/steinfletcher/apitest?status.svg" alt="Godoc" /></a>
+<a href="https://coveralls.io/github/steinfletcher/apitest?branch=master&service=github"><img src="https://coveralls.io/repos/github/steinfletcher/apitest/badge.svg?branch=master" alt="Coverage Status"/></a>
+<a href="https://travis-ci.org/steinfletcher/apitest"><img src="https://travis-ci.org/steinfletcher/apitest.svg?branch=master" alt="Build Status" /></a>
+<a href="https://goreportcard.com/report/github.com/steinfletcher/apitest"><img src="https://goreportcard.com/badge/github.com/steinfletcher/apitest" alt="Go Report Card" /></a>
+<a href="https://buymeacoffee.com/25YexDsi7" title="Donate to this project using Buy Me A Coffee"><img src="https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg" alt="Buy Me A Coffee donate button" /></a>
+</p>
+
+# apitest
 
 A simple and extensible behavioural testing library in golang. Supports mocking external http calls and renders sequence diagrams on completion.
 
 In behavioural tests the internal structure of the app is not known by the tests. Data is input to the system and the outputs are expected to meet certain conditions.
+
+<span>Logo by <a target="_blank" href="https://twitter.com/egonelbre">@egonelbre</a><span>
 
 ## Installation
 
