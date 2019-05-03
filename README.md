@@ -18,6 +18,10 @@ In behavioural tests the internal structure of the app is not known by the tests
 
 <span>Logo by <a target="_blank" href="https://twitter.com/egonelbre">@egonelbre</a><span>
 
+## Documentation
+
+Please visit [https://apitest.dev](https://apitest.dev) for the latest documentation.
+
 ## Installation
 
 ```bash
