@@ -422,6 +422,9 @@ func TestApiTest_MatchesResponseHeaders_WithMixedKeyCase(t *testing.T) {
 		Header("Authorization", "12345").
 		Header("Authorization", "00000").
 		Header("authorization", "98765").
+		HeaderPresent("Def").
+		HeaderPresent("Authorization").
+		HeaderNotPresent("XYZ").
 		End()
 }
 

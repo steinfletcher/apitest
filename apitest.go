@@ -323,6 +323,8 @@ type Response struct {
 	status             int
 	body               string
 	headers            map[string][]string
+	headersPresent     []string
+	headersNotPresent  []string
 	cookies            []*Cookie
 	cookiesPresent     []string
 	cookiesNotPresent  []string
@@ -368,16 +370,30 @@ func (r *Response) CookieNotPresent(cookieName string) *Response {
 
 // Header is a builder method to set the request headers
 func (r *Response) Header(key, value string) *Response {
-	normalizedKey := textproto.CanonicalMIMEHeaderKey(key)
-	r.headers[normalizedKey] = append(r.headers[normalizedKey], value)
+	normalizedName := textproto.CanonicalMIMEHeaderKey(key)
+	r.headers[normalizedName] = append(r.headers[normalizedName], value)
+	return r
+}
+
+// HeaderPresent is a builder method to set the request headers that should be present in the response
+func (r *Response) HeaderPresent(name string) *Response {
+	normalizedName := textproto.CanonicalMIMEHeaderKey(name)
+	r.headersPresent = append(r.headersPresent, normalizedName)
+	return r
+}
+
+// HeaderNotPresent is a builder method to set the request headers that should not be present in the response
+func (r *Response) HeaderNotPresent(name string) *Response {
+	normalizedName := textproto.CanonicalMIMEHeaderKey(name)
+	r.headersNotPresent = append(r.headersNotPresent, normalizedName)
 	return r
 }
 
 // Headers is a builder method to set the request headers
 func (r *Response) Headers(headers map[string]string) *Response {
-	for k, v := range headers {
-		normalizedKey := textproto.CanonicalMIMEHeaderKey(k)
-		r.headers[normalizedKey] = append(r.headers[textproto.CanonicalMIMEHeaderKey(normalizedKey)], v)
+	for name, value := range headers {
+		normalizedName := textproto.CanonicalMIMEHeaderKey(name)
+		r.headers[normalizedName] = append(r.headers[textproto.CanonicalMIMEHeaderKey(normalizedName)], value)
 	}
 	return r
 }
@@ -752,6 +768,22 @@ func (a *APITest) assertHeaders(res *httptest.ResponseRecorder) {
 			}
 			if !found {
 				a.t.Fatalf("could not match header=%s", expectedHeader)
+			}
+		}
+	}
+
+	if len(a.response.headersPresent) > 0 {
+		for _, expectedName := range a.response.headersPresent {
+			if res.Header().Get(expectedName) == "" {
+				a.t.Fatalf("expected header '%s' not present in response", expectedName)
+			}
+		}
+	}
+
+	if len(a.response.headersNotPresent) > 0 {
+		for _, name := range a.response.headersNotPresent {
+			if res.Header().Get(name) != "" {
+				a.t.Fatalf("did not expect header '%s' in response", name)
 			}
 		}
 	}
