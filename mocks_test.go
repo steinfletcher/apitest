@@ -616,6 +616,41 @@ func TestMocks_Response_Cookies(t *testing.T) {
 	}, response.Cookies())
 }
 
+func TestMocks_Standalone(t *testing.T) {
+	cli := http.Client{Timeout: 5}
+	defer NewMock().
+		Post("http://localhost:8080/path").
+		Body(`{"a", 12345}`).
+		RespondWith().
+		Status(http.StatusCreated).
+		EndStandalone()()
+
+	resp, err := cli.Post("http://localhost:8080/path",
+		"application/json",
+		strings.NewReader(`{"a", 12345}`))
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+}
+
+func TestMocks_Standalone_WithCustomerHTTPClient(t *testing.T) {
+	httpClient := customCli
+	defer NewMock().
+		HttpClient(httpClient).
+		Post("http://localhost:8080/path").
+		Body(`{"a", 12345}`).
+		RespondWith().
+		Status(http.StatusCreated).
+		EndStandalone()()
+
+	resp, err := httpClient.Post("http://localhost:8080/path",
+		"application/json",
+		strings.NewReader(`{"a", 12345}`))
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+}
+
 func TestMocks_ApiTest_WithMocks(t *testing.T) {
 	tests := []struct {
 		name    string

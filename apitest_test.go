@@ -17,8 +17,8 @@ import (
 func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		bytes, _ := ioutil.ReadAll(r.Body)
-		if string(bytes) != `{"a": 12345}` {
+		data, _ := ioutil.ReadAll(r.Body)
+		if string(data) != `{"a": 12345}` {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -42,8 +42,8 @@ func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 func TestApiTest_AddsJSONBodyToRequestUsingJSON(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		bytes, _ := ioutil.ReadAll(r.Body)
-		if string(bytes) != `{"a": 12345}` {
+		data, _ := ioutil.ReadAll(r.Body)
+		if string(data) != `{"a": 12345}` {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -66,8 +66,8 @@ func TestApiTest_AddsJSONBodyToRequestUsingJSON(t *testing.T) {
 func TestApiTest_AddsTextBodyToRequest(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		bytes, _ := ioutil.ReadAll(r.Body)
-		if string(bytes) != `hello` {
+		data, _ := ioutil.ReadAll(r.Body)
+		if string(data) != `hello` {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
