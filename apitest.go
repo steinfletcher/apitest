@@ -417,7 +417,7 @@ func (r *Response) End() Result {
 		res := r.apiTest.report()
 		return Result{Response: res}
 	}
-	res := r.execute()
+	res := r.runTest()
 	return Result{Response: res}
 }
 
@@ -467,7 +467,7 @@ func (a *APITest) report() *http.Response {
 	}
 
 	execTime := time.Now().UTC()
-	res := a.response.execute()
+	res := a.response.runTest()
 	finishTime := time.Now().UTC()
 
 	a.recorder.
@@ -547,24 +547,20 @@ func createHash(meta map[string]interface{}) string {
 	return fmt.Sprintf("%d_%d", prefix.Sum32(), suffix.Sum32())
 }
 
-func (r *Response) execute() *http.Response {
-	apiTest := r.apiTest
-	if len(apiTest.mocks) > 0 {
-		apiTest.transport = newTransport(
-			apiTest.mocks,
-			apiTest.httpClient,
-			apiTest.debugEnabled,
-			apiTest.mocksObserver,
+func (r *Response) runTest() *http.Response {
+	a := r.apiTest
+	if len(a.mocks) > 0 {
+		a.transport = newTransport(
+			a.mocks,
+			a.httpClient,
+			a.debugEnabled,
+			a.mocksObserver,
 			r.apiTest,
 		)
-		defer apiTest.transport.Reset()
-		apiTest.transport.Hijack()
+		defer a.transport.Reset()
+		a.transport.Hijack()
 	}
-	return apiTest.run()
-}
-
-func (a *APITest) run() *http.Response {
-	res, req := a.runTest()
+	res, req := a.doRequest()
 
 	defer func() {
 		if len(a.observers) > 0 {
@@ -598,7 +594,7 @@ func (a *APITest) assertFunc(res *httptest.ResponseRecorder, req *http.Request) 
 	return nil
 }
 
-func (a *APITest) runTest() (*httptest.ResponseRecorder, *http.Request) {
+func (a *APITest) doRequest() (*httptest.ResponseRecorder, *http.Request) {
 	req := a.BuildRequest()
 	if a.request.interceptor != nil {
 		a.request.interceptor(req)

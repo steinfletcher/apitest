@@ -188,9 +188,11 @@ func buildResponseFromMock(mockResponse *MockResponse) *http.Response {
 }
 
 type Mock struct {
-	isUsed   bool
-	request  *MockRequest
-	response *MockResponse
+	isUsed          bool
+	request         *MockRequest
+	response        *MockResponse
+	httpClient      *http.Client
+	debugStandalone bool
 }
 
 type MockRequest struct {
@@ -232,6 +234,19 @@ func NewMock() *Mock {
 	mock.request = req
 	mock.response = res
 	return mock
+}
+
+// Debug is used to set debug mode for mocks in standalone mode.
+// This is overridden by the debug setting in the `APITest` struct
+func (m *Mock) Debug() *Mock {
+	m.debugStandalone = true
+	return m
+}
+
+// HttpClient allows the developer to provide a custom http client when using mocks
+func (m *Mock) HttpClient(cli *http.Client) *Mock {
+	m.httpClient = cli
+	return m
 }
 
 func (m *Mock) Get(u string) *MockRequest {
@@ -405,6 +420,19 @@ func (r *MockResponse) End() *Mock {
 	return r.mock
 }
 
+func (r *MockResponse) EndStandalone() func() {
+	transport := newTransport(
+		[]*Mock{r.mock},
+		r.mock.httpClient,
+		r.mock.debugStandalone,
+		nil,
+		nil,
+	)
+	resetFunc := func() { transport.Reset() }
+	transport.Hijack()
+	return resetFunc
+}
+
 // Matcher type accepts the actual request and a mock request to match against.
 // Will return an error that describes why there was a mismatch if the inputs do not match or nil if they do.
 type Matcher func(*http.Request, *MockRequest) error
@@ -568,9 +596,13 @@ var bodyMatcher = func(req *http.Request, spec *MockRequest) error {
 		return nil
 	}
 
+	if req.Body == nil {
+		return errors.New("expected a body but received none")
+	}
+
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if len(body) == 0 {
 		return errors.New("expected a body but received none")
