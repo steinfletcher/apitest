@@ -200,8 +200,11 @@ type MockRequest struct {
 	url              *url.URL
 	method           string
 	headers          map[string][]string
+	headerPresent    []string
+	headerNotPresent []string
 	query            map[string][]string
 	queryPresent     []string
+	queryNotPresent  []string
 	cookie           []Cookie
 	cookiePresent    []string
 	cookieNotPresent []string
@@ -336,6 +339,16 @@ func (r *MockRequest) Headers(headers map[string]string) *MockRequest {
 	return r
 }
 
+func (r *MockRequest) HeaderPresent(key string) *MockRequest {
+	r.headerPresent = append(r.headerPresent, key)
+	return r
+}
+
+func (r *MockRequest) HeaderNotPresent(key string) *MockRequest {
+	r.headerNotPresent = append(r.headerNotPresent, key)
+	return r
+}
+
 func (r *MockRequest) Query(key, value string) *MockRequest {
 	r.query[key] = append(r.query[key], value)
 	return r
@@ -350,6 +363,11 @@ func (r *MockRequest) QueryParams(queryParams map[string]string) *MockRequest {
 
 func (r *MockRequest) QueryPresent(key string) *MockRequest {
 	r.queryPresent = append(r.queryPresent, key)
+	return r
+}
+
+func (r *MockRequest) QueryNotPresent(key string) *MockRequest {
+	r.queryNotPresent = append(r.queryNotPresent, key)
 	return r
 }
 
@@ -519,6 +537,24 @@ var headerMatcher = func(req *http.Request, spec *MockRequest) error {
 	return nil
 }
 
+var headerPresentMatcher = func(req *http.Request, spec *MockRequest) error {
+	for _, header := range spec.headerPresent {
+		if req.Header.Get(header) == "" {
+			return fmt.Errorf("expected header '%s' was not present", header)
+		}
+	}
+	return nil
+}
+
+var headerNotPresentMatcher = func(req *http.Request, spec *MockRequest) error {
+	for _, header := range spec.headerNotPresent {
+		if req.Header.Get(header) != "" {
+			return fmt.Errorf("unexpected header '%s' was present", header)
+		}
+	}
+	return nil
+}
+
 var queryParamMatcher = func(req *http.Request, spec *MockRequest) error {
 	mockQueryParams := spec.query
 	for key, values := range mockQueryParams {
@@ -551,6 +587,15 @@ var queryPresentMatcher = func(req *http.Request, spec *MockRequest) error {
 	for _, query := range spec.queryPresent {
 		if req.URL.Query().Get(query) == "" {
 			return fmt.Errorf("expected query param %s not received", query)
+		}
+	}
+	return nil
+}
+
+var queryNotPresentMatcher = func(req *http.Request, spec *MockRequest) error {
+	for _, query := range spec.queryNotPresent {
+		if req.URL.Query().Get(query) != "" {
+			return fmt.Errorf("unexpected query param '%s' present", query)
 		}
 	}
 	return nil
@@ -651,8 +696,11 @@ var defaultMatchers = []Matcher{
 	schemeMatcher,
 	methodMatcher,
 	headerMatcher,
+	headerPresentMatcher,
+	headerNotPresentMatcher,
 	queryParamMatcher,
 	queryPresentMatcher,
+	queryNotPresentMatcher,
 	bodyMatcher,
 	cookieMatcher,
 	cookiePresentMatcher,

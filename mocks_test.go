@@ -15,27 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMocks_QueryPresent(t *testing.T) {
-	tests := []struct {
-		requestUrl    string
-		queryParam    string
-		expectedError error
-	}{
-		{"http://test.com/v1/path?a=1", "a", nil},
-		{"http://test.com/v1/path", "a", errors.New("expected query param a not received")},
-		{"http://test.com/v1/path?c=1", "b", errors.New("expected query param b not received")},
-		{"http://test.com/v2/path?b=2&a=1", "a", nil},
-	}
-	for _, test := range tests {
-		t.Run(test.requestUrl, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, test.requestUrl, nil)
-			mockRequest := NewMock().Get(test.requestUrl).QueryPresent(test.queryParam)
-			matchError := queryPresentMatcher(req, mockRequest)
-			assert.Equal(t, test.expectedError, matchError)
-		})
-	}
-}
-
 func TestMocks_Cookie_Matches(t *testing.T) {
 	reqURL := "http://test.com/v1/path"
 	req := httptest.NewRequest(http.MethodGet, reqURL, nil)
@@ -213,6 +192,54 @@ func TestMocks_MockRequest_Header_WorksWithHeaders(t *testing.T) {
 	assert.Nil(t, matchError)
 }
 
+func TestMocks_HeaderPresentMatcher(t *testing.T) {
+	tests := map[string]struct {
+		requestHeaders map[string]string
+		headerPresent  string
+		expectedError  error
+	}{
+		"present":     {map[string]string{"A": "123", "X": "456"}, "X", nil},
+		"not present": {map[string]string{"A": "123"}, "C", errors.New("expected header 'C' was not present")},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/assert", nil)
+			for k, v := range test.requestHeaders {
+				req.Header.Add(k, v)
+			}
+			mockRequest := NewMock().Get("/assert").HeaderPresent(test.headerPresent)
+
+			matchError := headerPresentMatcher(req, mockRequest)
+
+			assert.Equal(t, test.expectedError, matchError)
+		})
+	}
+}
+
+func TestMocks_HeaderNotPresentMatcher(t *testing.T) {
+	tests := map[string]struct {
+		requestHeaders   map[string]string
+		headerNotPresent string
+		expectedError    error
+	}{
+		"not present": {map[string]string{"A": "123"}, "C", nil},
+		"present":     {map[string]string{"A": "123", "X": "456"}, "X", errors.New("unexpected header 'X' was present")},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/assert", nil)
+			for k, v := range test.requestHeaders {
+				req.Header.Add(k, v)
+			}
+			mockRequest := NewMock().Get("/assert").HeaderNotPresent(test.headerNotPresent)
+
+			matchError := headerNotPresentMatcher(req, mockRequest)
+
+			assert.Equal(t, test.expectedError, matchError)
+		})
+	}
+}
+
 func TestMocks_QueryMatcher(t *testing.T) {
 	tests := []struct {
 		requestUrl    string
@@ -245,6 +272,48 @@ func TestMocks_QueryParams_DoesNotOverwriteQuery(t *testing.T) {
 
 	assert.Equal(t, 2, len(mockRequest.query))
 	assert.Nil(t, matchError)
+}
+
+func TestMocks_QueryPresent(t *testing.T) {
+	tests := []struct {
+		requestUrl    string
+		queryParam    string
+		expectedError error
+	}{
+		{"http://test.com/v1/path?a=1", "a", nil},
+		{"http://test.com/v1/path", "a", errors.New("expected query param a not received")},
+		{"http://test.com/v1/path?c=1", "b", errors.New("expected query param b not received")},
+		{"http://test.com/v2/path?b=2&a=1", "a", nil},
+	}
+	for _, test := range tests {
+		t.Run(test.requestUrl, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, test.requestUrl, nil)
+			mockRequest := NewMock().Get(test.requestUrl).QueryPresent(test.queryParam)
+			matchError := queryPresentMatcher(req, mockRequest)
+			assert.Equal(t, test.expectedError, matchError)
+		})
+	}
+}
+
+func TestMocks_QueryNotPresent(t *testing.T) {
+	tests := []struct {
+		queryString   string
+		queryParam    string
+		expectedError error
+	}{
+		{"http://test.com/v1/path?a=1", "a", errors.New("unexpected query param 'a' present")},
+		{"http://test.com/v1/path", "a", nil},
+		{"http://test.com/v1/path?c=1", "b", nil},
+		{"http://test.com/v2/path?b=2&a=1", "a", errors.New("unexpected query param 'a' present")},
+	}
+	for _, test := range tests {
+		t.Run(test.queryString, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, test.queryString, nil)
+			mockRequest := NewMock().Get("http://test.com/v1/path" + test.queryString).QueryNotPresent(test.queryParam)
+			matchError := queryNotPresentMatcher(req, mockRequest)
+			assert.Equal(t, test.expectedError, matchError)
+		})
+	}
 }
 
 func TestMocks_SchemeMatcher(t *testing.T) {
