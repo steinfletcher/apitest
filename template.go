@@ -39,7 +39,7 @@ const Template = `<!DOCTYPE html>
             <th scope="row">{{ inc $i }}</th>
             <td>
 <pre>{{ $e.Header }}</pre>
-{{if $e.Body }}<pre><code class="json">{{ $e.Body }}</code></pre>{{end}}
+{{if $e.Body }}<pre><code>{{ $e.Body }}</code></pre>{{end}}
             </td>
         </tr>
         {{ end }}

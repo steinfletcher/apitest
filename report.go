@@ -111,3 +111,10 @@ func (r *Recorder) ResponseStatus() (int, error) {
 		return -1, errors.New("final event should be a response type")
 	}
 }
+
+func (r *Recorder) Reset() {
+	r.Title = ""
+	r.SubTitle = ""
+	r.Events = nil
+	r.Meta = nil
+}
