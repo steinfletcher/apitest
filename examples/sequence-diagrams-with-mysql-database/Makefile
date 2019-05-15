@@ -1,3 +1,5 @@
+.PHONY: mysql-dev test
+
 mysql-dev:
 	docker stop apitest_mysql || true && docker rm apitest_mysql || true
 	docker run -d \
