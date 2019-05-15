@@ -774,9 +774,9 @@ func TestCreateHash_GroupsByEndpoint(t *testing.T) {
 }
 
 type RecorderCaptor struct {
-	capturedRecorder *Recorder
+	capturedRecorder Recorder
 }
 
 func (r *RecorderCaptor) Format(recorder *Recorder) {
-	r.capturedRecorder = recorder
+	r.capturedRecorder = *recorder
 }

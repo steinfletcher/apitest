@@ -461,6 +461,7 @@ func (a *APITest) report() *http.Response {
 	if a.recorder == nil {
 		a.recorder = NewTestRecorder()
 	}
+	defer a.recorder.Reset()
 
 	if a.recorderHook != nil {
 		a.recorderHook(a.recorder)
@@ -521,7 +522,6 @@ func (a *APITest) report() *http.Response {
 	meta["hash"] = createHash(meta)
 
 	a.recorder.AddMeta(meta)
-
 	a.reporter.Format(a.recorder)
 
 	return res

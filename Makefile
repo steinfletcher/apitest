@@ -4,7 +4,8 @@ test:
 	go test ./... -v -race -covermode=atomic -coverprofile=coverage.out
 
 test-examples:
-	cd examples && go test -v -race ./... && cd ..
+	cd examples && go test -v -race ./... && \
+	cd sequence-diagrams-with-sqlite-database && make test && cd ..
 
 fmt:
 	bash -c 'diff -u <(echo -n) <(gofmt -s -d ./)'

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,35 +9,22 @@ import (
 	"github.com/jmoiron/sqlx"
 	uuid "github.com/satori/go.uuid"
 	"github.com/steinfletcher/apitest"
-	apitestdb "github.com/steinfletcher/apitest/x/db"
+	"github.com/steinfletcher/apitest/examples/sequence-diagrams-with-postgres-database/test"
+	_ "github.com/steinfletcher/apitest/examples/sequence-diagrams-with-postgres-database/test"
 )
 
 // This test requires a postgres database to run
 
-var recorder *apitest.Recorder
-
-func init() {
-	recorder = apitest.NewTestRecorder()
-	wrappedDriver := apitestdb.WrapWithRecorder("postgres", recorder)
-	sql.Register("wrappedPostgres", wrappedDriver)
-}
-
 func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
-	dsn := os.Getenv("POSTGRES_DSN")
-	if dsn == "" {
-		t.SkipNow()
-	}
+	skip(t)
 
-	defer recorder.Reset()
 	username := uuid.NewV4().String()[0:7]
-
-	DBSetup(dsn, func(db *sqlx.DB) {
+	test.DBSetup(func(db *sqlx.DB) {
 		q := "INSERT INTO users (username, is_contactable) VALUES ($1, $2)"
 		db.MustExec(q, username, true)
 	})
 
 	apiTest("gets the user").
-		Debug().
 		Mocks(getUserMock(username)).
 		Get("/user").
 		Query("name", username).
@@ -50,21 +36,15 @@ func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
 }
 
 func TestPostUser_With_Default_Report_Formatter(t *testing.T) {
-	dsn := os.Getenv("POSTGRES_DSN")
-	if dsn == "" {
-		t.SkipNow()
-	}
+	skip(t)
 
-	defer recorder.Reset()
 	username := uuid.NewV4().String()[0:7]
-
-	DBSetup(dsn, func(db *sqlx.DB) {
+	test.DBSetup(func(db *sqlx.DB) {
 		q := "INSERT INTO users (username, is_contactable) VALUES ($1, $2)"
 		db.MustExec(q, username, true)
 	})
 
 	apiTest("creates a user").
-		Debug().
 		Mocks(postUserMock(username)).
 		Post("/user").
 		Body(fmt.Sprintf(`{"name": "%s", "is_contactable": true}`, username)).
@@ -94,16 +74,16 @@ func postUserMock(username string) *apitest.Mock {
 }
 
 func apiTest(name string) *apitest.APITest {
-	dsn := os.Getenv("POSTGRES_DSN")
-	testDB, err := sqlx.Connect("wrappedPostgres", dsn)
-	if err != nil {
-		panic(err)
-	}
-
-	app := newApp(testDB)
-
+	app := newApp(test.DBConnect())
 	return apitest.New(name).
-		Recorder(recorder).
+		Recorder(test.Recorder).
 		Report(apitest.SequenceDiagram()).
 		Handler(app.Router)
+}
+
+func skip(t *testing.T) {
+	dsn := os.Getenv("POSTGRES_DSN")
+	if dsn == "" {
+		t.SkipNow()
+	}
 }
