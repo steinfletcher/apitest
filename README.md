@@ -7,7 +7,6 @@
 <a href="https://coveralls.io/github/steinfletcher/apitest?branch=master&service=github"><img src="https://coveralls.io/repos/github/steinfletcher/apitest/badge.svg?branch=master" alt="Coverage Status"/></a>
 <a href="https://travis-ci.org/steinfletcher/apitest"><img src="https://travis-ci.org/steinfletcher/apitest.svg?branch=master" alt="Build Status" /></a>
 <a href="https://goreportcard.com/report/github.com/steinfletcher/apitest"><img src="https://goreportcard.com/badge/github.com/steinfletcher/apitest" alt="Go Report Card" /></a>
-<a href="https://buymeacoffee.com/25YexDsi7" title="Donate to this project using Buy Me A Coffee"><img src="https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg" alt="Buy Me A Coffee donate button" /></a>
 </p>
 
 # apitest

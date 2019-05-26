@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
 	"reflect"
 	"testing"
@@ -495,7 +496,7 @@ func TestApiTest_AssertFunc(t *testing.T) {
 				Expect(t).
 				Assert(IsSuccess)
 
-			err := apitTest.apiTest.assertFunc(res, nil)
+			err := apitTest.apiTest.assertFunc(res.Result(), httptest.NewRequest("GET", "/", nil))
 
 			assert.Equal(t, test.expectedErr, err)
 		})
@@ -771,6 +772,71 @@ func TestCreateHash_GroupsByEndpoint(t *testing.T) {
 			assert.Equal(t, test.expected, hash)
 		})
 	}
+}
+
+// TestRealNetworking creates a server with two endpoints, /login sets a token via a cookie and /authenticated_resource
+// validates the token. A cookie jar is used to verify session persistence across multiple apitest instances
+func TestRealNetworking(t *testing.T) {
+	srv := &http.Server{Addr: ":9876"}
+	finish := make(chan struct{})
+	tokenValue := "ABCDEF"
+	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{Name: "Token", Value: tokenValue})
+		w.WriteHeader(203)
+	})
+	http.HandleFunc("/authenticated_resource", func(w http.ResponseWriter, r *http.Request) {
+		token, err := r.Cookie("Token")
+		if err == http.ErrNoCookie {
+			w.WriteHeader(400)
+			return
+		}
+		if err != nil {
+			w.WriteHeader(500)
+			return
+		}
+
+		if token.Value != tokenValue {
+			t.Fatalf("token did not equal %s", tokenValue)
+		}
+		w.WriteHeader(204)
+	})
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			panic(err)
+		}
+	}()
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Println("Recovered in f", r)
+			}
+		}()
+
+		cookieJar, _ := cookiejar.New(nil)
+		cli := &http.Client{
+			Timeout: time.Second * 1,
+			Jar:     cookieJar,
+		}
+
+		New().
+			EnableNetworking(cli).
+			Get("http://localhost:9876/login").
+			Expect(t).
+			Status(203).
+			End()
+
+		New().
+			EnableNetworking(cli).
+			Get("http://localhost:9876/authenticated_resource").
+			Expect(t).
+			Status(204).
+			End()
+
+		finish <- struct{}{}
+	}()
+	<-finish
 }
 
 type RecorderCaptor struct {

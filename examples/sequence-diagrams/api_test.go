@@ -13,8 +13,8 @@ func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
 		Meta(map[string]interface{}{"host": "user-service"}).
 		Mocks(getPreferencesMock, getUserMock).
 		Handler(newApp().Router).
-		Get("/user").
-		Query("name", "jan").
+		Post("/user/search").
+		JSON(`{"name":"jan"}`).
 		Expect(t).
 		Status(http.StatusOK).
 		Header("Content-Type", "application/json").
@@ -28,8 +28,8 @@ func TestGetUser_With_Default_Report_Formatter_Overriding_Path(t *testing.T) {
 		Report(apitest.SequenceDiagram(".sequence-diagrams")).
 		Mocks(getPreferencesMock, getUserMock).
 		Handler(newApp().Router).
-		Get("/user").
-		Query("name", "jan").
+		Post("/user/search").
+		JSON(`{"name":"jan"}`).
 		Expect(t).
 		Status(http.StatusOK).
 		Header("Content-Type", "application/json").

@@ -27,7 +27,6 @@ func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
 		t.SkipNow()
 	}
 
-	defer recorder.Reset()
 	username := uuid.NewV4().String()[0:7]
 
 	DBSetup(dsn, func(db *sqlx.DB) {
@@ -36,7 +35,6 @@ func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
 	})
 
 	apiTest("gets the user").
-		Debug().
 		Mocks(getUserMock(username)).
 		Get("/user").
 		Query("name", username).
@@ -53,7 +51,6 @@ func TestPostUser_With_Default_Report_Formatter(t *testing.T) {
 		t.SkipNow()
 	}
 
-	defer recorder.Reset()
 	username := uuid.NewV4().String()[0:7]
 
 	DBSetup(dsn, func(db *sqlx.DB) {
@@ -62,10 +59,9 @@ func TestPostUser_With_Default_Report_Formatter(t *testing.T) {
 	})
 
 	apiTest("creates a user").
-		Debug().
 		Mocks(postUserMock(username)).
 		Post("/user").
-		Body(fmt.Sprintf(`{"name": "%s", "is_contactable": true}`, username)).
+		JSON(fmt.Sprintf(`{"name": "%s", "is_contactable": true}`, username)).
 		Expect(t).
 		Status(http.StatusOK).
 		Header("Content-Type", "application/json").

@@ -20,7 +20,7 @@ type App struct {
 
 func newApp() *App {
 	router := mux.NewRouter()
-	router.HandleFunc("/user", getUser()).Methods("GET")
+	router.HandleFunc("/user/search", getUser()).Methods("POST")
 	return &App{Router: router}
 }
 
