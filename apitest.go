@@ -29,21 +29,23 @@ var responseDebugPrefix = fmt.Sprintf("<%s", divider)
 
 // APITest is the top level struct holding the test spec
 type APITest struct {
-	debugEnabled  bool
-	reporter      ReportFormatter
-	recorder      *Recorder
-	handler       http.Handler
-	name          string
-	request       *Request
-	response      *Response
-	observers     []Observe
-	mocksObserver Observe
-	recorderHook  RecorderHook
-	mocks         []*Mock
-	t             *testing.T
-	httpClient    *http.Client
-	transport     *Transport
-	meta          map[string]interface{}
+	debugEnabled         bool
+	networkingEnabled    bool
+	networkingHTTPClient *http.Client
+	reporter             ReportFormatter
+	recorder             *Recorder
+	handler              http.Handler
+	name                 string
+	request              *Request
+	response             *Response
+	observers            []Observe
+	mocksObserver        Observe
+	recorderHook         RecorderHook
+	mocks                []*Mock
+	t                    *testing.T
+	httpClient           *http.Client
+	transport            *Transport
+	meta                 map[string]interface{}
 }
 
 type InboundRequest struct {
@@ -84,6 +86,16 @@ func New(name ...string) *APITest {
 	}
 
 	return apiTest
+}
+
+func (a *APITest) EnableNetworking(cli ...*http.Client) *APITest {
+	a.networkingEnabled = true
+	if len(cli) == 1 {
+		a.networkingHTTPClient = cli[0]
+		return a
+	}
+	a.networkingHTTPClient = http.DefaultClient
+	return a
 }
 
 // Debug logs to the console the http wire representation of all http interactions that are intercepted by apitest. This includes the inbound request to the application under test, the response returned by the application and any interactions that are intercepted by the mock server.
@@ -413,6 +425,10 @@ func (r *Response) Assert(fn func(*http.Response, *http.Request) error) *Respons
 
 // End runs the test returning the result to the caller
 func (r *Response) End() Result {
+	if r.apiTest.handler == nil && r.apiTest.networkingEnabled == false {
+		r.apiTest.t.Fatal("either define a http.handler or enable networking")
+	}
+
 	if r.apiTest.reporter != nil {
 		res := r.apiTest.report()
 		return Result{Response: res}
@@ -565,7 +581,7 @@ func (r *Response) runTest() *http.Response {
 	defer func() {
 		if len(a.observers) > 0 {
 			for _, observe := range a.observers {
-				observe(res.Result(), req, a)
+				observe(res, req, a)
 			}
 		}
 	}()
@@ -578,14 +594,13 @@ func (r *Response) runTest() *http.Response {
 		a.t.Fatal(err.Error())
 	}
 
-	return copyHttpResponse(res.Result())
+	return copyHttpResponse(res)
 }
 
-func (a *APITest) assertFunc(res *httptest.ResponseRecorder, req *http.Request) error {
+func (a *APITest) assertFunc(res *http.Response, req *http.Request) error {
 	if len(a.response.assert) > 0 {
 		for _, assertFn := range a.response.assert {
-			response := res.Result()
-			err := assertFn(copyHttpResponse(response), req)
+			err := assertFn(copyHttpResponse(res), copyHttpRequest(req))
 			if err != nil {
 				return err
 			}
@@ -594,12 +609,12 @@ func (a *APITest) assertFunc(res *httptest.ResponseRecorder, req *http.Request) 
 	return nil
 }
 
-func (a *APITest) doRequest() (*httptest.ResponseRecorder, *http.Request) {
+func (a *APITest) doRequest() (*http.Response, *http.Request) {
 	req := a.BuildRequest()
 	if a.request.interceptor != nil {
 		a.request.interceptor(req)
 	}
-	res := httptest.NewRecorder()
+	resRecorder := httptest.NewRecorder()
 
 	if a.debugEnabled {
 		requestDump, err := httputil.DumpRequest(req, true)
@@ -608,10 +623,20 @@ func (a *APITest) doRequest() (*httptest.ResponseRecorder, *http.Request) {
 		}
 	}
 
-	a.serveHttp(res, req)
+	var res *http.Response
+	var err error
+	if a.networkingEnabled == false {
+		a.serveHttp(resRecorder, copyHttpRequest(req))
+		res = resRecorder.Result()
+	} else {
+		res, err = a.networkingHTTPClient.Do(req)
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	if a.debugEnabled {
-		responseDump, err := httputil.DumpResponse(res.Result(), true)
+		responseDump, err := httputil.DumpResponse(res, true)
 		if err == nil {
 			debugLog(responseDebugPrefix, "final response", string(responseDump))
 		}
@@ -691,26 +716,31 @@ func buildQueryCollection(params map[string][]string) []pair {
 	return pairs
 }
 
-func (a *APITest) assertResponse(res *httptest.ResponseRecorder) {
+func (a *APITest) assertResponse(res *http.Response) {
 	if a.response.status != 0 {
-		assert.Equal(a.t, a.response.status, res.Code, fmt.Sprintf("Status code %d not equal to %d", res.Code, a.response.status))
+		assert.Equal(a.t, a.response.status, res.StatusCode, fmt.Sprintf("Status code %d not equal to %d", res.StatusCode, a.response.status))
 	}
 
 	if a.response.body != "" {
+		var resBodyBytes []byte
+		if res.Body != nil {
+			resBodyBytes, _ = ioutil.ReadAll(res.Body)
+			res.Body = ioutil.NopCloser(bytes.NewBuffer(resBodyBytes))
+		}
 		if json.Valid([]byte(a.response.body)) {
-			assert.JSONEq(a.t, a.response.body, res.Body.String())
+			assert.JSONEq(a.t, a.response.body, string(resBodyBytes))
 		} else {
-			assert.Equal(a.t, a.response.body, res.Body.String())
+			assert.Equal(a.t, a.response.body, string(resBodyBytes))
 		}
 	}
 }
 
-func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
+func (a *APITest) assertCookies(response *http.Response) {
 	if len(a.response.cookies) > 0 {
 		for _, expectedCookie := range a.response.cookies {
 			var mismatchedFields []string
 			foundCookie := false
-			for _, actualCookie := range responseCookies(response) {
+			for _, actualCookie := range response.Cookies() {
 				cookieFound, errors := compareCookies(expectedCookie, actualCookie)
 				if cookieFound {
 					foundCookie = true
@@ -725,7 +755,7 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 	if len(a.response.cookiesPresent) > 0 {
 		for _, cookieName := range a.response.cookiesPresent {
 			foundCookie := false
-			for _, cookie := range responseCookies(response) {
+			for _, cookie := range response.Cookies() {
 				if cookie.Name == cookieName {
 					foundCookie = true
 				}
@@ -737,7 +767,7 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 	if len(a.response.cookiesNotPresent) > 0 {
 		for _, cookieName := range a.response.cookiesNotPresent {
 			foundCookie := false
-			for _, cookie := range responseCookies(response) {
+			for _, cookie := range response.Cookies() {
 				if cookie.Name == cookieName {
 					foundCookie = true
 				}
@@ -747,16 +777,11 @@ func (a *APITest) assertCookies(response *httptest.ResponseRecorder) {
 	}
 }
 
-func responseCookies(response *httptest.ResponseRecorder) []*http.Cookie {
-	return response.Result().Cookies()
-}
-
-func (a *APITest) assertHeaders(res *httptest.ResponseRecorder) {
+func (a *APITest) assertHeaders(res *http.Response) {
 	for expectedHeader, expectedValues := range a.response.headers {
 		for _, expectedValue := range expectedValues {
 			found := false
-			result := res.Result()
-			for _, resValue := range result.Header[expectedHeader] {
+			for _, resValue := range res.Header[expectedHeader] {
 				if expectedValue == resValue {
 					found = true
 					break
@@ -770,7 +795,7 @@ func (a *APITest) assertHeaders(res *httptest.ResponseRecorder) {
 
 	if len(a.response.headersPresent) > 0 {
 		for _, expectedName := range a.response.headersPresent {
-			if res.Header().Get(expectedName) == "" {
+			if res.Header.Get(expectedName) == "" {
 				a.t.Fatalf("expected header '%s' not present in response", expectedName)
 			}
 		}
@@ -778,7 +803,7 @@ func (a *APITest) assertHeaders(res *httptest.ResponseRecorder) {
 
 	if len(a.response.headersNotPresent) > 0 {
 		for _, name := range a.response.headersNotPresent {
-			if res.Header().Get(name) != "" {
+			if res.Header.Get(name) != "" {
 				a.t.Fatalf("did not expect header '%s' in response", name)
 			}
 		}
