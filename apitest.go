@@ -441,6 +441,17 @@ type Result struct {
 	Response *http.Response
 }
 
+func (r Result) JSON(t interface{}) {
+	data, err := ioutil.ReadAll(r.Response.Body)
+	if err != nil {
+		panic(err)
+	}
+	err = json.Unmarshal(data, t)
+	if err != nil {
+		panic(err)
+	}
+}
+
 type mockInteraction struct {
 	request   *http.Request
 	response  *http.Response

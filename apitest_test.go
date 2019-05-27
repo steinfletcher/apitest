@@ -430,6 +430,9 @@ func TestApiTest_MatchesResponseHeaders_WithMixedKeyCase(t *testing.T) {
 }
 
 func TestApiTest_EndReturnsTheResult(t *testing.T) {
+	type resBody struct {
+		B string `json:"b"`
+	}
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
@@ -440,7 +443,8 @@ func TestApiTest_EndReturnsTheResult(t *testing.T) {
 		}
 	})
 
-	res := New().
+	var r resBody
+	New().
 		Handler(handler).
 		Get("/hello").
 		Expect(t).
@@ -449,9 +453,10 @@ func TestApiTest_EndReturnsTheResult(t *testing.T) {
 			"b": "hi"
 		}`).
 		Status(http.StatusCreated).
-		End()
+		End().
+		JSON(&r)
 
-	assert.Equal(t, http.StatusCreated, res.Response.StatusCode)
+	assert.Equal(t, "hi", r.B)
 }
 
 func TestApiTest_CustomAssert(t *testing.T) {
