@@ -95,5 +95,3 @@ apitest.New().
 	    req.URL.RawQuery = "a[]=xxx&a[]=yyy"
 	}).
 ```
-
-### Reporting
