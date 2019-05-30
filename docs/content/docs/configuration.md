@@ -11,7 +11,30 @@ apitest.New().
 	Handler(myHandler)
 ```
 
-`apitest` does not make a http call over the network. Instead the provided http handler's `ServeHTTP` method is invoked in the same process as the test code. The user defined request and response structs are converted to `http.Request` and `http.Response` types via Go's `httptest` package. The goal here is to test the internal application and not the networking layer. This approach keeps the test fast simple. If you would like to use a real http client to generate a request against a running application we recommend using a tool like [Baloo](https://github.com/h2non/baloo) which has a similar api to but the principles are much different.
+When setting a handler `apitest` does not make a http call over the network. Instead the provided http handler's `ServeHTTP` method is invoked in the same process as the test code. The user defined request and response structs are converted to `http.Request` and `http.Response` types via Go's `httptest` package. The goal here is to test the internal application and not the networking layer. This approach keeps the test fast simple. If you would like to use a real http client to generate a request against a running application you should enable networking.
+
+## Enable Networking
+
+If you want to generate HTTP requests against a running application you should enable networking. Passing a http client with a configured cookie jar allows browser like session behaviour where cookies are preserved across multiple `apitest` requests.
+
+```go
+cookieJar, _ := cookiejar.New(nil)
+httpClient := &http.Client{
+    Jar: cookieJar,
+}
+
+apitest.New().
+	EnableNetworking(httpClient).
+	Post("/login")
+	...
+
+apitest.New().
+	EnableNetworking(httpClient).
+	Get("/authenticated_route")
+	...
+```
+
+This approach can be useful for performing end-to-end tests.
 
 ## Debug Output
 
