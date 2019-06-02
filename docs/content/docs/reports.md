@@ -23,3 +23,15 @@ apitest.New().
 ```
 
 In this [example](https://github.com/steinfletcher/apitest/tree/master/examples/sequence-diagrams) we implement a REST API and generate a sequence diagram with the http interactions.
+
+The following diagram is generated which illustrates the interactions between collaborators in the test. The `sut` block is the system under test.
+
+<span class="seqDiagIm">
+![sequence diagram](/seq-diagram.png)
+</span>
+
+For each interaction, the http wire representation of the request/response is rendered in the event log below the diagram
+
+<span class="eveLog">
+![event log](/log.png)
+</span>

@@ -2,3 +2,4 @@
 .idea/
 coverage.out
 resources/_gen/images/
+.DS_Store
