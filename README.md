@@ -38,7 +38,7 @@ go get -u github.com/steinfletcher/apitest
 | [iris](https://github.com/steinfletcher/apitest/tree/master/examples/iris)                           | iris web framework                                                                                         |
 | [echo](https://github.com/steinfletcher/apitest/tree/master/examples/echo)                           | High performance, extensible, minimalist Go web framework                                                  |
 | [mocks](https://github.com/steinfletcher/apitest/tree/master/examples/mocks)                         | example mocking out external http calls                                                                    |
-| [sequence diagrams](https://github.com/steinfletcher/apitest/tree/master/examples/sequence-diagrams) | generate sequence diagrams from tests. See the [demo](https://steinfletcher.github.io/api-test-examples/)  |
+| [sequence diagrams](https://github.com/steinfletcher/apitest/tree/master/examples/sequence-diagrams) | generate sequence diagrams from tests. See the [demo](http://demo-html.apitest.dev/)  |
 
 ### Companion libraries
 
