@@ -39,9 +39,9 @@ The assertion library checks if the content is `JSON` and if so performs the ass
 You can use `JSONPath` to assert on partial content from the response body. This is useful when you are only interested in particular fields in the response.
 A separate module must be installed which provides these assertions - `go get -u github.com/steinfletcher/apitest-jsonpath`
 
-#### Equals
+#### Equal
 
-When the selector returns a single value use `Equals`. Given the JSON body in the response is `{"id": 12345}`
+When the selector returns a single value use `Equal`. Given the JSON body in the response is `{"id": 12345}`
 
 ```go
 apitest.New(handler).
@@ -60,7 +60,7 @@ apitest.New().
 	Handler(handler).
 	Get("/hello").
 	Expect(t).
-	Assert(Contains(`$.items[?@.available==true].color`, "red")).
+	Assert(jsonpath.Contains(`$.items[?@.available==true].color`, "red")).
 	End()
 ```
 
@@ -75,7 +75,7 @@ func TestApi(t *testing.T) {
 		Patch("/hello").
 		Expect(t).
 		Status(http.StatusOK).
-		Cookies(apitest.Cookie"ABC").Value("12345")).
+		Cookies(apitest.Cookie("ABC").Value("12345")).
 		CookiePresent("Session-Token").
 		CookieNotPresent("XXX").
 		End()
