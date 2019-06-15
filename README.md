@@ -278,6 +278,23 @@ func TestApi(t *testing.T) {
 }
 ```
 
+#### Provide a url encoded form body in the request
+
+```go
+func TestApi(t *testing.T) {
+	apitest.New().
+		Handler(handler).
+		Post("/hello").
+		FormData("a", "1").
+		FormData("b", "2").
+		FormData("b", "3").
+		FormData("c", "4", "5", "6").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+```
+
 #### Capture the request and response data
 
 ```go

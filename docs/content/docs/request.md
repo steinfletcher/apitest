@@ -72,6 +72,24 @@ Header("name", "value")
 Headers(map[string]string{"name1": "value1", "name2": "value2"})
 ```
 
+## URL encoded form
+
+There are multiple ways to create a URL encoded form body in the request. The following approaches are chainable.
+
+### short form
+
+```go
+FormData("name", "value")
+```
+
+### multiple values
+
+`FormData` is a variadic function that can be used to take a variable amount of values for the same key.
+
+```go
+FormData("name", "value1", "value2")
+```
+
 ## Cookies
 
 There are multiple ways to specify http request cookies. These approaches are chainable.

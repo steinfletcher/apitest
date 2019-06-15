@@ -187,6 +187,26 @@ func TestApiTest_AddsHeadersToRequest(t *testing.T) {
 		End()
 }
 
+func TestApiTest_AddsContentTypeHeaderToRequest(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		if r.Header["Content-Type"][0] != "application/x-www-form-urlencoded" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	New().
+		Handler(handler).
+		Post("/hello").
+		ContentType("application/x-www-form-urlencoded").
+		Body(`name=John`).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
 func TestApiTest_AddsCookiesToRequest(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
@@ -842,6 +862,50 @@ func TestRealNetworking(t *testing.T) {
 		finish <- struct{}{}
 	}()
 	<-finish
+}
+
+func TestApiTest_AddsUrlEncodedFormBody(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		if r.Header["Content-Type"][0] != "application/x-www-form-urlencoded" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		err := r.ParseForm()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		expectedPostFormData := map[string][]string{
+			"name":     {"John"},
+			"age":      {"99"},
+			"children": {"Jack", "Ann"},
+			"pets":     {"Toby", "Henry", "Alice"},
+		}
+
+		for key := range expectedPostFormData {
+			if !reflect.DeepEqual(expectedPostFormData[key], r.PostForm[key]) {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
+
+	New().
+		Handler(handler).
+		Post("/hello").
+		FormData("name", "John").
+		FormData("age", "99").
+		FormData("children", "Jack").
+		FormData("children", "Ann").
+		FormData("pets", "Toby", "Henry", "Alice").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
 }
 
 type RecorderCaptor struct {

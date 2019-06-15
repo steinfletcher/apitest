@@ -196,20 +196,23 @@ type Mock struct {
 }
 
 type MockRequest struct {
-	mock             *Mock
-	url              *url.URL
-	method           string
-	headers          map[string][]string
-	headerPresent    []string
-	headerNotPresent []string
-	query            map[string][]string
-	queryPresent     []string
-	queryNotPresent  []string
-	cookie           []Cookie
-	cookiePresent    []string
-	cookieNotPresent []string
-	body             string
-	matchers         []Matcher
+	mock               *Mock
+	url                *url.URL
+	method             string
+	headers            map[string][]string
+	headerPresent      []string
+	headerNotPresent   []string
+	formData           map[string][]string
+	formDataPresent    []string
+	formDataNotPresent []string
+	query              map[string][]string
+	queryPresent       []string
+	queryNotPresent    []string
+	cookie             []Cookie
+	cookiePresent      []string
+	cookieNotPresent   []string
+	body               string
+	matchers           []Matcher
 }
 
 type MockResponse struct {
@@ -261,6 +264,7 @@ func NewMock() *Mock {
 	req := &MockRequest{
 		mock:     mock,
 		headers:  map[string][]string{},
+		formData: map[string][]string{},
 		query:    map[string][]string{},
 		matchers: defaultMatchers,
 	}
@@ -381,6 +385,23 @@ func (r *MockRequest) HeaderPresent(key string) *MockRequest {
 
 func (r *MockRequest) HeaderNotPresent(key string) *MockRequest {
 	r.headerNotPresent = append(r.headerNotPresent, key)
+	return r
+}
+
+func (r *MockRequest) FormData(key string, values ...string) *MockRequest {
+	for _, value := range values {
+		r.formData[key] = append(r.formData[key], value)
+	}
+	return r
+}
+
+func (r *MockRequest) FormDataPresent(key string) *MockRequest {
+	r.formDataPresent = append(r.formDataPresent, key)
+	return r
+}
+
+func (r *MockRequest) FormDataNotPresent(key string) *MockRequest {
+	r.formDataNotPresent = append(r.formDataNotPresent, key)
 	return r
 }
 
@@ -636,6 +657,74 @@ var queryNotPresentMatcher = func(req *http.Request, spec *MockRequest) error {
 	return nil
 }
 
+var formDataMatcher = func(req *http.Request, spec *MockRequest) error {
+	mockFormData := spec.formData
+
+	for key, values := range mockFormData {
+		err := req.ParseForm()
+		if err != nil {
+			return errors.New("unable to parse form data")
+		}
+
+		receivedFormData := req.PostForm
+
+		if _, ok := receivedFormData[key]; !ok {
+			return fmt.Errorf("not all of received form data values %s matched expected mock form data values %s", receivedFormData, mockFormData)
+		}
+
+		found := 0
+		for _, field := range receivedFormData[key] {
+			for _, value := range values {
+				match, err := regexp.MatchString(value, field)
+				if err != nil {
+					return fmt.Errorf("unable to match received form data values %s against expected mock form data values %s", value, field)
+				}
+
+				if match {
+					found++
+				}
+			}
+		}
+
+		if found != len(values) {
+			return fmt.Errorf("not all of received form data values %s matched expected mock form data values %s", receivedFormData, mockFormData)
+		}
+	}
+	return nil
+}
+
+var formDataPresentMatcher = func(req *http.Request, spec *MockRequest) error {
+	err := req.ParseForm()
+	if err != nil {
+		return errors.New("unable to parse form data")
+	}
+
+	receivedFormData := req.PostForm
+
+	for _, key := range spec.formDataPresent {
+		if _, ok := receivedFormData[key]; !ok {
+			return fmt.Errorf("expected form data key %s not received", key)
+		}
+	}
+	return nil
+}
+
+var formDataNotPresentMatcher = func(req *http.Request, spec *MockRequest) error {
+	err := req.ParseForm()
+	if err != nil {
+		return errors.New("unable to parse form data")
+	}
+
+	receivedFormData := req.PostForm
+
+	for _, key := range spec.formDataNotPresent {
+		if _, ok := receivedFormData[key]; ok {
+			return fmt.Errorf("did not expect a form data key %s", key)
+		}
+	}
+	return nil
+}
+
 var cookieMatcher = func(req *http.Request, spec *MockRequest) error {
 	for _, c := range spec.cookie {
 		foundCookie, _ := req.Cookie(*c.name)
@@ -736,6 +825,9 @@ var defaultMatchers = []Matcher{
 	queryParamMatcher,
 	queryPresentMatcher,
 	queryNotPresentMatcher,
+	formDataMatcher,
+	formDataPresentMatcher,
+	formDataNotPresentMatcher,
 	bodyMatcher,
 	cookieMatcher,
 	cookiePresentMatcher,

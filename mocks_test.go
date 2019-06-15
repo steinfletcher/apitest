@@ -316,6 +316,148 @@ func TestMocks_QueryNotPresent(t *testing.T) {
 	}
 }
 
+func TestMocks_FormDataMatcher(t *testing.T) {
+	tests := []struct {
+		name             string
+		requestFormData  map[string][]string
+		expectedFormData map[string][]string
+		expectedError    error
+	}{
+		{
+			"single key match",
+			map[string][]string{"a": {"1"}},
+			map[string][]string{"a": {"1"}},
+			nil,
+		},
+		{
+			"multiple key match",
+			map[string][]string{"a": {"1"}, "b": {"1"}},
+			map[string][]string{"a": {"1"}, "b": {"1"}},
+			nil,
+		},
+		{
+			"multiple value same key match",
+			map[string][]string{"a": {"1", "2"}},
+			map[string][]string{"a": {"2", "1"}},
+			nil,
+		},
+		{
+			"error when no form data present",
+			map[string][]string{},
+			map[string][]string{"a": {"1"}},
+			errors.New("not all of received form data values map[] matched expected mock form data values map[a:[1]]"),
+		},
+		{
+			"error when form data value does not match",
+			map[string][]string{"a": {"1"}},
+			map[string][]string{"a": {"2"}},
+			errors.New("not all of received form data values map[a:[1]] matched expected mock form data values map[a:[2]]"),
+		},
+		{
+			"error when form data key does not match",
+			map[string][]string{"a": {"1"}},
+			map[string][]string{"b": {"1"}},
+			errors.New("not all of received form data values map[a:[1]] matched expected mock form data values map[b:[1]]"),
+		},
+		{
+			"error when form data same key multiple values do not match",
+			map[string][]string{"a": {"1", "2", "4"}},
+			map[string][]string{"a": {"1", "3", "4"}},
+			errors.New("not all of received form data values map[a:[1 2 4]] matched expected mock form data values map[a:[1 3 4]]"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			form := url.Values{}
+			for key := range test.requestFormData {
+				for _, value := range test.requestFormData[key] {
+					form.Add(key, value)
+				}
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "http://test.com/v1/path", strings.NewReader(form.Encode()))
+			req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+			mockRequest := NewMock().Post("http://test.com/v1/path")
+			for key := range test.expectedFormData {
+				for _, value := range test.expectedFormData[key] {
+					mockRequest.FormData(key, value)
+				}
+			}
+			matchError := formDataMatcher(req, mockRequest)
+			assert.Equal(t, test.expectedError, matchError)
+		})
+	}
+}
+
+func TestMocks_FormDataPresent(t *testing.T) {
+	tests := []struct {
+		name                       string
+		requestFormData            map[string]string
+		expectedFormDataKeyPresent []string
+		expectedError              error
+	}{
+		{"single form data key present", map[string]string{"a": "1", "b": "1"}, []string{"a"}, nil},
+		{"multiple form data key present", map[string]string{"a": "1", "b": "1"}, []string{"a", "b"}, nil},
+		{"error when no form data present", map[string]string{}, []string{"a"}, errors.New("expected form data key a not received")},
+		{"error when form data key not found", map[string]string{"b": "1", "c": "1"}, []string{"a"}, errors.New("expected form data key a not received")},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			form := url.Values{}
+			for i := range test.requestFormData {
+				form.Add(i, test.requestFormData[i])
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "http://test.com/v1/path", strings.NewReader(form.Encode()))
+			req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+			mockRequest := NewMock().Post("http://test.com/v1/path")
+			for _, key := range test.expectedFormDataKeyPresent {
+				mockRequest.FormDataPresent(key)
+			}
+
+			matchError := formDataPresentMatcher(req, mockRequest)
+
+			assert.Equal(t, test.expectedError, matchError)
+		})
+	}
+}
+
+func TestMocks_FormDataNotPresent(t *testing.T) {
+	tests := []struct {
+		name                          string
+		requestFormData               map[string]string
+		expectedFormDataKeyNotPresent []string
+		expectedError                 error
+	}{
+		{"single form data key not present", map[string]string{"a": "1", "b": "1"}, []string{"c"}, nil},
+		{"multiple form data key not present", map[string]string{"a": "1", "b": "1"}, []string{"d", "e"}, nil},
+		{"no form data present", map[string]string{}, []string{"a"}, nil},
+		{"error when form data key found", map[string]string{"a": "1", "b": "1"}, []string{"a"}, errors.New("did not expect a form data key a")},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			form := url.Values{}
+			for i := range test.requestFormData {
+				form.Add(i, test.requestFormData[i])
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "http://test.com/v1/path", strings.NewReader(form.Encode()))
+			req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+			mockRequest := NewMock().Post("http://test.com/v1/path")
+			for _, key := range test.expectedFormDataKeyNotPresent {
+				mockRequest.FormDataNotPresent(key)
+			}
+
+			matchError := formDataNotPresentMatcher(req, mockRequest)
+
+			assert.Equal(t, test.expectedError, matchError)
+		})
+	}
+}
+
 func TestMocks_SchemeMatcher(t *testing.T) {
 	tests := []struct {
 		requestUrl    string
