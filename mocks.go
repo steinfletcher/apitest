@@ -593,25 +593,27 @@ var headerNotPresentMatcher = func(req *http.Request, spec *MockRequest) error {
 var queryParamMatcher = func(req *http.Request, spec *MockRequest) error {
 	mockQueryParams := spec.query
 	for key, values := range mockQueryParams {
-		var err error
-		var match bool
-
 		receivedQueryParams := req.URL.Query()
 
+		if _, ok := receivedQueryParams[key]; !ok {
+			return fmt.Errorf("not all of received query params %s matched expected mock query params %s", receivedQueryParams, mockQueryParams)
+		}
+
+		found := 0
 		for _, field := range receivedQueryParams[key] {
 			for _, value := range values {
-				match, err = regexp.MatchString(value, field)
+				match, err := regexp.MatchString(value, field)
 				if err != nil {
 					return fmt.Errorf("unable to match received query param value %s against expected value %s", value, field)
 				}
-			}
 
-			if match {
-				break
+				if match {
+					found++
+				}
 			}
 		}
 
-		if !match {
+		if found != len(values) {
 			return fmt.Errorf("not all of received query params %s matched expected mock query params %s", receivedQueryParams, mockQueryParams)
 		}
 	}
