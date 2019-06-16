@@ -243,18 +243,27 @@ func TestMocks_HeaderNotPresentMatcher(t *testing.T) {
 func TestMocks_QueryMatcher(t *testing.T) {
 	tests := []struct {
 		requestUrl    string
-		queryToMatch  map[string]string
+		queryToMatch  map[string][]string
 		expectedError error
 	}{
-		{"http://test.com/v1/path?a=1", map[string]string{"a": "1"}, nil},
-		{"http://test.com/v1/path", map[string]string{"a": "1"}, errors.New("not all of received query params map[] matched expected mock query params map[a:[1]]")},
-		{"http://test.com/v2/path?a=1", map[string]string{"b": "1"}, errors.New("not all of received query params map[a:[1]] matched expected mock query params map[b:[1]]")},
-		{"http://test.com/v2/path?b=2&a=1", map[string]string{"a": "1"}, nil},
+		{"http://test.com/v1/path?a=1", map[string][]string{"a": {"1"}}, nil},
+		{"http://test.com/v2/path?b=2&a=1", map[string][]string{"b": {"2"}, "a": {"1"}}, nil},
+		{"http://test.com/v2/path?b=2&a=1&a=2", map[string][]string{"a": {"2"}}, nil},
+		{"http://test.com/v2/path?b=2&a=1&a=2", map[string][]string{"a": {"2", "1"}}, nil},
+		{"http://test.com/v1/path", map[string][]string{"a": {"1"}}, errors.New("not all of received query params map[] matched expected mock query params map[a:[1]]")},
+		{"http://test.com/v2/path?a=1", map[string][]string{"b": {"1"}}, errors.New("not all of received query params map[a:[1]] matched expected mock query params map[b:[1]]")},
+		{"http://test.com/v2/path?b=2&a=1&a=2&a=3", map[string][]string{"a": {"4", "1", "2"}}, errors.New("not all of received query params map[a:[1 2 3] b:[2]] matched expected mock query params map[a:[4 1 2]]")},
 	}
 	for _, test := range tests {
 		t.Run(test.requestUrl, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, test.requestUrl, nil)
-			mockRequest := NewMock().Get(test.requestUrl).QueryParams(test.queryToMatch)
+			mockRequest := NewMock().Get(test.requestUrl)
+			for k := range test.queryToMatch {
+				for _, value := range test.queryToMatch[k] {
+					mockRequest.Query(k, value)
+				}
+			}
+
 			matchError := queryParamMatcher(req, mockRequest)
 			assert.Equal(t, test.expectedError, matchError)
 		})
