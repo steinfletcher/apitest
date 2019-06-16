@@ -70,9 +70,10 @@ func New(name ...string) *APITest {
 	}
 
 	request := &Request{
-		apiTest: apiTest,
-		headers: map[string][]string{},
-		query:   map[string][]string{},
+		apiTest:  apiTest,
+		headers:  map[string][]string{},
+		query:    map[string][]string{},
+		formData: map[string][]string{},
 	}
 	response := &Response{
 		apiTest: apiTest,
@@ -187,6 +188,7 @@ type Request struct {
 	query           map[string][]string
 	queryCollection map[string][]string
 	headers         map[string][]string
+	formData        map[string][]string
 	cookies         []*Cookie
 	basicAuth       string
 	apiTest         *APITest
@@ -264,7 +266,7 @@ func (r *Request) Body(b string) *Request {
 // JSON is a convenience method for setting the request body and content type header as "application/json"
 func (r *Request) JSON(b string) *Request {
 	r.body = b
-	r.Header("Content-Type", "application/json")
+	r.ContentType("application/json")
 	return r
 }
 
@@ -306,6 +308,13 @@ func (r *Request) Headers(headers map[string]string) *Request {
 	return r
 }
 
+// ContentType is a builder method to set the Content-Type header of the request
+func (r *Request) ContentType(contentType string) *Request {
+	normalizedKey := textproto.CanonicalMIMEHeaderKey("Content-Type")
+	r.headers[normalizedKey] = []string{contentType}
+	return r
+}
+
 // Cookie is a convenience method for setting a single request cookies by name and value
 func (r *Request) Cookie(name, value string) *Request {
 	r.cookies = append(r.cookies, &Cookie{name: &name, value: &value})
@@ -321,6 +330,17 @@ func (r *Request) Cookies(c ...*Cookie) *Request {
 // BasicAuth is a builder method to sets basic auth on the request.
 func (r *Request) BasicAuth(username, password string) *Request {
 	r.basicAuth = fmt.Sprintf("%s:%s", username, password)
+	return r
+}
+
+// FormData is a builder method to set the body form data
+// Also sets the content type of the request to application/x-www-form-urlencoded
+func (r *Request) FormData(name string, values ...string) *Request {
+	r.ContentType("application/x-www-form-urlencoded")
+	for _, value := range values {
+		r.formData[name] = append(r.formData[name], value)
+	}
+
 	return r
 }
 
@@ -667,6 +687,16 @@ func (a *APITest) serveHttp(res *httptest.ResponseRecorder, req *http.Request) {
 }
 
 func (a *APITest) BuildRequest() *http.Request {
+	if len(a.request.formData) > 0 {
+		form := url.Values{}
+		for k := range a.request.formData {
+			for _, value := range a.request.formData[k] {
+				form.Add(k, value)
+			}
+		}
+		a.request.body = form.Encode()
+	}
+
 	req, _ := http.NewRequest(a.request.method, a.request.url, bytes.NewBufferString(a.request.body))
 	req.URL.RawQuery = formatQuery(a.request)
 	req.Host = "application"
