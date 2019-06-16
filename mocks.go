@@ -663,12 +663,13 @@ var formDataMatcher = func(req *http.Request, spec *MockRequest) error {
 	mockFormData := spec.formData
 
 	for key, values := range mockFormData {
-		err := req.ParseForm()
+		r := copyHttpRequest(req)
+		err := r.ParseForm()
 		if err != nil {
 			return errors.New("unable to parse form data")
 		}
 
-		receivedFormData := req.PostForm
+		receivedFormData := r.PostForm
 
 		if _, ok := receivedFormData[key]; !ok {
 			return fmt.Errorf("not all of received form data values %s matched expected mock form data values %s", receivedFormData, mockFormData)
@@ -696,32 +697,36 @@ var formDataMatcher = func(req *http.Request, spec *MockRequest) error {
 }
 
 var formDataPresentMatcher = func(req *http.Request, spec *MockRequest) error {
-	err := req.ParseForm()
-	if err != nil {
-		return errors.New("unable to parse form data")
-	}
+	if len(spec.formDataPresent) > 0 {
+		r := copyHttpRequest(req)
+		if err := r.ParseForm(); err != nil {
+			return errors.New("unable to parse form data")
+		}
 
-	receivedFormData := req.PostForm
+		receivedFormData := r.PostForm
 
-	for _, key := range spec.formDataPresent {
-		if _, ok := receivedFormData[key]; !ok {
-			return fmt.Errorf("expected form data key %s not received", key)
+		for _, key := range spec.formDataPresent {
+			if _, ok := receivedFormData[key]; !ok {
+				return fmt.Errorf("expected form data key %s not received", key)
+			}
 		}
 	}
 	return nil
 }
 
 var formDataNotPresentMatcher = func(req *http.Request, spec *MockRequest) error {
-	err := req.ParseForm()
-	if err != nil {
-		return errors.New("unable to parse form data")
-	}
+	if len(spec.formDataNotPresent) > 0 {
+		r := copyHttpRequest(req)
+		if err := r.ParseForm(); err != nil {
+			return errors.New("unable to parse form data")
+		}
 
-	receivedFormData := req.PostForm
+		receivedFormData := r.PostForm
 
-	for _, key := range spec.formDataNotPresent {
-		if _, ok := receivedFormData[key]; ok {
-			return fmt.Errorf("did not expect a form data key %s", key)
+		for _, key := range spec.formDataNotPresent {
+			if _, ok := receivedFormData[key]; ok {
+				return fmt.Errorf("did not expect a form data key %s", key)
+			}
 		}
 	}
 	return nil
