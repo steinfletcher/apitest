@@ -221,6 +221,41 @@ type MockResponse struct {
 	times      int
 }
 
+type StandaloneMocks struct {
+	mocks      []*Mock
+	httpClient *http.Client
+	debug      bool
+}
+
+func NewStandaloneMocks(mocks ...*Mock) *StandaloneMocks {
+	return &StandaloneMocks{
+		mocks: mocks,
+	}
+}
+
+func (r *StandaloneMocks) HttpClient(cli *http.Client) *StandaloneMocks {
+	r.httpClient = cli
+	return r
+}
+
+func (r *StandaloneMocks) Debug() *StandaloneMocks {
+	r.debug = true
+	return r
+}
+
+func (r *StandaloneMocks) End() func() {
+	transport := newTransport(
+		r.mocks,
+		r.httpClient,
+		r.debug,
+		nil,
+		nil,
+	)
+	resetFunc := func() { transport.Reset() }
+	transport.Hijack()
+	return resetFunc
+}
+
 func NewMock() *Mock {
 	mock := &Mock{}
 	req := &MockRequest{
@@ -438,9 +473,9 @@ func (r *MockResponse) End() *Mock {
 	return r.mock
 }
 
-func (r *MockResponse) EndStandalone() func() {
+func (r *MockResponse) EndStandalone(other ...*Mock) func() {
 	transport := newTransport(
-		[]*Mock{r.mock},
+		append([]*Mock{r.mock}, other...),
 		r.mock.httpClient,
 		r.mock.debugStandalone,
 		nil,

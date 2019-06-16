@@ -702,7 +702,38 @@ func TestMocks_Standalone(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 }
 
-func TestMocks_Standalone_WithCustomerHTTPClient(t *testing.T) {
+func TestMocks_Standalone_WithContainer(t *testing.T) {
+	cli := http.Client{Timeout: 5}
+	reset := NewStandaloneMocks(
+		NewMock().
+			Post("http://localhost:8080/path").
+			Body(`{"a": 12345}`).
+			RespondWith().
+			Status(http.StatusCreated).
+			End(),
+		NewMock().
+			Get("http://localhost:8080/path").
+			RespondWith().
+			Body(`{"a": 12345}`).
+			Status(http.StatusOK).
+			End(),
+	).
+		End()
+	defer reset()
+
+	resp, err := cli.Post("http://localhost:8080/path",
+		"application/json",
+		strings.NewReader(`{"a": 12345}`))
+
+	getRes, err := cli.Get("http://localhost:8080/path")
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	data, err := ioutil.ReadAll(getRes.Body)
+	assert.JSONEq(t, `{"a": 12345}`, string(data))
+}
+
+func TestMocks_Standalone_WithCustomHTTPClient(t *testing.T) {
 	httpClient := customCli
 	defer NewMock().
 		HttpClient(httpClient).
