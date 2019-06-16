@@ -68,4 +68,24 @@ func TestMocks_Standalone(t *testing.T) {
 
 `EndStandalone` returns a function that should be invoked after the test runs to reset the http transport to the default configuration.
 
+If you want to register multiple standalone mocks in a test, use the `apitest.NewStandaloneMocks()` factory method.
+
+```go
+resetTransport := apitest.NewStandaloneMocks(
+	apitest.NewMock().
+		Post("http://localhost:8080/path").
+		Body(`{"a": 12345}`).
+		RespondWith().
+		Status(http.StatusCreated).
+		End(),
+	apitest.NewMock().
+		Get("http://localhost:8080/path").
+		RespondWith().
+		Body(`{"a": 12345}`).
+		Status(http.StatusOK).
+		End(),
+).End()
+defer resetTransport()
+```
+
 <!-- TODO: explain the matchers -->
