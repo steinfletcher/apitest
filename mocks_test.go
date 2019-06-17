@@ -1007,6 +1007,56 @@ func TestMocks_ApiTest_SupportsObservingMocks(t *testing.T) {
 	assert.Equal(t, 3, len(observedMocks))
 }
 
+func TestMocks_ApiTest_SupportsObservingMocksWithReport(t *testing.T) {
+	var observedMocks []*mockInteraction
+	reporter := &RecorderCaptor{}
+	observeMocksCalled := false
+
+	getUser := NewMock().
+		Get("http://localhost:8080").
+		RespondWith().
+		Status(http.StatusOK).
+		Body("1").
+		Times(2).
+		End()
+
+	getPreferences := NewMock().
+		Get("http://localhost:8080").
+		RespondWith().
+		Status(http.StatusOK).
+		Body("2").
+		End()
+
+	New().
+		Report(reporter).
+		ObserveMocks(func(res *http.Response, req *http.Request, a *APITest) {
+			observeMocksCalled = true
+			if res == nil || req == nil || a == nil {
+				t.Fatal("expected request and response to be defined")
+			}
+			observedMocks = append(observedMocks, &mockInteraction{response: res, request: req})
+		}).
+		Mocks(getUser, getPreferences).
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			bytes1 := getUserData()
+			bytes2 := getUserData()
+			bytes3 := getUserData()
+
+			w.Write(bytes1)
+			w.Write(bytes2)
+			w.Write(bytes3)
+			w.WriteHeader(http.StatusOK)
+		})).
+		Get("/").
+		Expect(t).
+		Status(http.StatusOK).
+		Body(`112`).
+		End()
+
+	assert.Equal(t, 3, len(observedMocks))
+	assert.True(t, observeMocksCalled)
+}
+
 func TestMocks_ApiTest_SupportsMultipleMocks(t *testing.T) {
 	getUser := NewMock().
 		Get("http://localhost:8080").

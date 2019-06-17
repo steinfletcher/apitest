@@ -21,7 +21,7 @@ type Transport struct {
 	mocks           []*Mock
 	nativeTransport http.RoundTripper
 	httpClient      *http.Client
-	observe         Observe
+	observers       []Observe
 	apiTest         *APITest
 }
 
@@ -29,14 +29,14 @@ func newTransport(
 	mocks []*Mock,
 	httpClient *http.Client,
 	debugEnabled bool,
-	observe Observe,
+	observers []Observe,
 	apiTest *APITest) *Transport {
 
 	t := &Transport{
 		mocks:        mocks,
 		httpClient:   httpClient,
 		debugEnabled: debugEnabled,
-		observe:      observe,
+		observers:    observers,
 		apiTest:      apiTest,
 	}
 	if httpClient != nil {
@@ -94,9 +94,11 @@ func (r *Transport) RoundTrip(req *http.Request) (mockResponse *http.Response, m
 		}()
 	}
 
-	if r.observe != nil {
+	if r.observers != nil && len(r.observers) > 0 {
 		defer func() {
-			r.observe(mockResponse, req, r.apiTest)
+			for _, observe := range r.observers {
+				observe(mockResponse, req, r.apiTest)
+			}
 		}()
 	}
 

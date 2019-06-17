@@ -39,7 +39,7 @@ type APITest struct {
 	request              *Request
 	response             *Response
 	observers            []Observe
-	mocksObserver        Observe
+	mocksObservers       []Observe
 	recorderHook         RecorderHook
 	mocks                []*Mock
 	t                    *testing.T
@@ -157,7 +157,7 @@ func (a *APITest) Observe(observers ...Observe) *APITest {
 
 // ObserveMocks is a builder method for setting the mocks observers
 func (a *APITest) ObserveMocks(observer Observe) *APITest {
-	a.mocksObserver = observer
+	a.mocksObservers = append(a.mocksObservers, observer)
 	return a
 }
 
@@ -492,17 +492,17 @@ func (a *APITest) report() *http.Response {
 	var capturedMockInteractions []*mockInteraction
 
 	a.observers = append(a.observers, func(finalRes *http.Response, inboundReq *http.Request, a *APITest) {
-		capturedFinalRes = finalRes
-		capturedInboundReq = inboundReq
+		capturedFinalRes = copyHttpResponse(finalRes)
+		capturedInboundReq = copyHttpRequest(inboundReq)
 	})
 
-	a.mocksObserver = func(mockRes *http.Response, mockReq *http.Request, a *APITest) {
+	a.mocksObservers = append(a.mocksObservers, func(mockRes *http.Response, mockReq *http.Request, a *APITest) {
 		capturedMockInteractions = append(capturedMockInteractions, &mockInteraction{
 			request:   copyHttpRequest(mockReq),
 			response:  copyHttpResponse(mockRes),
 			timestamp: time.Now().UTC(),
 		})
-	}
+	})
 
 	if a.recorder == nil {
 		a.recorder = NewTestRecorder()
@@ -600,7 +600,7 @@ func (r *Response) runTest() *http.Response {
 			a.mocks,
 			a.httpClient,
 			a.debugEnabled,
-			a.mocksObserver,
+			a.mocksObservers,
 			r.apiTest,
 		)
 		defer a.transport.Reset()
