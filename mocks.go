@@ -672,7 +672,8 @@ var formDataMatcher = func(req *http.Request, spec *MockRequest) error {
 		receivedFormData := r.PostForm
 
 		if _, ok := receivedFormData[key]; !ok {
-			return fmt.Errorf("not all of received form data values %s matched expected mock form data values %s", receivedFormData, mockFormData)
+			return fmt.Errorf("not all of received form data values %s matched expected mock form data values %s",
+				receivedFormData, mockFormData)
 		}
 
 		found := 0
