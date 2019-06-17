@@ -491,12 +491,11 @@ func (a *APITest) report() *http.Response {
 	var capturedFinalRes *http.Response
 	var capturedMockInteractions []*mockInteraction
 
-	a.observers = []Observe{
-		func(finalRes *http.Response, inboundReq *http.Request, a *APITest) {
-			capturedFinalRes = finalRes
-			capturedInboundReq = inboundReq
-		},
-	}
+	a.observers = append(a.observers, func(finalRes *http.Response, inboundReq *http.Request, a *APITest) {
+		capturedFinalRes = finalRes
+		capturedInboundReq = inboundReq
+	})
+
 	a.mocksObserver = func(mockRes *http.Response, mockReq *http.Request, a *APITest) {
 		capturedMockInteractions = append(capturedMockInteractions, &mockInteraction{
 			request:   copyHttpRequest(mockReq),

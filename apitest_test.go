@@ -621,9 +621,11 @@ func TestApiTest_Observe(t *testing.T) {
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	observeCalled := false
 
 	New("observe test").
 		Observe(func(res *http.Response, req *http.Request, apiTest *APITest) {
+			observeCalled = true
 			assert.Equal(t, http.StatusOK, res.StatusCode)
 			assert.Equal(t, "/hello", req.URL.Path)
 			assert.Equal(t, "observe test", apiTest.name)
@@ -633,6 +635,8 @@ func TestApiTest_Observe(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		End()
+
+	assert.True(t, observeCalled)
 }
 
 func TestApiTest_Observe_DumpsTheHttpRequestAndResponse(t *testing.T) {
@@ -654,6 +658,31 @@ func TestApiTest_Observe_DumpsTheHttpRequestAndResponse(t *testing.T) {
 		Expect(t).
 		Status(http.StatusCreated).
 		End()
+}
+
+func TestApiTest_ObserveWithReport(t *testing.T) {
+	reporter := &RecorderCaptor{}
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	observeCalled := false
+
+	New("observe test").
+		Report(reporter).
+		Observe(func(res *http.Response, req *http.Request, apiTest *APITest) {
+			observeCalled = true
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Equal(t, "/hello", req.URL.Path)
+			assert.Equal(t, "observe test", apiTest.name)
+		}).
+		Handler(handler).
+		Get("/hello").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	assert.True(t, observeCalled)
 }
 
 func TestApiTest_Intercept(t *testing.T) {
