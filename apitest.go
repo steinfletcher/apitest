@@ -46,6 +46,8 @@ type APITest struct {
 	httpClient           *http.Client
 	transport            *Transport
 	meta                 map[string]interface{}
+	started              time.Time
+	finished             time.Time
 }
 
 type InboundRequest struct {
@@ -445,15 +447,26 @@ func (r *Response) Assert(fn func(*http.Response, *http.Request) error) *Respons
 
 // End runs the test returning the result to the caller
 func (r *Response) End() Result {
-	if r.apiTest.handler == nil && r.apiTest.networkingEnabled == false {
-		r.apiTest.t.Fatal("either define a http.handler or enable networking")
+	apiTest := r.apiTest
+	defer func() {
+		if apiTest.debugEnabled {
+			fmt.Println(fmt.Sprintf("Duration: %s\n", apiTest.finished.Sub(apiTest.started)))
+		}
+	}()
+
+	if apiTest.handler == nil && apiTest.networkingEnabled == false {
+		apiTest.t.Fatal("either define a http.Handler or enable networking")
 	}
 
-	if r.apiTest.reporter != nil {
-		res := r.apiTest.report()
+	if apiTest.reporter != nil {
+		res := apiTest.report()
 		return Result{Response: res}
 	}
+
+	apiTest.started = time.Now()
 	res := r.runTest()
+	apiTest.finished = time.Now()
+
 	return Result{Response: res}
 }
 
@@ -513,9 +526,9 @@ func (a *APITest) report() *http.Response {
 		a.recorderHook(a.recorder)
 	}
 
-	execTime := time.Now().UTC()
+	a.started = time.Now()
 	res := a.response.runTest()
-	finishTime := time.Now().UTC()
+	a.finished = time.Now()
 
 	a.recorder.
 		AddTitle(fmt.Sprintf("%s %s", capturedInboundReq.Method, capturedInboundReq.URL.String())).
@@ -524,7 +537,7 @@ func (a *APITest) report() *http.Response {
 			Source:    quoted(ConsumerName),
 			Target:    quoted(SystemUnderTestDefaultName),
 			Value:     capturedInboundReq,
-			Timestamp: execTime,
+			Timestamp: a.started,
 		})
 
 	for _, interaction := range capturedMockInteractions {
@@ -548,7 +561,7 @@ func (a *APITest) report() *http.Response {
 		Source:    quoted(SystemUnderTestDefaultName),
 		Target:    quoted(ConsumerName),
 		Value:     capturedFinalRes,
-		Timestamp: finishTime,
+		Timestamp: a.finished,
 	})
 
 	sort.Slice(a.recorder.Events, func(i, j int) bool {
@@ -566,6 +579,7 @@ func (a *APITest) report() *http.Response {
 	meta["method"] = capturedInboundReq.Method
 	meta["name"] = a.name
 	meta["hash"] = createHash(meta)
+	meta["duration"] = a.finished.Sub(a.started).Nanoseconds()
 
 	a.recorder.AddMeta(meta)
 	a.reporter.Format(a.recorder)

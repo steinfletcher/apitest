@@ -564,6 +564,7 @@ func TestApiTest_Report(t *testing.T) {
 	assert.Equal(t, "POST", r.Meta["method"])
 	assert.Equal(t, "some test", r.Meta["name"])
 	assert.Equal(t, "abc.com", r.Meta["host"])
+	assert.NotEmpty(t, r.Meta["duration"])
 }
 
 func TestApiTest_Recorder(t *testing.T) {
