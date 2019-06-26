@@ -38,7 +38,7 @@ type App struct {
 
 func newApp(db *sqlx.DB) *App {
 	router := mux.NewRouter()
-	router.HandleFunc("/user", getUser(db)).Methods("GET")
+	router.HandleFunc("/some-really-long-path-so-we-can-observe-truncation-here-whey", getUser(db)).Methods("GET")
 	router.HandleFunc("/user", postUser(db)).Methods("POST")
 	return &App{Router: router, DB: db}
 }

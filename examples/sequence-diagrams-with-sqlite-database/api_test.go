@@ -36,7 +36,7 @@ func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
 
 	apiTest("gets the user").
 		Mocks(getUserMock(username)).
-		Get("/user").
+		Get("/some-really-long-path-so-we-can-observe-truncation-here-whey").
 		Query("name", username).
 		Expect(t).
 		Status(http.StatusOK).

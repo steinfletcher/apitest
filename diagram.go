@@ -88,7 +88,7 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 	}
 
 	tmpl, err := template.New("sequenceDiagram").
-		Funcs(*incTemplateFunc).
+		Funcs(*templateFunc).
 		Parse(Template)
 	if err != nil {
 		panic(err)
@@ -130,10 +130,17 @@ func SequenceDiagram(path ...string) *SequenceDiagramFormatter {
 	return &SequenceDiagramFormatter{storagePath: storagePath, fs: &osFileSystem{}}
 }
 
-var incTemplateFunc = &template.FuncMap{
+var templateFunc = &template.FuncMap{
 	"inc": func(i int) int {
 		return i + 1
 	},
+}
+
+func truncate(s string) string {
+	if len(s) > 50 {
+		return fmt.Sprintf("%s...", s[:50])
+	}
+	return s
 }
 
 func badgeCSSClass(status int) string {
@@ -157,7 +164,7 @@ func NewHTMLTemplateModel(r *Recorder) (HTMLTemplateModel, error) {
 		switch v := event.(type) {
 		case HttpRequest:
 			httpReq := v.Value
-			webSequenceDiagram.AddRequestRow(v.Source, v.Target, fmt.Sprintf("%s %s", httpReq.Method, httpReq.URL))
+			webSequenceDiagram.AddRequestRow(v.Source, v.Target, truncate(fmt.Sprintf("%s %s", httpReq.Method, httpReq.URL)))
 			entry, err := NewHttpRequestLogEntry(httpReq)
 			if err != nil {
 				return HTMLTemplateModel{}, err
