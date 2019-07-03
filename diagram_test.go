@@ -110,6 +110,7 @@ func TestNewHTMLTemplateModel_Success(t *testing.T) {
 	assert.Equal(t, template.JS(`{"host":"example.com","method":"GET","name":"some test","path":"/user"}`), model.MetaJSON)
 	assert.Equal(t, http.StatusNoContent, model.StatusCode)
 	assert.Equal(t, "badge badge-success", model.BadgeClass)
+	assert.Contains(t, model.WebSequenceDSL, "GET /abcdef")
 }
 
 func aRecorder() *Recorder {
@@ -174,7 +175,7 @@ func TestNewHttpResponseLogEntry_PlainText(t *testing.T) {
 }
 
 func aRequest() HttpRequest {
-	req := httptest.NewRequest(http.MethodGet, "http://example.com/abcdef", nil)
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/abcdef?name=abc", nil)
 	req.Header.Set("Content-Type", "application/json")
 	return HttpRequest{Value: req, Source: "reqSource", Target: "reqTarget"}
 }

@@ -36,7 +36,7 @@
         <tr>
             <th scope="row">1</th>
             <td>
-<pre>GET http://example.com/abcdef HTTP/1.1
+<pre>GET http://example.com/abcdef?name=abc HTTP/1.1
 Content-Type: application/json
 
 </pre>
@@ -48,7 +48,7 @@ Content-Type: application/json
             <th scope="row">2</th>
             <td>
 <pre>A</pre>
-<pre><code>B</code></pre>
+<pre style="max-height: 1000px;"><code>B</code></pre>
             </td>
         </tr>
         
@@ -56,7 +56,7 @@ Content-Type: application/json
             <th scope="row">3</th>
             <td>
 <pre>C</pre>
-<pre><code>D</code></pre>
+<pre style="max-height: 1000px;"><code>D</code></pre>
             </td>
         </tr>
         
@@ -74,7 +74,7 @@ Content-Type: application/json
     </table>
 </div>
 <script>
-    Diagram.parse("reqSource-\x3ereqTarget: (1) GET http:\/\/example.com\/abcdef\nmesReqSource-\x3e: (2) A\nmesResSource-\x3e\x3e: (3) C\nresSource-\x3e\x3eresTarget: (4) 204\n").drawSVG("d", {theme: 'simple', 'font-size': 14});
+    Diagram.parse("reqSource-\x3ereqTarget: (1) GET \/abcdef?name=abc\nmesReqSource-\x3e: (2) A\nmesResSource-\x3e\x3e: (3) C\nresSource-\x3e\x3eresTarget: (4) 204\n").drawSVG("d", {theme: 'simple', 'font-size': 14});
 </script>
 <style>
     body {

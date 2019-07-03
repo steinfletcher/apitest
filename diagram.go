@@ -136,11 +136,15 @@ var templateFunc = &template.FuncMap{
 	},
 }
 
-func truncate(s string) string {
-	if len(s) > 50 {
-		return fmt.Sprintf("%s...", s[:50])
+func formatDiagramRequest(req *http.Request) string {
+	out := req.URL.Path
+	if req.URL.RawQuery != "" {
+		out = fmt.Sprintf("%s %s?%s", req.Method, out, req.URL.RawQuery)
 	}
-	return s
+	if len(out) > 65 {
+		return fmt.Sprintf("%s...", out[:65])
+	}
+	return out
 }
 
 func badgeCSSClass(status int) string {
@@ -164,7 +168,7 @@ func NewHTMLTemplateModel(r *Recorder) (HTMLTemplateModel, error) {
 		switch v := event.(type) {
 		case HttpRequest:
 			httpReq := v.Value
-			webSequenceDiagram.AddRequestRow(v.Source, v.Target, truncate(fmt.Sprintf("%s %s", httpReq.Method, httpReq.URL)))
+			webSequenceDiagram.AddRequestRow(v.Source, v.Target, formatDiagramRequest(httpReq))
 			entry, err := NewHttpRequestLogEntry(httpReq)
 			if err != nil {
 				return HTMLTemplateModel{}, err
