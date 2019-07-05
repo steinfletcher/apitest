@@ -202,6 +202,17 @@ type Mock struct {
 	debugStandalone bool
 }
 
+// Matches checks whether the given request matches the mock
+func (m *Mock) Matches(req *http.Request) []error {
+	var errs []error
+	for _, matcher := range m.request.matchers {
+		if matcherError := matcher(req, m.request); matcherError != nil {
+			errs = append(errs, matcherError)
+		}
+	}
+	return errs
+}
+
 // MockRequest represents the http request side of a mock interaction
 type MockRequest struct {
 	mock               *Mock
@@ -362,19 +373,13 @@ func matches(req *http.Request, mocks []*Mock) (*MockResponse, error) {
 			continue
 		}
 
-		var mockMatchErrors []error
-		for _, matcher := range mock.request.matchers {
-			if matcherError := matcher(req, mock.request); matcherError != nil {
-				mockMatchErrors = append(mockMatchErrors, matcherError)
-			}
-		}
-
-		if len(mockMatchErrors) == 0 {
+		errs := mock.Matches(req)
+		if len(errs) == 0 {
 			mock.isUsed = true
 			return mock.response, nil
 		}
 
-		mockError = mockError.addErrors(mockNumber+1, mockMatchErrors...)
+		mockError = mockError.addErrors(mockNumber+1, errs...)
 	}
 
 	return nil, mockError
