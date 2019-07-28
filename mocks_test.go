@@ -1162,3 +1162,11 @@ func NewHttpGet(cli *http.Client) HttpGet {
 		}
 	}
 }
+
+type RecorderCaptor struct {
+	capturedRecorder Recorder
+}
+
+func (r *RecorderCaptor) Format(recorder *Recorder) {
+	r.capturedRecorder = *recorder
+}

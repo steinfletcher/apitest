@@ -1,13 +1,11 @@
-package apitest
+package apitest_test
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
+	"github.com/steinfletcher/apitest"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
-	"net/http/httptest"
 	"reflect"
 	"testing"
 	"time"
@@ -30,7 +28,7 @@ func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Post("/hello").
 		Body(`{"a": 12345}`).
@@ -55,7 +53,7 @@ func TestApiTest_AddsJSONBodyToRequestUsingJSON(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Post("/hello").
 		JSON(`{"a": 12345}`).
@@ -75,7 +73,7 @@ func TestApiTest_AddsTextBodyToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Put("/hello").
 		Body(`hello`).
@@ -94,7 +92,7 @@ func TestApiTest_AddsQueryParamsToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Get("/hello").
 		QueryParams(map[string]string{"a": "b"}).
@@ -113,7 +111,7 @@ func TestApiTest_AddsQueryParamCollectionToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Get("/hello").
 		QueryCollection(map[string][]string{"a": {"b", "c", "d"}}).
@@ -133,7 +131,7 @@ func TestApiTest_AddsQueryParamCollectionToRequest_HandlesEmpty(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Get("/hello").
 		QueryCollection(map[string][]string{}).
@@ -154,7 +152,7 @@ func TestApiTest_CanCombineQueryParamMethods(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Get("/hello").
 		Query("a", "9").
@@ -177,7 +175,7 @@ func TestApiTest_AddsHeadersToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Delete("/hello").
 		Headers(map[string]string{"Authorization": "12345"}).
@@ -197,7 +195,7 @@ func TestApiTest_AddsContentTypeHeaderToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Post("/hello").
 		ContentType("application/x-www-form-urlencoded").
@@ -221,12 +219,12 @@ func TestApiTest_AddsCookiesToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Method(http.MethodGet).
 		URL("/hello").
 		Cookie("Cookie", "Nom").
-		Cookies(NewCookie("Cookie1").Value("Yummy")).
+		Cookies(apitest.NewCookie("Cookie1").Value("Yummy")).
 		Expect(t).
 		Status(http.StatusOK).
 		End()
@@ -247,7 +245,7 @@ func TestApiTest_AddsBasicAuthToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New("some test name").
+	apitest.New("some test name").
 		Handler(handler).
 		Get("/hello").
 		BasicAuth("username", "password").
@@ -267,7 +265,7 @@ func TestApiTest_MatchesJSONResponseBody(t *testing.T) {
 		}
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Get("/hello").
 		Expect(t).
@@ -287,7 +285,7 @@ func TestApiTest_MatchesJSONResponseBodyWithWhitespace(t *testing.T) {
 		}
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Get("/hello").
 		Expect(t).
@@ -310,7 +308,7 @@ func TestApiTest_MatchesTextResponseBody(t *testing.T) {
 		}
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Get("/hello").
 		Expect(t).
@@ -347,14 +345,14 @@ func TestApiTest_MatchesResponseCookies(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Patch("/hello").
 		Expect(t).
 		Status(http.StatusOK).
 		Cookies(
-			NewCookie("ABC").Value("12345"),
-			NewCookie("DEF").Value("67890")).
+			apitest.NewCookie("ABC").Value("12345"),
+			apitest.NewCookie("DEF").Value("67890")).
 		Cookie("YYY", "kfiufhtne").
 		CookiePresent("XXX").
 		CookiePresent("VVV").
@@ -377,13 +375,13 @@ func TestApiTest_MatchesResponseHttpCookies(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Cookies(
-			NewCookie("ABC").Value("12345"),
-			NewCookie("DEF").Value("67890")).
+			apitest.NewCookie("ABC").Value("12345"),
+			apitest.NewCookie("DEF").Value("67890")).
 		End()
 }
 
@@ -406,12 +404,12 @@ func TestApiTest_MatchesResponseHttpCookies_OnlySuppliedFields(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Cookies(
-			NewCookie("session_id").
+			apitest.NewCookie("session_id").
 				Value("pdsanjdna_8e8922").
 				Path("/").
 				Expires(parsedDateTime).
@@ -431,7 +429,7 @@ func TestApiTest_MatchesResponseHeaders_WithMixedKeyCase(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Get("/hello").
 		Expect(t).
@@ -464,7 +462,7 @@ func TestApiTest_EndReturnsTheResult(t *testing.T) {
 	})
 
 	var r resBody
-	New().
+	apitest.New().
 		Handler(handler).
 		Get("/hello").
 		Expect(t).
@@ -486,50 +484,16 @@ func TestApiTest_CustomAssert(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Patch("/hello").
 		Expect(t).
-		Assert(IsSuccess).
+		Assert(apitest.IsSuccess).
 		End()
 }
 
-func TestApiTest_SupportsMultipleCustomAsserts(t *testing.T) {
-	test := New().
-		Patch("/hello").
-		Expect(t).
-		Assert(IsSuccess).
-		Assert(IsSuccess)
-
-	assert.Len(t, test.assert, 2)
-}
-
-func TestApiTest_AssertFunc(t *testing.T) {
-	tests := []struct {
-		statusCode  int
-		expectedErr error
-	}{
-		{200, nil},
-		{400, errors.New("not success. Status code=400")},
-	}
-	for _, test := range tests {
-		t.Run(fmt.Sprintf("status: %d", test.statusCode), func(t *testing.T) {
-			res := httptest.NewRecorder()
-			res.Code = test.statusCode
-			apitTest := New().
-				Patch("/hello").
-				Expect(t).
-				Assert(IsSuccess)
-
-			err := apitTest.apiTest.assertFunc(res.Result(), httptest.NewRequest("GET", "/", nil))
-
-			assert.Equal(t, test.expectedErr, err)
-		})
-	}
-}
-
 func TestApiTest_Report(t *testing.T) {
-	getUser := NewMock().
+	getUser := apitest.NewMock().
 		Get("http://localhost:8080").
 		RespondWith().
 		Status(http.StatusOK).
@@ -539,7 +503,7 @@ func TestApiTest_Report(t *testing.T) {
 
 	reporter := &RecorderCaptor{}
 
-	New("some test").
+	apitest.New("some test").
 		Debug().
 		Meta(map[string]interface{}{"host": "abc.com"}).
 		Report(reporter).
@@ -568,7 +532,7 @@ func TestApiTest_Report(t *testing.T) {
 }
 
 func TestApiTest_Recorder(t *testing.T) {
-	getUser := NewMock().
+	getUser := apitest.NewMock().
 		Get("http://localhost:8080").
 		RespondWith().
 		Status(http.StatusOK).
@@ -577,25 +541,25 @@ func TestApiTest_Recorder(t *testing.T) {
 		End()
 
 	reporter := &RecorderCaptor{}
-	messageRequest := MessageRequest{
+	messageRequest := apitest.MessageRequest{
 		Source:    "Source",
 		Target:    "Target",
 		Header:    "Header",
 		Body:      "Body",
 		Timestamp: time.Now().UTC(),
 	}
-	messageResponse := MessageResponse{
+	messageResponse := apitest.MessageResponse{
 		Source:    "Source",
 		Target:    "Target",
 		Header:    "Header",
 		Body:      "Body",
 		Timestamp: time.Now().UTC(),
 	}
-	recorder := NewTestRecorder()
+	recorder := apitest.NewTestRecorder()
 	recorder.AddMessageRequest(messageRequest)
 	recorder.AddMessageResponse(messageResponse)
 
-	New("some test").
+	apitest.New("some test").
 		Meta(map[string]interface{}{"host": "abc.com"}).
 		Report(reporter).
 		Recorder(recorder).
@@ -624,12 +588,11 @@ func TestApiTest_Observe(t *testing.T) {
 	})
 	observeCalled := false
 
-	New("observe test").
-		Observe(func(res *http.Response, req *http.Request, apiTest *APITest) {
+	apitest.New("observe test").
+		Observe(func(res *http.Response, req *http.Request, apiTest *apitest.APITest) {
 			observeCalled = true
 			assert.Equal(t, http.StatusOK, res.StatusCode)
 			assert.Equal(t, "/hello", req.URL.Path)
-			assert.Equal(t, "observe test", apiTest.name)
 		}).
 		Handler(handler).
 		Get("/hello").
@@ -651,7 +614,7 @@ func TestApiTest_Observe_DumpsTheHttpRequestAndResponse(t *testing.T) {
 		}
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Post("/hello").
 		Body(`{"a": 12345}`).
@@ -669,13 +632,12 @@ func TestApiTest_ObserveWithReport(t *testing.T) {
 	})
 	observeCalled := false
 
-	New("observe test").
+	apitest.New("observe test").
 		Report(reporter).
-		Observe(func(res *http.Response, req *http.Request, apiTest *APITest) {
+		Observe(func(res *http.Response, req *http.Request, apiTest *apitest.APITest) {
 			observeCalled = true
 			assert.Equal(t, http.StatusOK, res.StatusCode)
 			assert.Equal(t, "/hello", req.URL.Path)
-			assert.Equal(t, "observe test", apiTest.name)
 		}).
 		Handler(handler).
 		Get("/hello").
@@ -701,7 +663,7 @@ func TestApiTest_Intercept(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Intercept(func(req *http.Request) {
 			req.URL.RawQuery = "a[]=xxx&a[]=yyy"
@@ -714,119 +676,11 @@ func TestApiTest_Intercept(t *testing.T) {
 		End()
 }
 
-func TestApiTest_ReplicatesMocks(t *testing.T) {
-	tests := []struct {
-		times int
-	}{
-		{1}, {15}, {0}, {2},
-	}
-	for _, test := range tests {
-		t.Run(fmt.Sprintf("%v", test.times), func(t *testing.T) {
-			mock := NewMock().
-				Get("/abc").
-				RespondWith().
-				Status(http.StatusOK).
-				Times(test.times).
-				End()
-
-			numMocks := len(New().Mocks(mock).mocks)
-			if numMocks != test.times {
-				t.Fatalf("expected %d instances of the mock to be defined, but was %d", test.times, numMocks)
-			}
-		})
-	}
-}
-
 func TestApiTest_ExposesRequestAndResponse(t *testing.T) {
-	apiTest := New()
+	apiTest := apitest.New()
 
 	assert.NotNil(t, apiTest.Request())
 	assert.NotNil(t, apiTest.Response())
-}
-
-func TestApiTest_BuildQueryCollection(t *testing.T) {
-	queryParams := map[string][]string{
-		"a": {"22", "33"},
-		"b": {"11"},
-		"c": {},
-	}
-
-	params := buildQueryCollection(queryParams)
-
-	expectedPairs := []pair{
-		{l: "a", r: "22"},
-		{l: "a", r: "33"},
-		{l: "b", r: "11"},
-	}
-
-	if len(expectedPairs) != len(params) {
-		t.Fatalf("Expected lengths not the same")
-	}
-
-	// Filter out expected pairs when found and remove
-	for _, param := range params {
-		for i, expectedPair := range expectedPairs {
-			if reflect.DeepEqual(param, expectedPair) {
-				expectedPairs = append(expectedPairs[:i], expectedPairs[i+1:]...)
-			}
-		}
-	}
-
-	if len(expectedPairs) != 0 {
-		t.Fatalf("%s not found in params", expectedPairs)
-	}
-}
-
-func TestApiTest_BuildQueryCollection_EmptyIfNoParams(t *testing.T) {
-	queryParams := map[string][]string{"c": {}}
-
-	params := buildQueryCollection(queryParams)
-
-	if len(params) > 0 {
-		t.Fatalf("Expected params to be empty")
-	}
-}
-
-func TestApiTest_CopyHttpRequest(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/", bytes.NewBufferString("12345"))
-	req.Header.Add("a", "1")
-	req.Header.Add("b", "2")
-
-	reqCopy := copyHttpRequest(req)
-
-	assert.Equal(t, reqCopy.Method, req.Method)
-	assert.Equal(t, reqCopy.URL, req.URL)
-	assert.Equal(t, reqCopy.Host, req.Host)
-	assert.Equal(t, reqCopy.ContentLength, req.ContentLength)
-	assert.Equal(t, reqCopy.Header, req.Header)
-	assert.Equal(t, reqCopy.Body, req.Body)
-}
-
-func TestCreateHash_GroupsByEndpoint(t *testing.T) {
-	tests := []struct {
-		app      string
-		method   string
-		path     string
-		name     string
-		expected string
-	}{
-		{app: "a", method: "GET", path: "/v1/abc", name: "test1", expected: "1850189403_2569220284"},
-		{app: "a", method: "GET", path: "/v1/abc", name: "test2", expected: "1850189403_2619553141"},
-		{app: "b", method: "GET", path: "/v1/abc", name: "test1", expected: "547235502_2569220284"},
-		{app: "b", method: "GET", path: "/v1/abc", name: "test2", expected: "547235502_2619553141"},
-	}
-	for _, test := range tests {
-		t.Run(fmt.Sprintf("%s %s %s %s", test.app, test.method, test.path, test.name), func(t *testing.T) {
-			meta := map[string]interface{}{
-				"app":    test.app,
-				"method": test.method,
-				"path":   test.path,
-				"name":   test.name,
-			}
-			hash := createHash(meta)
-			assert.Equal(t, test.expected, hash)
-		})
-	}
 }
 
 // TestRealNetworking creates a server with two endpoints, /login sets a token via a cookie and /authenticated_resource
@@ -875,14 +729,14 @@ func TestRealNetworking(t *testing.T) {
 			Jar:     cookieJar,
 		}
 
-		New().
+		apitest.New().
 			EnableNetworking(cli).
 			Get("http://localhost:9876/login").
 			Expect(t).
 			Status(203).
 			End()
 
-		New().
+		apitest.New().
 			EnableNetworking(cli).
 			Get("http://localhost:9876/authenticated_resource").
 			Expect(t).
@@ -925,7 +779,7 @@ func TestApiTest_AddsUrlEncodedFormBody(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	New().
+	apitest.New().
 		Handler(handler).
 		Post("/hello").
 		FormData("name", "John").
@@ -939,9 +793,21 @@ func TestApiTest_AddsUrlEncodedFormBody(t *testing.T) {
 }
 
 type RecorderCaptor struct {
-	capturedRecorder Recorder
+	capturedRecorder apitest.Recorder
 }
 
-func (r *RecorderCaptor) Format(recorder *Recorder) {
+func (r *RecorderCaptor) Format(recorder *apitest.Recorder) {
 	r.capturedRecorder = *recorder
+}
+
+func getUserData() []byte {
+	res, err := http.Get("http://localhost:8080")
+	if err != nil {
+		panic(err)
+	}
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		panic(err)
+	}
+	return data
 }

@@ -28,7 +28,7 @@ func newApp() *App {
 }
 
 func (a *App) start() {
-	log.Fatal(a.iris.Run(iris.Addr("localhost:8080")))
+	log.Fatal(a.iris.Run(iris.Addr(":8080")))
 }
 
 func getUser(ctx iris.Context) {
