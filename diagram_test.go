@@ -16,7 +16,7 @@ func TestSequenceDiagramFormatter_Format(t *testing.T) {
 	mockFS := &FS{}
 	formatter := SequenceDiagramFormatter{storagePath: ".sequence", fs: mockFS}
 
-	formatter.format(aRecorder())
+	formatter.Format(aRecorder())
 
 	assert.Equal(t, ".sequence", mockFS.CapturedMkdirAllPath)
 	assert.True(t, strings.HasSuffix(mockFS.CapturedCreateName, "html"))

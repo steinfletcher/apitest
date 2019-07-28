@@ -942,6 +942,6 @@ type RecorderCaptor struct {
 	capturedRecorder Recorder
 }
 
-func (r *RecorderCaptor) format(recorder *Recorder) {
+func (r *RecorderCaptor) Format(recorder *Recorder) {
 	r.capturedRecorder = *recorder
 }

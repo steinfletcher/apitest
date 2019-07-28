@@ -591,7 +591,7 @@ func (a *APITest) report() *http.Response {
 	meta["duration"] = a.finished.Sub(a.started).Nanoseconds()
 
 	a.recorder.AddMeta(meta)
-	a.reporter.format(a.recorder)
+	a.reporter.Format(a.recorder)
 
 	return res
 }

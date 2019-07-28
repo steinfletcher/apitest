@@ -9,7 +9,8 @@ import (
 type (
 	// ReportFormatter represents the report formatter
 	ReportFormatter interface {
-		format(*Recorder)
+		// Format formats the events received from the recorder
+		Format(*Recorder)
 	}
 
 	// Event represents a reporting event

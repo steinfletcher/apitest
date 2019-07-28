@@ -82,7 +82,7 @@ func (r *webSequenceDiagramDSL) toString() string {
 	return r.data.String()
 }
 
-func (r *SequenceDiagramFormatter) format(recorder *Recorder) {
+func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 	output, err := newHTMLTemplateModel(recorder)
 	if err != nil {
 		panic(err)
