@@ -1,6 +1,6 @@
 package apitest
 
-const Template = `<!DOCTYPE html>
+const reportTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">

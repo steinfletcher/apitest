@@ -16,6 +16,7 @@ import (
 	"strings"
 )
 
+// Transport wraps components used to observe and manipulate the real request and response objects
 type Transport struct {
 	debugEnabled    bool
 	mocks           []*Mock
@@ -62,6 +63,7 @@ func (u *unmatchedMockError) addErrors(mockNumber int, errors ...error) *unmatch
 	return u
 }
 
+// Error implementation of in-built error human readable string function
 func (u *unmatchedMockError) Error() string {
 	var strBuilder strings.Builder
 	strBuilder.WriteString("received request did not match any mocks\n\n")
@@ -130,6 +132,7 @@ func debugMock(res *http.Response, req *http.Request) {
 	}
 }
 
+// Hijack replace the transport implementation of the interaction under test in order to observe, mock and inject expectations
 func (r *Transport) Hijack() {
 	if r.httpClient != nil {
 		r.httpClient.Transport = r
@@ -138,6 +141,7 @@ func (r *Transport) Hijack() {
 	http.DefaultTransport = r
 }
 
+// Reset replace the hijacked transport implementation of the interaction under test to the original implementation
 func (r *Transport) Reset() {
 	if r.httpClient != nil {
 		r.httpClient.Transport = r.nativeTransport
@@ -189,6 +193,7 @@ func buildResponseFromMock(mockResponse *MockResponse) *http.Response {
 	return res
 }
 
+// Mock represents the entire interaction for a mock to be used for testing
 type Mock struct {
 	isUsed          bool
 	request         *MockRequest
@@ -197,6 +202,7 @@ type Mock struct {
 	debugStandalone bool
 }
 
+// MockRequest represents the http request side of a mock interaction
 type MockRequest struct {
 	mock               *Mock
 	url                *url.URL
@@ -217,6 +223,7 @@ type MockRequest struct {
 	matchers           []Matcher
 }
 
+// MockResponse represents the http response side of a mock interaction
 type MockResponse struct {
 	mock       *Mock
 	headers    map[string][]string
@@ -226,28 +233,33 @@ type MockResponse struct {
 	times      int
 }
 
+// StandaloneMocks for using mocks outside of API tests context
 type StandaloneMocks struct {
 	mocks      []*Mock
 	httpClient *http.Client
 	debug      bool
 }
 
+// NewStandaloneMocks create a series of StandaloneMocks
 func NewStandaloneMocks(mocks ...*Mock) *StandaloneMocks {
 	return &StandaloneMocks{
 		mocks: mocks,
 	}
 }
 
+// HttpClient use the given http client
 func (r *StandaloneMocks) HttpClient(cli *http.Client) *StandaloneMocks {
 	r.httpClient = cli
 	return r
 }
 
+// Debug switch on debugging mode
 func (r *StandaloneMocks) Debug() *StandaloneMocks {
 	r.debug = true
 	return r
 }
 
+// End finalises the mock, ready for use
 func (r *StandaloneMocks) End() func() {
 	transport := newTransport(
 		r.mocks,
@@ -261,6 +273,7 @@ func (r *StandaloneMocks) End() func() {
 	return resetFunc
 }
 
+// NewMock create a new mock, ready for configuration using the builder pattern
 func NewMock() *Mock {
 	mock := &Mock{}
 	req := &MockRequest{
@@ -293,30 +306,35 @@ func (m *Mock) HttpClient(cli *http.Client) *Mock {
 	return m
 }
 
+// Get configures the mock to match http method GET
 func (m *Mock) Get(u string) *MockRequest {
 	m.parseUrl(u)
 	m.request.method = http.MethodGet
 	return m.request
 }
 
+// Put configures the mock to match http method PUT
 func (m *Mock) Put(u string) *MockRequest {
 	m.parseUrl(u)
 	m.request.method = http.MethodPut
 	return m.request
 }
 
+// Post configures the mock to match http method POST
 func (m *Mock) Post(u string) *MockRequest {
 	m.parseUrl(u)
 	m.request.method = http.MethodPost
 	return m.request
 }
 
+// Delete configures the mock to match http method DELETE
 func (m *Mock) Delete(u string) *MockRequest {
 	m.parseUrl(u)
 	m.request.method = http.MethodDelete
 	return m.request
 }
 
+// Patch configures the mock to match http method PATCH
 func (m *Mock) Patch(u string) *MockRequest {
 	m.parseUrl(u)
 	m.request.method = http.MethodPatch
@@ -331,6 +349,7 @@ func (m *Mock) parseUrl(u string) {
 	m.request.url = parsed
 }
 
+// Method configures mock to match given http method
 func (m *Mock) Method(method string) *MockRequest {
 	m.request.method = method
 	return m.request
@@ -361,17 +380,20 @@ func matches(req *http.Request, mocks []*Mock) (*MockResponse, error) {
 	return nil, mockError
 }
 
+// Body configures the mock request to match the given body
 func (r *MockRequest) Body(b string) *MockRequest {
 	r.body = b
 	return r
 }
 
+// Header configures the mock request to match the given header
 func (r *MockRequest) Header(key, value string) *MockRequest {
 	normalizedKey := textproto.CanonicalMIMEHeaderKey(key)
 	r.headers[normalizedKey] = append(r.headers[normalizedKey], value)
 	return r
 }
 
+// Headers configures the mock request to match the given headers
 func (r *MockRequest) Headers(headers map[string]string) *MockRequest {
 	for k, v := range headers {
 		normalizedKey := textproto.CanonicalMIMEHeaderKey(k)
@@ -380,16 +402,19 @@ func (r *MockRequest) Headers(headers map[string]string) *MockRequest {
 	return r
 }
 
+// HeaderPresent configures the mock request to match when this header is present, regardless of value
 func (r *MockRequest) HeaderPresent(key string) *MockRequest {
 	r.headerPresent = append(r.headerPresent, key)
 	return r
 }
 
+// HeaderNotPresent configures teh mock request to match when the header is not present
 func (r *MockRequest) HeaderNotPresent(key string) *MockRequest {
 	r.headerNotPresent = append(r.headerNotPresent, key)
 	return r
 }
 
+// FormData configures the mock request to math the given form data
 func (r *MockRequest) FormData(key string, values ...string) *MockRequest {
 	for _, value := range values {
 		r.formData[key] = append(r.formData[key], value)
@@ -397,21 +422,25 @@ func (r *MockRequest) FormData(key string, values ...string) *MockRequest {
 	return r
 }
 
+// FormDataPresent configures the mock request to match when the form data is present, regardless of values
 func (r *MockRequest) FormDataPresent(key string) *MockRequest {
 	r.formDataPresent = append(r.formDataPresent, key)
 	return r
 }
 
+// FormDataNotPresent configures the mock request to match when the form data is not present
 func (r *MockRequest) FormDataNotPresent(key string) *MockRequest {
 	r.formDataNotPresent = append(r.formDataNotPresent, key)
 	return r
 }
 
+// Query configures the mock request to match a query param
 func (r *MockRequest) Query(key, value string) *MockRequest {
 	r.query[key] = append(r.query[key], value)
 	return r
 }
 
+// QueryParams configures the mock request to match a number of query params
 func (r *MockRequest) QueryParams(queryParams map[string]string) *MockRequest {
 	for k, v := range queryParams {
 		r.query[k] = append(r.query[k], v)
@@ -419,46 +448,55 @@ func (r *MockRequest) QueryParams(queryParams map[string]string) *MockRequest {
 	return r
 }
 
+// QueryPresent configures the mock request to match when a query param is present, regardless of value
 func (r *MockRequest) QueryPresent(key string) *MockRequest {
 	r.queryPresent = append(r.queryPresent, key)
 	return r
 }
 
+// QueryNotPresent configures the mock request to match when the query param is not present
 func (r *MockRequest) QueryNotPresent(key string) *MockRequest {
 	r.queryNotPresent = append(r.queryNotPresent, key)
 	return r
 }
 
+// Cookie configures the mock request to match a cookie
 func (r *MockRequest) Cookie(name, value string) *MockRequest {
 	r.cookie = append(r.cookie, Cookie{name: &name, value: &value})
 	return r
 }
 
+// CookiePresent configures the mock request to match when a cookie is present, regardless of value
 func (r *MockRequest) CookiePresent(name string) *MockRequest {
 	r.cookiePresent = append(r.cookiePresent, name)
 	return r
 }
 
+// CookieNotPresent configures the mock request to match when a cookie is not present
 func (r *MockRequest) CookieNotPresent(name string) *MockRequest {
 	r.cookieNotPresent = append(r.cookieNotPresent, name)
 	return r
 }
 
+// AddMatcher configures the mock request to match using a custom matcher
 func (r *MockRequest) AddMatcher(matcher Matcher) *MockRequest {
 	r.matchers = append(r.matchers, matcher)
 	return r
 }
 
+// RespondWith finalises the mock request phase of set up and allowing the definition of response attributes to be defined
 func (r *MockRequest) RespondWith() *MockResponse {
 	return r.mock.response
 }
 
+// Header respond with the given header
 func (r *MockResponse) Header(key string, value string) *MockResponse {
 	normalizedKey := textproto.CanonicalMIMEHeaderKey(key)
 	r.headers[normalizedKey] = append(r.headers[normalizedKey], value)
 	return r
 }
 
+// Headers respond with the given headers
 func (r *MockResponse) Headers(headers map[string]string) *MockResponse {
 	for k, v := range headers {
 		normalizedKey := textproto.CanonicalMIMEHeaderKey(k)
@@ -467,35 +505,42 @@ func (r *MockResponse) Headers(headers map[string]string) *MockResponse {
 	return r
 }
 
+// Cookies respond with the given cookies
 func (r *MockResponse) Cookies(cookie ...*Cookie) *MockResponse {
 	r.cookies = append(r.cookies, cookie...)
 	return r
 }
 
+// Cookie respond with the given cookie
 func (r *MockResponse) Cookie(name, value string) *MockResponse {
 	r.cookies = append(r.cookies, NewCookie(name).Value(value))
 	return r
 }
 
+// Body respond with the given body
 func (r *MockResponse) Body(body string) *MockResponse {
 	r.body = body
 	return r
 }
 
+// Status respond with the given status
 func (r *MockResponse) Status(statusCode int) *MockResponse {
 	r.statusCode = statusCode
 	return r
 }
 
+// Times respond the given number of times
 func (r *MockResponse) Times(times int) *MockResponse {
 	r.times = times
 	return r
 }
 
+// End finalise the response definition phase in order for the mock to be used
 func (r *MockResponse) End() *Mock {
 	return r.mock
 }
 
+// EndStandalone finalises the response definition of standalone mocks
 func (r *MockResponse) EndStandalone(other ...*Mock) func() {
 	transport := newTransport(
 		append([]*Mock{r.mock}, other...),

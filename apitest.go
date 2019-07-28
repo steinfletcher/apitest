@@ -20,7 +20,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// SystemUnderTestDefaultName default name for system under test
 const SystemUnderTestDefaultName = "sut"
+
+// ConsumerName default consumer name
 const ConsumerName = "cli"
 
 var divider = strings.Repeat("-", 10)
@@ -50,11 +53,13 @@ type APITest struct {
 	finished             time.Time
 }
 
+// InboundRequest used to wrap the incoming request with a timestamp
 type InboundRequest struct {
 	request   *http.Request
 	timestamp time.Time
 }
 
+// FinalResponse used to wrap the final response with a timestamp
 type FinalResponse struct {
 	response  *http.Response
 	timestamp time.Time
@@ -63,6 +68,7 @@ type FinalResponse struct {
 // Observe will be called by with the request and response on completion
 type Observe func(*http.Response, *http.Request, *APITest)
 
+// RecorderHook used to implement a custom interaction recorder
 type RecorderHook func(*Recorder)
 
 // New creates a new api test. The name is optional and will appear in test reports
@@ -91,6 +97,7 @@ func New(name ...string) *APITest {
 	return apiTest
 }
 
+// EnableNetworking will enable networking for provided clients
 func (a *APITest) EnableNetworking(cli ...*http.Client) *APITest {
 	a.networkingEnabled = true
 	if len(cli) == 1 {
@@ -107,7 +114,7 @@ func (a *APITest) Debug() *APITest {
 	return a
 }
 
-// Reporter provides a hook to add custom formatting to the output of the test
+// Report provides a hook to add custom formatting to the output of the test
 func (a *APITest) Report(reporter ReportFormatter) *APITest {
 	a.reporter = reporter
 	return a
@@ -470,10 +477,12 @@ func (r *Response) End() Result {
 	return Result{Response: res}
 }
 
+// Result provides the final result
 type Result struct {
 	Response *http.Response
 }
 
+// JSON unmarshal the result response body to a valid struct
 func (r Result) JSON(t interface{}) {
 	data, err := ioutil.ReadAll(r.Response.Body)
 	if err != nil {
@@ -582,7 +591,7 @@ func (a *APITest) report() *http.Response {
 	meta["duration"] = a.finished.Sub(a.started).Nanoseconds()
 
 	a.recorder.AddMeta(meta)
-	a.reporter.Format(a.recorder)
+	a.reporter.format(a.recorder)
 
 	return res
 }
@@ -654,7 +663,7 @@ func (a *APITest) assertFunc(res *http.Response, req *http.Request) error {
 }
 
 func (a *APITest) doRequest() (*http.Response, *http.Request) {
-	req := a.BuildRequest()
+	req := a.buildRequest()
 	if a.request.interceptor != nil {
 		a.request.interceptor(req)
 	}
@@ -699,7 +708,7 @@ func (a *APITest) serveHttp(res *httptest.ResponseRecorder, req *http.Request) {
 	a.handler.ServeHTTP(res, req)
 }
 
-func (a *APITest) BuildRequest() *http.Request {
+func (a *APITest) buildRequest() *http.Request {
 	if len(a.request.formData) > 0 {
 		form := url.Values{}
 		for k := range a.request.formData {

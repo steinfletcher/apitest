@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Cookie used to represent an http cookie
 type Cookie struct {
 	name     *string
 	value    *string
@@ -17,47 +18,56 @@ type Cookie struct {
 	httpOnly *bool
 }
 
+// NewCookie creates a new Cookie with the provided name
 func NewCookie(name string) *Cookie {
 	return &Cookie{
 		name: &name,
 	}
 }
 
+// Value sets the value of the Cookie
 func (cookie *Cookie) Value(value string) *Cookie {
 	cookie.value = &value
 	return cookie
 }
 
+// Path sets the path of the Cookie
 func (cookie *Cookie) Path(path string) *Cookie {
 	cookie.path = &path
 	return cookie
 }
 
+// Domain sets the domain of the Cookie
 func (cookie *Cookie) Domain(domain string) *Cookie {
 	cookie.domain = &domain
 	return cookie
 }
 
+// Expires sets the expires time of the Cookie
 func (cookie *Cookie) Expires(expires time.Time) *Cookie {
 	cookie.expires = &expires
 	return cookie
 }
 
+// MaxAge sets the maxage of the Cookie
 func (cookie *Cookie) MaxAge(maxAge int) *Cookie {
 	cookie.maxAge = &maxAge
 	return cookie
 }
 
+// Secure sets the secure bool of the Cookie
 func (cookie *Cookie) Secure(secure bool) *Cookie {
 	cookie.secure = &secure
 	return cookie
 }
 
+// HttpOnly sets the httpOnly bool of the Cookie
 func (cookie *Cookie) HttpOnly(httpOnly bool) *Cookie {
 	cookie.httpOnly = &httpOnly
 	return cookie
 }
 
+// ToHttpCookie transforms the Cookie to an http cookie
 func (cookie *Cookie) ToHttpCookie() *http.Cookie {
 	httpCookie := http.Cookie{}
 
@@ -100,7 +110,7 @@ func (cookie *Cookie) ToHttpCookie() *http.Cookie {
 // Supported fields are Name, Value, Domain, Path, Expires, MaxAge, Secure and HttpOnly
 func compareCookies(expectedCookie *Cookie, actualCookie *http.Cookie) (bool, []string) {
 	cookieFound := *expectedCookie.name == actualCookie.Name
-	compareErrors := []string{}
+	compareErrors := make([]string, 0)
 
 	if cookieFound {
 
