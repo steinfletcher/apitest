@@ -132,7 +132,7 @@ func aRecorder() *Recorder {
 func TestNewHttpRequestLogEntry(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/path", strings.NewReader(`{"a": 12345}`))
 
-	logEntry, err := newHttpRequestLogEntry(req)
+	logEntry, err := newHTTPRequestLogEntry(req)
 
 	assert.Nil(t, err)
 	assert.True(t, strings.Contains(logEntry.Header, "GET /path"))
@@ -149,7 +149,7 @@ func TestNewHttpResponseLogEntry_JSON(t *testing.T) {
 		Body:          ioutil.NopCloser(strings.NewReader(`{"a": 12345}`)),
 	}
 
-	logEntry, err := newHttpResponseLogEntry(response)
+	logEntry, err := newHTTPResponseLogEntry(response)
 
 	assert.Nil(t, err)
 	assert.True(t, strings.Contains(logEntry.Header, `HTTP/1.1 200 OK`))
@@ -166,7 +166,7 @@ func TestNewHttpResponseLogEntry_PlainText(t *testing.T) {
 		Body:          ioutil.NopCloser(strings.NewReader(`abcdef`)),
 	}
 
-	logEntry, err := newHttpResponseLogEntry(response)
+	logEntry, err := newHTTPResponseLogEntry(response)
 
 	assert.Nil(t, err)
 	assert.True(t, strings.Contains(logEntry.Header, `HTTP/1.1 200 OK`))
