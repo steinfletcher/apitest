@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html/template"
+	htmlTemplate "html/template"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -17,58 +17,60 @@ import (
 )
 
 type (
-	HTMLTemplateModel struct {
+	htmlTemplateModel struct {
 		Title          string
 		SubTitle       string
 		StatusCode     int
 		BadgeClass     string
-		LogEntries     []LogEntry
+		LogEntries     []logEntry
 		WebSequenceDSL string
-		MetaJSON       template.JS
+		MetaJSON       htmlTemplate.JS
 	}
 
-	LogEntry struct {
+	logEntry struct {
 		Header    string
 		Body      string
 		Timestamp time.Time
 	}
 
+	// SequenceDiagramFormatter implementation of a ReportFormatter
 	SequenceDiagramFormatter struct {
 		storagePath string
 		fs          fileSystem
 	}
 
 	fileSystem interface {
-		Create(name string) (*os.File, error)
-		MkdirAll(path string, perm os.FileMode) error
+		create(name string) (*os.File, error)
+		mkdirAll(path string, perm os.FileMode) error
 	}
 
 	osFileSystem struct{}
 
-	WebSequenceDiagramDSL struct {
+	webSequenceDiagramDSL struct {
 		data  bytes.Buffer
 		count int
 	}
 )
 
-func (r *osFileSystem) Create(name string) (*os.File, error) {
+
+func (r *osFileSystem) create(name string) (*os.File, error) {
 	return os.Create(name)
 }
 
-func (r *osFileSystem) MkdirAll(path string, perm os.FileMode) error {
+func (r *osFileSystem) mkdirAll(path string, perm os.FileMode) error {
 	return os.MkdirAll(path, perm)
 }
 
-func (r *WebSequenceDiagramDSL) AddRequestRow(source string, target string, description string) {
+func (r *webSequenceDiagramDSL) addRequestRow(source string, target string, description string) {
 	r.addRow("->", source, target, description)
 }
 
-func (r *WebSequenceDiagramDSL) AddResponseRow(source string, target string, description string) {
+func (r *webSequenceDiagramDSL) addResponseRow(source string, target string, description string) {
 	r.addRow("->>", source, target, description)
 }
 
-func (r *WebSequenceDiagramDSL) addRow(operation, source string, target string, description string) {
-	r.count += 1
+func (r *webSequenceDiagramDSL) addRow(operation, source string, target string, description string) {
+	r.count++
 	r.data.WriteString(fmt.Sprintf("%s%s%s: (%d) %s\n",
 		source,
 		operation,
@@ -77,19 +79,19 @@ func (r *WebSequenceDiagramDSL) addRow(operation, source string, target string, 
 		description))
 }
 
-func (r *WebSequenceDiagramDSL) ToString() string {
+func (r *webSequenceDiagramDSL) toString() string {
 	return r.data.String()
 }
 
-func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
-	output, err := NewHTMLTemplateModel(recorder)
+func (r *SequenceDiagramFormatter) format(recorder *Recorder) {
+	output, err := newHTMLTemplateModel(recorder)
 	if err != nil {
 		panic(err)
 	}
 
-	tmpl, err := template.New("sequenceDiagram").
+	tmpl, err := htmlTemplate.New("sequenceDiagram").
 		Funcs(*templateFunc).
-		Parse(Template)
+		Parse(reportTemplate)
 	if err != nil {
 		panic(err)
 	}
@@ -101,13 +103,13 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 	}
 
 	fileName := fmt.Sprintf("%s.html", recorder.Meta["hash"])
-	err = r.fs.MkdirAll(r.storagePath, os.ModePerm)
+	err = r.fs.mkdirAll(r.storagePath, os.ModePerm)
 	if err != nil {
 		panic(err)
 	}
 	saveFilesTo := fmt.Sprintf("%s/%s", r.storagePath, fileName)
 
-	f, err := r.fs.Create(saveFilesTo)
+	f, err := r.fs.create(saveFilesTo)
 	if err != nil {
 		panic(err)
 	}
@@ -120,6 +122,7 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 	fmt.Printf("Created sequence diagram (%s): %s\n", fileName, filepath.FromSlash(s))
 }
 
+// SequenceDiagram produce a sequence diagram at the given path or .sequence by default
 func SequenceDiagram(path ...string) *SequenceDiagramFormatter {
 	var storagePath string
 	if len(path) == 0 {
@@ -130,7 +133,7 @@ func SequenceDiagram(path ...string) *SequenceDiagramFormatter {
 	return &SequenceDiagramFormatter{storagePath: storagePath, fs: &osFileSystem{}}
 }
 
-var templateFunc = &template.FuncMap{
+var templateFunc = &htmlTemplate.FuncMap{
 	"inc": func(i int) int {
 		return i + 1
 	},
@@ -157,38 +160,38 @@ func badgeCSSClass(status int) string {
 	return class
 }
 
-func NewHTMLTemplateModel(r *Recorder) (HTMLTemplateModel, error) {
+func newHTMLTemplateModel(r *Recorder) (htmlTemplateModel, error) {
 	if len(r.Events) == 0 {
-		return HTMLTemplateModel{}, errors.New("no events are defined")
+		return htmlTemplateModel{}, errors.New("no events are defined")
 	}
-	var logs []LogEntry
-	webSequenceDiagram := &WebSequenceDiagramDSL{}
+	var logs []logEntry
+	webSequenceDiagram := &webSequenceDiagramDSL{}
 
 	for _, event := range r.Events {
 		switch v := event.(type) {
 		case HttpRequest:
 			httpReq := v.Value
-			webSequenceDiagram.AddRequestRow(v.Source, v.Target, formatDiagramRequest(httpReq))
-			entry, err := NewHttpRequestLogEntry(httpReq)
+			webSequenceDiagram.addRequestRow(v.Source, v.Target, formatDiagramRequest(httpReq))
+			entry, err := newHttpRequestLogEntry(httpReq)
 			if err != nil {
-				return HTMLTemplateModel{}, err
+				return htmlTemplateModel{}, err
 			}
 			entry.Timestamp = v.Timestamp
 			logs = append(logs, entry)
 		case HttpResponse:
-			webSequenceDiagram.AddResponseRow(v.Source, v.Target, strconv.Itoa(v.Value.StatusCode))
-			entry, err := NewHttpResponseLogEntry(v.Value)
+			webSequenceDiagram.addResponseRow(v.Source, v.Target, strconv.Itoa(v.Value.StatusCode))
+			entry, err := newHttpResponseLogEntry(v.Value)
 			if err != nil {
-				return HTMLTemplateModel{}, err
+				return htmlTemplateModel{}, err
 			}
 			entry.Timestamp = v.Timestamp
 			logs = append(logs, entry)
 		case MessageRequest:
-			webSequenceDiagram.AddRequestRow(v.Source, v.Target, v.Header)
-			logs = append(logs, LogEntry{Header: v.Header, Body: v.Body, Timestamp: v.Timestamp})
+			webSequenceDiagram.addRequestRow(v.Source, v.Target, v.Header)
+			logs = append(logs, logEntry{Header: v.Header, Body: v.Body, Timestamp: v.Timestamp})
 		case MessageResponse:
-			webSequenceDiagram.AddResponseRow(v.Source, v.Target, v.Header)
-			logs = append(logs, LogEntry{Header: v.Header, Body: v.Body, Timestamp: v.Timestamp})
+			webSequenceDiagram.addResponseRow(v.Source, v.Target, v.Header)
+			logs = append(logs, logEntry{Header: v.Header, Body: v.Body, Timestamp: v.Timestamp})
 		default:
 			panic("received unknown event type")
 		}
@@ -196,47 +199,47 @@ func NewHTMLTemplateModel(r *Recorder) (HTMLTemplateModel, error) {
 
 	status, err := r.ResponseStatus()
 	if err != nil {
-		return HTMLTemplateModel{}, err
+		return htmlTemplateModel{}, err
 	}
 
 	jsonMeta, err := json.Marshal(r.Meta)
 	if err != nil {
-		return HTMLTemplateModel{}, err
+		return htmlTemplateModel{}, err
 	}
 
-	return HTMLTemplateModel{
-		WebSequenceDSL: webSequenceDiagram.ToString(),
+	return htmlTemplateModel{
+		WebSequenceDSL: webSequenceDiagram.toString(),
 		LogEntries:     logs,
 		Title:          r.Title,
 		SubTitle:       r.SubTitle,
 		StatusCode:     status,
 		BadgeClass:     badgeCSSClass(status),
-		MetaJSON:       template.JS(jsonMeta),
+		MetaJSON:       htmlTemplate.JS(jsonMeta),
 	}, nil
 }
 
-func NewHttpRequestLogEntry(req *http.Request) (LogEntry, error) {
+func newHttpRequestLogEntry(req *http.Request) (logEntry, error) {
 	reqHeader, err := httputil.DumpRequest(req, false)
 	if err != nil {
-		return LogEntry{}, err
+		return logEntry{}, err
 	}
 	body, err := formatBodyContent(req.Body)
 	if err != nil {
-		return LogEntry{}, err
+		return logEntry{}, err
 	}
-	return LogEntry{Header: string(reqHeader), Body: body}, err
+	return logEntry{Header: string(reqHeader), Body: body}, err
 }
 
-func NewHttpResponseLogEntry(res *http.Response) (LogEntry, error) {
+func newHttpResponseLogEntry(res *http.Response) (logEntry, error) {
 	resDump, err := httputil.DumpResponse(res, false)
 	if err != nil {
-		return LogEntry{}, err
+		return logEntry{}, err
 	}
 	body, err := formatBodyContent(res.Body)
 	if err != nil {
-		return LogEntry{}, err
+		return logEntry{}, err
 	}
-	return LogEntry{Header: string(resDump), Body: body}, err
+	return logEntry{Header: string(resDump), Body: body}, err
 }
 
 func formatBodyContent(bodyReadCloser io.ReadCloser) (string, error) {

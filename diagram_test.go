@@ -16,7 +16,7 @@ func TestSequenceDiagramFormatter_Format(t *testing.T) {
 	mockFS := &FS{}
 	formatter := SequenceDiagramFormatter{storagePath: ".sequence", fs: mockFS}
 
-	formatter.Format(aRecorder())
+	formatter.format(aRecorder())
 
 	assert.Equal(t, ".sequence", mockFS.CapturedMkdirAllPath)
 	assert.True(t, strings.HasSuffix(mockFS.CapturedCreateName, "html"))
@@ -46,13 +46,13 @@ func TestDiagram_BadgeCSSClass(t *testing.T) {
 }
 
 func TestWebSequenceDiagram_GeneratesDSL(t *testing.T) {
-	wsd := WebSequenceDiagramDSL{}
-	wsd.AddRequestRow("A", "B", "request1")
-	wsd.AddRequestRow("B", "C", "request2")
-	wsd.AddResponseRow("C", "B", "response1")
-	wsd.AddResponseRow("B", "A", "response2")
+	wsd := webSequenceDiagramDSL{}
+	wsd.addRequestRow("A", "B", "request1")
+	wsd.addRequestRow("B", "C", "request2")
+	wsd.addResponseRow("C", "B", "response1")
+	wsd.addResponseRow("B", "A", "response2")
 
-	actual := wsd.ToString()
+	actual := wsd.toString()
 
 	expected := "A->B: (1) request1\nB->C: (2) request2\nC->>B: (3) response1\nB->>A: (4) response2\n"
 	if expected != actual {
@@ -93,7 +93,7 @@ func TestRecorderBuilder(t *testing.T) {
 func TestNewHTMLTemplateModel_ErrorsIfNoEventsDefined(t *testing.T) {
 	recorder := NewTestRecorder()
 
-	_, err := NewHTMLTemplateModel(recorder)
+	_, err := newHTMLTemplateModel(recorder)
 
 	assert.Error(t, err, "no events are defined")
 }
@@ -101,7 +101,7 @@ func TestNewHTMLTemplateModel_ErrorsIfNoEventsDefined(t *testing.T) {
 func TestNewHTMLTemplateModel_Success(t *testing.T) {
 	recorder := aRecorder()
 
-	model, err := NewHTMLTemplateModel(recorder)
+	model, err := newHTMLTemplateModel(recorder)
 
 	assert.Nil(t, err)
 	assert.Len(t, model.LogEntries, 4)
@@ -132,7 +132,7 @@ func aRecorder() *Recorder {
 func TestNewHttpRequestLogEntry(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/path", strings.NewReader(`{"a": 12345}`))
 
-	logEntry, err := NewHttpRequestLogEntry(req)
+	logEntry, err := newHttpRequestLogEntry(req)
 
 	assert.Nil(t, err)
 	assert.True(t, strings.Contains(logEntry.Header, "GET /path"))
@@ -149,7 +149,7 @@ func TestNewHttpResponseLogEntry_JSON(t *testing.T) {
 		Body:          ioutil.NopCloser(strings.NewReader(`{"a": 12345}`)),
 	}
 
-	logEntry, err := NewHttpResponseLogEntry(response)
+	logEntry, err := newHttpResponseLogEntry(response)
 
 	assert.Nil(t, err)
 	assert.True(t, strings.Contains(logEntry.Header, `HTTP/1.1 200 OK`))
@@ -166,7 +166,7 @@ func TestNewHttpResponseLogEntry_PlainText(t *testing.T) {
 		Body:          ioutil.NopCloser(strings.NewReader(`abcdef`)),
 	}
 
-	logEntry, err := NewHttpResponseLogEntry(response)
+	logEntry, err := newHttpResponseLogEntry(response)
 
 	assert.Nil(t, err)
 	assert.True(t, strings.Contains(logEntry.Header, `HTTP/1.1 200 OK`))
@@ -199,7 +199,7 @@ type FS struct {
 	CapturedMkdirAllPath string
 }
 
-func (m *FS) Create(name string) (*os.File, error) {
+func (m *FS) create(name string) (*os.File, error) {
 	m.CapturedCreateName = name
 	file, err := ioutil.TempFile("/tmp", "apitest")
 	if err != nil {
@@ -209,7 +209,7 @@ func (m *FS) Create(name string) (*os.File, error) {
 	return file, nil
 }
 
-func (m *FS) MkdirAll(path string, perm os.FileMode) error {
+func (m *FS) mkdirAll(path string, perm os.FileMode) error {
 	m.CapturedMkdirAllPath = path
 	return nil
 }
