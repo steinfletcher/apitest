@@ -63,7 +63,7 @@ func (u *unmatchedMockError) addErrors(mockNumber int, errors ...error) *unmatch
 	return u
 }
 
-// Error implementation of in-built error human readable string function 
+// Error implementation of in-built error human readable string function
 func (u *unmatchedMockError) Error() string {
 	var strBuilder strings.Builder
 	strBuilder.WriteString("received request did not match any mocks\n\n")
@@ -392,6 +392,7 @@ func (r *MockRequest) Header(key, value string) *MockRequest {
 	r.headers[normalizedKey] = append(r.headers[normalizedKey], value)
 	return r
 }
+
 // Headers configures the mock request to match the given headers
 func (r *MockRequest) Headers(headers map[string]string) *MockRequest {
 	for k, v := range headers {
@@ -487,7 +488,6 @@ func (r *MockRequest) AddMatcher(matcher Matcher) *MockRequest {
 func (r *MockRequest) RespondWith() *MockResponse {
 	return r.mock.response
 }
-
 
 // Header respond with the given header
 func (r *MockResponse) Header(key string, value string) *MockResponse {

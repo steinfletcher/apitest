@@ -22,6 +22,7 @@ import (
 
 // SystemUnderTestDefaultName default name for system under test
 const SystemUnderTestDefaultName = "sut"
+
 // ConsumerName default consumer name
 const ConsumerName = "cli"
 

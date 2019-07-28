@@ -52,7 +52,6 @@ type (
 	}
 )
 
-
 func (r *osFileSystem) create(name string) (*os.File, error) {
 	return os.Create(name)
 }

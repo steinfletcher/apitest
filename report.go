@@ -60,13 +60,15 @@ type (
 	}
 )
 
-
 // GetTime gets the time of the HttpRequest interaction
-func (r HttpRequest) GetTime() time.Time     { return r.Timestamp }
+func (r HttpRequest) GetTime() time.Time { return r.Timestamp }
+
 // GetTime gets the time of the HttpResponse interaction
-func (r HttpResponse) GetTime() time.Time    { return r.Timestamp }
+func (r HttpResponse) GetTime() time.Time { return r.Timestamp }
+
 // GetTime gets the time of the MessageRequest interaction
-func (r MessageRequest) GetTime() time.Time  { return r.Timestamp }
+func (r MessageRequest) GetTime() time.Time { return r.Timestamp }
+
 // GetTime gets the time of the MessageResponse interaction
 func (r MessageResponse) GetTime() time.Time { return r.Timestamp }
 
@@ -74,7 +76,6 @@ func (r MessageResponse) GetTime() time.Time { return r.Timestamp }
 func NewTestRecorder() *Recorder {
 	return &Recorder{}
 }
-
 
 // AddHttpRequest add an http request to recorder
 func (r *Recorder) AddHttpRequest(req HttpRequest) *Recorder {
