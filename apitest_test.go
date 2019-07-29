@@ -686,7 +686,7 @@ func TestApiTest_ExposesRequestAndResponse(t *testing.T) {
 // TestRealNetworking creates a server with two endpoints, /login sets a token via a cookie and /authenticated_resource
 // validates the token. A cookie jar is used to verify session persistence across multiple apitest instances
 func TestRealNetworking(t *testing.T) {
-	srv := &http.Server{Addr: ":9876"}
+	srv := &http.Server{Addr: "localhost:9876"}
 	finish := make(chan struct{})
 	tokenValue := "ABCDEF"
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {

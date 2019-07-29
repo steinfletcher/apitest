@@ -413,7 +413,7 @@ func (r *MockRequest) HeaderPresent(key string) *MockRequest {
 	return r
 }
 
-// HeaderNotPresent configures teh mock request to match when the header is not present
+// HeaderNotPresent configures the mock request to match when the header is not present
 func (r *MockRequest) HeaderNotPresent(key string) *MockRequest {
 	r.headerNotPresent = append(r.headerNotPresent, key)
 	return r

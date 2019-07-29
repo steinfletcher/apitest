@@ -22,7 +22,9 @@ func main() {
 		panic(err)
 	}
 
-	goose.SetDialect("sqlite3")
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		panic(err)
+	}
 	errMigration := goose.Up(db.DB, "./migrations")
 	if errMigration != nil {
 		panic(errMigration)
@@ -31,25 +33,25 @@ func main() {
 	newApp(db).start()
 }
 
-type App struct {
+type app struct {
 	Router *mux.Router
 	DB     *sqlx.DB
 }
 
-func newApp(db *sqlx.DB) *App {
+func newApp(db *sqlx.DB) *app {
 	router := mux.NewRouter()
 	router.HandleFunc("/some-really-long-path-so-we-can-observe-truncation-here-whey", getUser(db)).Methods("GET")
 	router.HandleFunc("/user", postUser(db)).Methods("POST")
-	return &App{Router: router, DB: db}
+	return &app{Router: router, DB: db}
 }
 
-func (a *App) start() {
-	log.Fatal(http.ListenAndServe(":8888", a.Router))
+func (a *app) start() {
+	log.Fatal(http.ListenAndServe("localhost:8888", a.Router))
 }
 
 func getUser(db *sqlx.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var externalUser ExternalUser
+		var externalUser externalUser
 		get(fmt.Sprintf("http://users/api/user?id=%s", r.URL.Query()["name"]), &externalUser)
 
 		var isContactable bool
@@ -58,21 +60,23 @@ func getUser(db *sqlx.DB) http.HandlerFunc {
 			panic(err)
 		}
 
-		response := User{
+		response := user{
 			Name:          externalUser.Name,
 			IsContactable: isContactable,
 		}
 
-		bytes, _ := json.Marshal(response)
+		b, _ := json.Marshal(response)
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(bytes)
+		if _, err := w.Write(b); err != nil {
+			panic(err)
+		}
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
 func postUser(db *sqlx.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var user User
+		var user user
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			panic(err)
@@ -83,28 +87,32 @@ func postUser(db *sqlx.DB) http.HandlerFunc {
 			panic(err)
 		}
 
-		post("http://users/api/user", ExternalUser{Name: user.Name})
+		post("http://users/api/user", externalUser{Name: user.Name})
 
 		tx := db.MustBegin()
 		_, err = tx.Exec("INSERT INTO users (username, is_contactable) VALUES (?, ?)", user.Name, user.IsContactable)
 		if err != nil {
-			tx.Rollback()
+			if err := tx.Rollback(); err != nil {
+				panic(err)
+			}
 			http.Error(w, "Error inserting user", http.StatusInternalServerError)
 			return
 		}
-		tx.Commit()
+		if err := tx.Commit(); err != nil {
+			panic(err)
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-type ExternalUser struct {
+type externalUser struct {
 	Name string `json:"name"`
 	ID   string `json:"id,omitempty"`
 }
 
-type User struct {
+type user struct {
 	Name          string `json:"name"`
 	IsContactable bool   `json:"is_contactable"`
 }
@@ -119,18 +127,18 @@ func get(path string, response interface{}) {
 		panic(fmt.Sprintf("unexpected status code=%d", res.StatusCode))
 	}
 
-	bytes, err := ioutil.ReadAll(res.Body)
+	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		panic(err)
 	}
 
-	err = json.Unmarshal(bytes, response)
+	err = json.Unmarshal(b, response)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func post(path string, user ExternalUser) {
+func post(path string, user externalUser) {
 	requestBytes, _ := json.Marshal(user)
 
 	res, err := http.Post(path, "application/json", bytes.NewBuffer(requestBytes))

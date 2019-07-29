@@ -14,49 +14,51 @@ func main() {
 	newApp().start()
 }
 
-type App struct {
+type app struct {
 	Router *mux.Router
 }
 
-func newApp() *App {
+func newApp() *app {
 	router := mux.NewRouter()
 	router.HandleFunc("/user/search", getUser()).Methods("POST")
-	return &App{Router: router}
+	return &app{Router: router}
 }
 
-func (a *App) start() {
-	log.Fatal(http.ListenAndServe(":8888", a.Router))
+func (a *app) start() {
+	log.Fatal(http.ListenAndServe("localhost:8888", a.Router))
 }
 
 func getUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var user User1
+		var user user
 		get("http://users/api/user/12345", &user)
 
-		var contactPreferences ContactPreferences1
+		var contactPreferences contactPreferences
 		get("http://preferences/api/preferences/12345", &contactPreferences)
 
-		response := UserResponse1{
+		response := userResponse{
 			Name:          user.Name,
 			IsContactable: contactPreferences.IsContactable,
 		}
 		bytes, _ := json.Marshal(response)
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(bytes)
+		if _, err := w.Write(bytes); err != nil {
+			panic(err)
+		}
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-type User1 struct {
+type user struct {
 	Name string `json:"name"`
 	ID   string `json:"id"`
 }
 
-type ContactPreferences1 struct {
+type contactPreferences struct {
 	IsContactable bool `json:"is_contactable"`
 }
 
-type UserResponse1 struct {
+type userResponse struct {
 	Name          string `json:"name"`
 	IsContactable bool   `json:"is_contactable"`
 }

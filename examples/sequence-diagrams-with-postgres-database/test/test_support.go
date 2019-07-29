@@ -10,6 +10,7 @@ import (
 
 const dsn = "host=localhost port=5432 user=postgres password=postgres dbname=apitest sslmode=disable"
 
+// Recorder is a generic recorder to be reused
 var Recorder *apitest.Recorder
 
 func init() {
@@ -18,6 +19,7 @@ func init() {
 	sql.Register("wrappedPostgres", wrappedDriver)
 }
 
+// DBSetup initiate connection to a postgres database, running migrations
 func DBSetup(setup func(db *sqlx.DB)) *sqlx.DB {
 	d, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
@@ -33,6 +35,7 @@ func DBSetup(setup func(db *sqlx.DB)) *sqlx.DB {
 	return d
 }
 
+// DBConnect connect to a wrapped postgres connection
 func DBConnect() *sqlx.DB {
 	testDB, err := sqlx.Connect("wrappedPostgres", dsn)
 	if err != nil {
