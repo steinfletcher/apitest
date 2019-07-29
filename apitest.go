@@ -346,10 +346,7 @@ func (r *Request) BasicAuth(username, password string) *Request {
 // Also sets the content type of the request to application/x-www-form-urlencoded
 func (r *Request) FormData(name string, values ...string) *Request {
 	r.ContentType("application/x-www-form-urlencoded")
-	for _, value := range values {
-		r.formData[name] = append(r.formData[name], value)
-	}
-
+	r.formData[name] = append(r.formData[name], values...)
 	return r
 }
 
@@ -461,7 +458,7 @@ func (r *Response) End() Result {
 		}
 	}()
 
-	if apiTest.handler == nil && apiTest.networkingEnabled == false {
+	if apiTest.handler == nil && !apiTest.networkingEnabled {
 		apiTest.t.Fatal("either define a http.Handler or enable networking")
 	}
 
@@ -678,7 +675,7 @@ func (a *APITest) doRequest() (*http.Response, *http.Request) {
 
 	var res *http.Response
 	var err error
-	if a.networkingEnabled == false {
+	if !a.networkingEnabled {
 		a.serveHttp(resRecorder, copyHttpRequest(req))
 		res = resRecorder.Result()
 	} else {

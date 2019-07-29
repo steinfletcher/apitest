@@ -82,6 +82,7 @@ func (r *webSequenceDiagramDSL) toString() string {
 	return r.data.String()
 }
 
+// Format formats the events received by the recorder
 func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 	output, err := newHTMLTemplateModel(recorder)
 	if err != nil {
@@ -250,7 +251,6 @@ func formatBodyContent(bodyReadCloser io.ReadCloser) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	bodyReadCloser = ioutil.NopCloser(bytes.NewBuffer(body))
 
 	buf := new(bytes.Buffer)
 	if json.Valid(body) {

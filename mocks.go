@@ -421,9 +421,7 @@ func (r *MockRequest) HeaderNotPresent(key string) *MockRequest {
 
 // FormData configures the mock request to math the given form data
 func (r *MockRequest) FormData(key string, values ...string) *MockRequest {
-	for _, value := range values {
-		r.formData[key] = append(r.formData[key], value)
-	}
+	r.formData[key] = append(r.formData[key], values...)
 	return r
 }
 
@@ -848,7 +846,7 @@ var bodyMatcher = func(req *http.Request, spec *MockRequest) error {
 
 	// Perform regexp match
 	match, _ := regexp.MatchString(mockBody, bodyStr)
-	if match == true {
+	if match {
 		return nil
 	}
 
