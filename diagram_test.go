@@ -2,6 +2,7 @@ package apitest
 
 import (
 	"html/template"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -43,6 +44,22 @@ func TestDiagram_BadgeCSSClass(t *testing.T) {
 			assert.Equal(t, test.class, class)
 		})
 	}
+}
+
+func TestFormatBodyContent_ShouldReplaceBody(t *testing.T) {
+	stream := ioutil.NopCloser(strings.NewReader("lol"))
+
+	val, err := formatBodyContent(stream, func(replacementBody io.ReadCloser) {
+		stream = replacementBody
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, "lol", val)
+
+	valSecondRun, errSecondRun := formatBodyContent(stream, func(replacementBody io.ReadCloser) {
+		stream = replacementBody
+	})
+	assert.NoError(t, errSecondRun)
+	assert.Equal(t, "lol", valSecondRun)
 }
 
 func TestWebSequenceDiagram_GeneratesDSL(t *testing.T) {

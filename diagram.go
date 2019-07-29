@@ -223,7 +223,9 @@ func newHTTPRequestLogEntry(req *http.Request) (logEntry, error) {
 	if err != nil {
 		return logEntry{}, err
 	}
-	body, err := formatBodyContent(req.Body)
+	body, err := formatBodyContent(req.Body, func(replacementBody io.ReadCloser) {
+		req.Body = replacementBody
+	})
 	if err != nil {
 		return logEntry{}, err
 	}
@@ -235,14 +237,16 @@ func newHTTPResponseLogEntry(res *http.Response) (logEntry, error) {
 	if err != nil {
 		return logEntry{}, err
 	}
-	body, err := formatBodyContent(res.Body)
+	body, err := formatBodyContent(res.Body, func(replacementBody io.ReadCloser) {
+		res.Body = replacementBody
+	})
 	if err != nil {
 		return logEntry{}, err
 	}
 	return logEntry{Header: string(resDump), Body: body}, err
 }
 
-func formatBodyContent(bodyReadCloser io.ReadCloser) (string, error) {
+func formatBodyContent(bodyReadCloser io.ReadCloser, replaceBody func(replacementBody io.ReadCloser)) (string, error) {
 	if bodyReadCloser == nil {
 		return "", nil
 	}
@@ -251,6 +255,8 @@ func formatBodyContent(bodyReadCloser io.ReadCloser) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	replaceBody(ioutil.NopCloser(bytes.NewReader(body)))
 
 	buf := new(bytes.Buffer)
 	if json.Valid(body) {
