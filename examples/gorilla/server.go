@@ -8,23 +8,23 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type User struct {
+type user struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
-type App struct {
+type application struct {
 	Router *mux.Router
 }
 
-func newApp() *App {
+func newApp() *application {
 	router := mux.NewRouter()
 	router.HandleFunc("/user/{id}", getUser()).Methods("GET")
-	return &App{Router: router}
+	return &application{Router: router}
 }
 
-func (a *App) start() {
-	log.Fatal(http.ListenAndServe(":8888", a.Router))
+func (a *application) start() {
+	log.Fatal(http.ListenAndServe("localhost:8888", a.Router))
 }
 
 func getUser() http.HandlerFunc {
@@ -37,7 +37,7 @@ func getUser() http.HandlerFunc {
 		})
 
 		if id == "1234" {
-			user := &User{ID: id, Name: "Andy"}
+			user := &user{ID: id, Name: "Andy"}
 			bytes, _ := json.Marshal(user)
 			_, err := w.Write(bytes)
 			if err != nil {
@@ -50,7 +50,6 @@ func getUser() http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusNotFound)
-		return
 	}
 }
 

@@ -10,48 +10,51 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type App struct {
+type app struct {
 	Router *mux.Router
 }
 
-func newApp() *App {
+func newApp() *app {
 	router := mux.NewRouter()
 	router.HandleFunc("/user", getUser()).Methods("GET")
-	return &App{Router: router}
+	return &app{Router: router}
 }
 
-func (a *App) start() {
-	log.Fatal(http.ListenAndServe(":8888", a.Router))
+func (a *app) start() {
+	log.Fatal(http.ListenAndServe("localhost:8888", a.Router))
 }
 
 func getUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var user User
+		var user user
 		get("/user/12345", &user)
 
-		var contactPreferences ContactPreferences
+		var contactPreferences contactPreferences
 		get("/preferences/12345", &contactPreferences)
 
-		response := UserResponse{
+		response := userResponse{
 			Name:          user.Name,
 			IsContactable: contactPreferences.IsContactable,
 		}
 		bytes, _ := json.Marshal(response)
-		w.Write(bytes)
+		_, err := w.Write(bytes)
+		if err != nil {
+			panic(err)
+		}
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-type User struct {
+type user struct {
 	Name string `json:"name"`
 	ID   string `json:"id"`
 }
 
-type ContactPreferences struct {
+type contactPreferences struct {
 	IsContactable bool `json:"is_contactable"`
 }
 
-type UserResponse struct {
+type userResponse struct {
 	Name          string `json:"name"`
 	IsContactable bool   `json:"is_contactable"`
 }

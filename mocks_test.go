@@ -899,11 +899,15 @@ func TestMocks_Standalone_WithContainer(t *testing.T) {
 		"application/json",
 		strings.NewReader(`{"a": 12345}`))
 
+	assert.NoError(t, err)
+
 	getRes, err := cli.Get("http://localhost:8080/path")
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 	data, err := ioutil.ReadAll(getRes.Body)
+
+	assert.NoError(t, err)
 	assert.JSONEq(t, `{"a": 12345}`, string(data))
 }
 
@@ -993,9 +997,12 @@ func TestMocks_ApiTest_SupportsObservingMocks(t *testing.T) {
 			bytes2 := getUserData()
 			bytes3 := getUserData()
 
-			w.Write(bytes1)
-			w.Write(bytes2)
-			w.Write(bytes3)
+			_, err := w.Write(bytes1)
+			assert.Nil(t, err)
+			_, err = w.Write(bytes2)
+			assert.Nil(t, err)
+			_, err = w.Write(bytes3)
+			assert.Nil(t, err)
 			w.WriteHeader(http.StatusOK)
 		})).
 		Get("/").
@@ -1042,9 +1049,13 @@ func TestMocks_ApiTest_SupportsObservingMocksWithReport(t *testing.T) {
 			bytes2 := getUserData()
 			bytes3 := getUserData()
 
-			w.Write(bytes1)
-			w.Write(bytes2)
-			w.Write(bytes3)
+			_, err := w.Write(bytes1)
+			assert.NoError(t, err)
+			_, err = w.Write(bytes2)
+			assert.NoError(t, err)
+			_, err = w.Write(bytes3)
+			assert.NoError(t, err)
+
 			w.WriteHeader(http.StatusOK)
 		})).
 		Get("/").
@@ -1080,9 +1091,12 @@ func TestMocks_ApiTest_SupportsMultipleMocks(t *testing.T) {
 			bytes2 := getUserData()
 			bytes3 := getUserData()
 
-			w.Write(bytes1)
-			w.Write(bytes2)
-			w.Write(bytes3)
+			_, err := w.Write(bytes1)
+			assert.NoError(t, err)
+			_, err = w.Write(bytes2)
+			assert.NoError(t, err)
+			_, err = w.Write(bytes3)
+			assert.NoError(t, err)
 			w.WriteHeader(http.StatusOK)
 		})).
 		Get("/").
@@ -1118,7 +1132,10 @@ func getUserHandler(get HttpGet) *http.ServeMux {
 			IsContactable: contactPreferences.IsContactable,
 		}
 		bytes, _ := json.Marshal(response)
-		w.Write(bytes)
+		_, err := w.Write(bytes)
+		if err != nil {
+			panic(err)
+		}
 		w.WriteHeader(http.StatusOK)
 	})
 	return handler

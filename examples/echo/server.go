@@ -6,27 +6,27 @@ import (
 	"github.com/labstack/echo"
 )
 
-type User struct {
+type user struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
-type App struct {
+type application struct {
 	app *echo.Echo
 }
 
-func newApp() *App {
+func newApp() *application {
 	app := echo.New()
 
 	app.GET("/user/:id", getUser)
 
-	return &App{
+	return &application{
 		app: app,
 	}
 }
 
-func (a *App) start() {
-	a.app.Logger.Fatal(a.app.Start(":1323"))
+func (a *application) start() {
+	a.app.Logger.Fatal(a.app.Start("localhost:1323"))
 }
 
 func getUser(ctx echo.Context) error {
@@ -39,10 +39,9 @@ func getUser(ctx echo.Context) error {
 	id := ctx.Param("id")
 
 	if id == "1234" {
-		return ctx.JSON(200, &User{ID: id, Name: "Andy"})
-	} else {
-		return ctx.NoContent(404)
+		return ctx.JSON(200, &user{ID: id, Name: "Andy"})
 	}
+	return ctx.NoContent(404)
 }
 
 func main() {

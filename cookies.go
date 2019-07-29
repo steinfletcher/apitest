@@ -111,44 +111,71 @@ func (cookie *Cookie) ToHttpCookie() *http.Cookie {
 func compareCookies(expectedCookie *Cookie, actualCookie *http.Cookie) (bool, []string) {
 	cookieFound := *expectedCookie.name == actualCookie.Name
 	compareErrors := make([]string, 0)
-
 	if cookieFound {
-
-		formatError := func(name string, expectedValue, actualValue interface{}) string {
-			return fmt.Sprintf("Mismatched field %s. Expected %v but received %v",
-				name,
-				expectedValue,
-				actualValue)
-		}
-
-		if expectedCookie.value != nil && *expectedCookie.value != actualCookie.Value {
-			compareErrors = append(compareErrors, formatError("Value", *expectedCookie.value, actualCookie.Value))
-		}
-
-		if expectedCookie.domain != nil && *expectedCookie.domain != actualCookie.Domain {
-			compareErrors = append(compareErrors, formatError("Domain", *expectedCookie.domain, actualCookie.Domain))
-		}
-
-		if expectedCookie.path != nil && *expectedCookie.path != actualCookie.Path {
-			compareErrors = append(compareErrors, formatError("Path", *expectedCookie.path, actualCookie.Path))
-		}
-
-		if expectedCookie.expires != nil && !(*expectedCookie.expires).Equal(actualCookie.Expires) {
-			compareErrors = append(compareErrors, formatError("Expires", *expectedCookie.expires, actualCookie.Expires))
-		}
-
-		if expectedCookie.maxAge != nil && *expectedCookie.maxAge != actualCookie.MaxAge {
-			compareErrors = append(compareErrors, formatError("MaxAge", *expectedCookie.maxAge, actualCookie.MaxAge))
-		}
-
-		if expectedCookie.secure != nil && *expectedCookie.secure != actualCookie.Secure {
-			compareErrors = append(compareErrors, formatError("Secure", *expectedCookie.secure, actualCookie.Secure))
-		}
-
-		if expectedCookie.httpOnly != nil && *expectedCookie.httpOnly != actualCookie.HttpOnly {
-			compareErrors = append(compareErrors, formatError("HttpOnly", *expectedCookie.httpOnly, actualCookie.HttpOnly))
-		}
+		compareErrors = compareValue(expectedCookie, actualCookie, compareErrors)
+		compareErrors = compareDomain(expectedCookie, actualCookie, compareErrors)
+		compareErrors = comparePath(expectedCookie, actualCookie, compareErrors)
+		compareErrors = compareExpires(expectedCookie, actualCookie, compareErrors)
+		compareErrors = compareMaxAge(expectedCookie, actualCookie, compareErrors)
+		compareErrors = compareSecure(expectedCookie, actualCookie, compareErrors)
+		compareErrors = compareHttpOnly(expectedCookie, actualCookie, compareErrors)
 	}
 
 	return cookieFound, compareErrors
+}
+
+func compareHttpOnly(expectedCookie *Cookie, actualCookie *http.Cookie, compareErrors []string) []string {
+	if expectedCookie.httpOnly != nil && *expectedCookie.httpOnly != actualCookie.HttpOnly {
+		compareErrors = append(compareErrors, formatError("HttpOnly", *expectedCookie.httpOnly, actualCookie.HttpOnly))
+	}
+	return compareErrors
+}
+
+func compareSecure(expectedCookie *Cookie, actualCookie *http.Cookie, compareErrors []string) []string {
+	if expectedCookie.secure != nil && *expectedCookie.secure != actualCookie.Secure {
+		compareErrors = append(compareErrors, formatError("Secure", *expectedCookie.secure, actualCookie.Secure))
+	}
+	return compareErrors
+}
+
+func compareMaxAge(expectedCookie *Cookie, actualCookie *http.Cookie, compareErrors []string) []string {
+	if expectedCookie.maxAge != nil && *expectedCookie.maxAge != actualCookie.MaxAge {
+		compareErrors = append(compareErrors, formatError("MaxAge", *expectedCookie.maxAge, actualCookie.MaxAge))
+	}
+	return compareErrors
+}
+
+func compareExpires(expectedCookie *Cookie, actualCookie *http.Cookie, compareErrors []string) []string {
+	if expectedCookie.expires != nil && !(*expectedCookie.expires).Equal(actualCookie.Expires) {
+		compareErrors = append(compareErrors, formatError("Expires", *expectedCookie.expires, actualCookie.Expires))
+	}
+	return compareErrors
+}
+
+func comparePath(expectedCookie *Cookie, actualCookie *http.Cookie, compareErrors []string) []string {
+	if expectedCookie.path != nil && *expectedCookie.path != actualCookie.Path {
+		compareErrors = append(compareErrors, formatError("Path", *expectedCookie.path, actualCookie.Path))
+	}
+	return compareErrors
+}
+
+func compareDomain(expectedCookie *Cookie, actualCookie *http.Cookie, compareErrors []string) []string {
+	if expectedCookie.domain != nil && *expectedCookie.domain != actualCookie.Domain {
+		compareErrors = append(compareErrors, formatError("Domain", *expectedCookie.domain, actualCookie.Domain))
+	}
+	return compareErrors
+}
+
+func compareValue(expectedCookie *Cookie, actualCookie *http.Cookie, compareErrors []string) []string {
+	if expectedCookie.value != nil && *expectedCookie.value != actualCookie.Value {
+		compareErrors = append(compareErrors, formatError("Value", *expectedCookie.value, actualCookie.Value))
+	}
+	return compareErrors
+}
+
+func formatError(name string, expectedValue, actualValue interface{}) string {
+	return fmt.Sprintf("Mismatched field %s. Expected %v but received %v",
+		name,
+		expectedValue,
+		actualValue)
 }

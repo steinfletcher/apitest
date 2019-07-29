@@ -15,26 +15,27 @@ import (
 // WrapWithRecorder wraps an existing driver with a Recorder
 func WrapWithRecorder(driverName string, recorder *apitest.Recorder) driver.Driver {
 	sqlDriver := sqlDriverNameToDriver(driverName)
-	recordingDriver := &RecordingDriver{
+	recordingDriver := &recordingDriver{
 		sourceName: driverName,
 		Driver:     sqlDriver,
 		recorder:   recorder,
 	}
 
 	if _, ok := sqlDriver.(driver.DriverContext); ok {
-		return &RecordingDriverContext{recordingDriver}
+		return &recordingDriverContext{recordingDriver}
 	}
 
 	return recordingDriver
 }
 
-type RecordingDriver struct {
+type recordingDriver struct {
 	Driver     driver.Driver
 	recorder   *apitest.Recorder
 	sourceName string
 }
 
-func (d *RecordingDriver) Open(name string) (driver.Conn, error) {
+// Open wraps opening a connection to the database with a recorder
+func (d *recordingDriver) Open(name string) (driver.Conn, error) {
 	conn, err := d.Driver.Open(name)
 	if err != nil {
 		return nil, err
@@ -45,53 +46,55 @@ func (d *RecordingDriver) Open(name string) (driver.Conn, error) {
 	_, isConnExec := conn.(driver.Execer)
 	_, isConnExecCtx := conn.(driver.ExecerContext)
 	_, isConnPrepareCtx := conn.(driver.ConnPrepareContext)
-	recordingConn := &RecordingConn{Conn: conn, recorder: d.recorder, sourceName: d.sourceName}
+	recordingConn := &recordingConn{Conn: conn, recorder: d.recorder, sourceName: d.sourceName}
 
 	if isConnQueryCtx && isConnExecCtx && isConnPrepareCtx {
-		return &RecordingConnWithExecQueryPrepareContext{
+		return &recordingConnWithExecQueryPrepareContext{
 			recordingConn,
-			&RecordingConnWithPrepareContext{recordingConn},
-			&RecordingConnWithExecContext{recordingConn},
-			&RecordingConnWithQueryContext{recordingConn},
-			&RecordingConnWithBeginTx{recordingConn},
-			&RecordingConnWithPing{recordingConn},
+			&recordingConnWithPrepareContext{recordingConn},
+			&recordingConnWithExecContext{recordingConn},
+			&recordingConnWithQueryContext{recordingConn},
+			&recordingConnWithBeginTx{recordingConn},
+			&recordingConnWithPing{recordingConn},
 		}, nil
 	}
 
 	if isConnQuery && isConnExec {
-		return &RecordingConnWithExecQuery{
+		return &recordingConnWithExecQuery{
 			recordingConn,
-			&RecordingConnWithExec{recordingConn},
-			&RecordingConnWithQuery{recordingConn},
+			&recordingConnWithExec{recordingConn},
+			&recordingConnWithQuery{recordingConn},
 		}, nil
 	}
 
 	return recordingConn, nil
 }
 
-type RecordingDriverContext struct {
-	*RecordingDriver
+type recordingDriverContext struct {
+	*recordingDriver
 }
 
-func (d *RecordingDriverContext) OpenConnector(name string) (driver.Connector, error) {
+// OpenConnector wraps the underlying driver OpenConnector call
+func (d *recordingDriverContext) OpenConnector(name string) (driver.Connector, error) {
 	if driverCtx, ok := d.Driver.(driver.DriverContext); ok {
 		connector, err := driverCtx.OpenConnector(name)
 		if err != nil {
 			return nil, err
 		}
-		return &RecordingConnector{recorder: d.recorder, sourceName: d.sourceName, Connector: connector}, nil
+		return &recordingConnector{recorder: d.recorder, sourceName: d.sourceName, Connector: connector}, nil
 	}
 
 	return nil, errors.New("OpenConnector not implemented")
 }
 
-type RecordingConnector struct {
+type recordingConnector struct {
 	Connector  driver.Connector
 	recorder   *apitest.Recorder
 	sourceName string
 }
 
-func (c *RecordingConnector) Connect(context context.Context) (driver.Conn, error) {
+// Connect wraps the
+func (c *recordingConnector) Connect(context context.Context) (driver.Conn, error) {
 	conn, err := c.Connector.Connect(context)
 	if err != nil {
 		return nil, err
@@ -102,39 +105,40 @@ func (c *RecordingConnector) Connect(context context.Context) (driver.Conn, erro
 	_, isConnExec := conn.(driver.Execer)
 	_, isConnExecCtx := conn.(driver.ExecerContext)
 	_, isConnPrepareCtx := conn.(driver.ConnPrepareContext)
-	recordingConn := &RecordingConn{Conn: conn, recorder: c.recorder, sourceName: c.sourceName}
+	recordingConn := &recordingConn{Conn: conn, recorder: c.recorder, sourceName: c.sourceName}
 
 	if isConnQueryCtx && isConnExecCtx && isConnPrepareCtx {
-		return &RecordingConnWithExecQueryPrepareContext{
+		return &recordingConnWithExecQueryPrepareContext{
 			recordingConn,
-			&RecordingConnWithPrepareContext{recordingConn},
-			&RecordingConnWithExecContext{recordingConn},
-			&RecordingConnWithQueryContext{recordingConn},
-			&RecordingConnWithBeginTx{recordingConn},
-			&RecordingConnWithPing{recordingConn},
+			&recordingConnWithPrepareContext{recordingConn},
+			&recordingConnWithExecContext{recordingConn},
+			&recordingConnWithQueryContext{recordingConn},
+			&recordingConnWithBeginTx{recordingConn},
+			&recordingConnWithPing{recordingConn},
 		}, nil
 	}
 
 	if isConnQuery && isConnExec {
-		return &RecordingConnWithExecQuery{
+		return &recordingConnWithExecQuery{
 			recordingConn,
-			&RecordingConnWithExec{recordingConn},
-			&RecordingConnWithQuery{recordingConn},
+			&recordingConnWithExec{recordingConn},
+			&recordingConnWithQuery{recordingConn},
 		}, nil
 	}
 
 	return recordingConn, nil
 }
 
-func (c *RecordingConnector) Driver() driver.Driver { return c.Connector.Driver() }
+func (c *recordingConnector) Driver() driver.Driver { return c.Connector.Driver() }
 
-type RecordingConn struct {
+type recordingConn struct {
 	Conn       driver.Conn
 	recorder   *apitest.Recorder
 	sourceName string
 }
 
-func (conn *RecordingConn) Prepare(query string) (driver.Stmt, error) {
+// Prepare wraps the underlying prepare statement call with a recorder, allowing the statement to be observed
+func (conn *recordingConn) Prepare(query string) (driver.Stmt, error) {
 	stmt, err := conn.Conn.Prepare(query)
 	if err != nil {
 		return nil, err
@@ -142,7 +146,7 @@ func (conn *RecordingConn) Prepare(query string) (driver.Stmt, error) {
 
 	_, isStmtQueryContext := stmt.(driver.StmtQueryContext)
 	_, isStmtExecContext := stmt.(driver.StmtExecContext)
-	recordingStmt := &RecordingStmt{
+	recordingStmt := &recordingStmt{
 		Stmt:       stmt,
 		recorder:   conn.recorder,
 		query:      query,
@@ -150,24 +154,28 @@ func (conn *RecordingConn) Prepare(query string) (driver.Stmt, error) {
 	}
 
 	if isStmtQueryContext && isStmtExecContext {
-		return &RecordingStmtWithExecQueryContext{
+		return &recordingStmtWithExecQueryContext{
 			recordingStmt,
-			&RecordingStmtWithExecContext{recordingStmt},
-			&RecordingStmtWithQueryContext{recordingStmt},
+			&recordingStmtWithExecContext{recordingStmt},
+			&recordingStmtWithQueryContext{recordingStmt},
 		}, nil
 	}
 
 	return recordingStmt, nil
 }
 
-func (conn *RecordingConn) Close() error              { return conn.Conn.Close() }
-func (conn *RecordingConn) Begin() (driver.Tx, error) { return conn.Conn.Begin() }
+// Close will close the wrapped drivers connection
+func (conn *recordingConn) Close() error { return conn.Conn.Close() }
 
-type RecordingConnWithQuery struct {
-	*RecordingConn
+//Begin begins a new transaction for the wrapped driver
+func (conn *recordingConn) Begin() (driver.Tx, error) { return conn.Conn.Begin() }
+
+type recordingConnWithQuery struct {
+	*recordingConn
 }
 
-func (conn *RecordingConnWithQuery) Query(query string, args []driver.Value) (driver.Rows, error) {
+// Query executes a query with arguments for the wrapped driver, capturing the query to the recorder
+func (conn *recordingConnWithQuery) Query(query string, args []driver.Value) (driver.Rows, error) {
 	if connQuery, ok := conn.Conn.(driver.Queryer); ok {
 		rows, err := connQuery.Query(query, args)
 		if err != nil {
@@ -188,17 +196,18 @@ func (conn *RecordingConnWithQuery) Query(query string, args []driver.Value) (dr
 			})
 		}
 
-		return &RecordingRows{Rows: rows, recorder: conn.recorder, sourceName: conn.sourceName}, err
+		return &recordingRows{Rows: rows, recorder: conn.recorder, sourceName: conn.sourceName}, err
 	}
 
 	return nil, errors.New("Queryer not implemented")
 }
 
-type RecordingConnWithQueryContext struct {
-	*RecordingConn
+type recordingConnWithQueryContext struct {
+	*recordingConn
 }
 
-func (conn *RecordingConnWithQueryContext) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
+// QueryContext wraps the underlying drivers queryContext call, capturing to the recorder
+func (conn *recordingConnWithQueryContext) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
 	if connQueryCtx, ok := conn.Conn.(driver.QueryerContext); ok {
 		rows, err := connQueryCtx.QueryContext(ctx, query, args)
 		if err != nil {
@@ -223,17 +232,18 @@ func (conn *RecordingConnWithQueryContext) QueryContext(ctx context.Context, que
 			})
 		}
 
-		return &RecordingRows{Rows: rows, recorder: conn.recorder, sourceName: conn.sourceName}, err
+		return &recordingRows{Rows: rows, recorder: conn.recorder, sourceName: conn.sourceName}, err
 	}
 
 	return nil, errors.New("QueryerContext not implemented")
 }
 
-type RecordingConnWithExec struct {
-	*RecordingConn
+type recordingConnWithExec struct {
+	*recordingConn
 }
 
-func (conn *RecordingConnWithExec) Exec(query string, args []driver.Value) (driver.Result, error) {
+// Exec wraps the underlying drivers Exec call, capturing to the recorder
+func (conn *recordingConnWithExec) Exec(query string, args []driver.Value) (driver.Result, error) {
 	if connExec, ok := conn.Conn.(driver.Execer); ok {
 		result, err := connExec.Exec(query, args)
 		if err != nil {
@@ -271,11 +281,12 @@ func (conn *RecordingConnWithExec) Exec(query string, args []driver.Value) (driv
 	return nil, errors.New("Execer not implemented")
 }
 
-type RecordingConnWithExecContext struct {
-	*RecordingConn
+type recordingConnWithExecContext struct {
+	*recordingConn
 }
 
-func (conn *RecordingConnWithExecContext) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
+// ExecContext wraps the underlying drivers ExecContext call, capturing to the recorder
+func (conn *recordingConnWithExecContext) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
 	if connExecCtx, ok := conn.Conn.(driver.ExecerContext); ok {
 		result, err := connExecCtx.ExecContext(ctx, query, args)
 		if err != nil {
@@ -317,11 +328,12 @@ func (conn *RecordingConnWithExecContext) ExecContext(ctx context.Context, query
 	return nil, errors.New("ExecerContext not implemented")
 }
 
-type RecordingConnWithPrepareContext struct {
-	*RecordingConn
+type recordingConnWithPrepareContext struct {
+	*recordingConn
 }
 
-func (conn *RecordingConnWithPrepareContext) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
+// PrepareContext wraps the underlying drivers PrepareContext call, capturing to the recorder
+func (conn *recordingConnWithPrepareContext) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
 	if connPrepareCtx, ok := conn.Conn.(driver.ConnPrepareContext); ok {
 		stmt, err := connPrepareCtx.PrepareContext(ctx, query)
 		if err != nil {
@@ -330,22 +342,22 @@ func (conn *RecordingConnWithPrepareContext) PrepareContext(ctx context.Context,
 
 		_, isStmtQueryContext := stmt.(driver.StmtQueryContext)
 		_, isStmtExecContext := stmt.(driver.StmtExecContext)
-		recordingStmt := &RecordingStmt{Stmt: stmt, recorder: conn.recorder, query: query, sourceName: conn.sourceName}
+		recordingStmt := &recordingStmt{Stmt: stmt, recorder: conn.recorder, query: query, sourceName: conn.sourceName}
 
 		if isStmtQueryContext && isStmtExecContext {
-			return &RecordingStmtWithExecQueryContext{
+			return &recordingStmtWithExecQueryContext{
 				recordingStmt,
-				&RecordingStmtWithExecContext{recordingStmt},
-				&RecordingStmtWithQueryContext{recordingStmt},
+				&recordingStmtWithExecContext{recordingStmt},
+				&recordingStmtWithQueryContext{recordingStmt},
 			}, nil
 		}
 
 		if isStmtQueryContext {
-			return &RecordingStmtWithQueryContext{recordingStmt}, nil
+			return &recordingStmtWithQueryContext{recordingStmt}, nil
 		}
 
 		if isStmtExecContext {
-			return &RecordingStmtWithExecContext{recordingStmt}, nil
+			return &recordingStmtWithExecContext{recordingStmt}, nil
 		}
 
 		return recordingStmt, nil
@@ -355,11 +367,12 @@ func (conn *RecordingConnWithPrepareContext) PrepareContext(ctx context.Context,
 	return nil, errors.New("ConnPrepareContext not implemented")
 }
 
-type RecordingConnWithBeginTx struct {
-	*RecordingConn
+type recordingConnWithBeginTx struct {
+	*recordingConn
 }
 
-func (conn *RecordingConnWithBeginTx) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
+// BeginTx wraps the underlying drivers BeginTx call
+func (conn *recordingConnWithBeginTx) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
 	if connBeginTx, ok := conn.Conn.(driver.ConnBeginTx); ok {
 		return connBeginTx.BeginTx(ctx, opts)
 	}
@@ -367,11 +380,12 @@ func (conn *RecordingConnWithBeginTx) BeginTx(ctx context.Context, opts driver.T
 	return nil, errors.New("ConnBeginTx not implemented")
 }
 
-type RecordingConnWithPing struct {
-	*RecordingConn
+type recordingConnWithPing struct {
+	*recordingConn
 }
 
-func (conn *RecordingConnWithPing) Ping(ctx context.Context) error {
+// Ping wraps the underlying drivers Ping call
+func (conn *recordingConnWithPing) Ping(ctx context.Context) error {
 	if connPinger, ok := conn.Conn.(driver.Pinger); ok {
 		return connPinger.Ping(ctx)
 	}
@@ -379,37 +393,40 @@ func (conn *RecordingConnWithPing) Ping(ctx context.Context) error {
 	return errors.New("Pinger not implemented")
 }
 
-type RecordingConnWithExecQuery struct {
-	*RecordingConn
-	*RecordingConnWithExec
-	*RecordingConnWithQuery
+type recordingConnWithExecQuery struct {
+	*recordingConn
+	*recordingConnWithExec
+	*recordingConnWithQuery
 }
 
-type RecordingConnWithExecQueryPrepareContext struct {
-	*RecordingConn
-	*RecordingConnWithPrepareContext
-	*RecordingConnWithExecContext
-	*RecordingConnWithQueryContext
-	*RecordingConnWithBeginTx
-	*RecordingConnWithPing
+type recordingConnWithExecQueryPrepareContext struct {
+	*recordingConn
+	*recordingConnWithPrepareContext
+	*recordingConnWithExecContext
+	*recordingConnWithQueryContext
+	*recordingConnWithBeginTx
+	*recordingConnWithPing
 }
 
-type RecordingStmt struct {
+type recordingStmt struct {
 	Stmt       driver.Stmt
 	recorder   *apitest.Recorder
 	sourceName string
 	query      string
 }
 
-func (stmt *RecordingStmt) Close() error {
+// Close wraps the underlying drivers Close call
+func (stmt *recordingStmt) Close() error {
 	return stmt.Stmt.Close()
 }
 
-func (stmt *RecordingStmt) NumInput() int {
+// NumInput wraps the underlying drivers NumInput call
+func (stmt *recordingStmt) NumInput() int {
 	return stmt.Stmt.NumInput()
 }
 
-func (stmt *RecordingStmt) Exec(args []driver.Value) (driver.Result, error) {
+// Exec wraps the underlying drivers Exec call, capturing to the recorder
+func (stmt *recordingStmt) Exec(args []driver.Value) (driver.Result, error) {
 	result, err := stmt.Stmt.Exec(args)
 	if stmt.recorder != nil {
 		recorderBody := stmt.query
@@ -439,7 +456,8 @@ func (stmt *RecordingStmt) Exec(args []driver.Value) (driver.Result, error) {
 	return result, err
 }
 
-func (stmt *RecordingStmt) Query(args []driver.Value) (driver.Rows, error) {
+// Query executes a query with arguments for the wrapped driver, capturing the query to the recorder
+func (stmt *recordingStmt) Query(args []driver.Value) (driver.Rows, error) {
 	rows, err := stmt.Stmt.Query(args)
 
 	if stmt.recorder != nil {
@@ -456,14 +474,15 @@ func (stmt *RecordingStmt) Query(args []driver.Value) (driver.Rows, error) {
 		})
 	}
 
-	return &RecordingRows{Rows: rows, recorder: stmt.recorder, sourceName: stmt.sourceName}, err
+	return &recordingRows{Rows: rows, recorder: stmt.recorder, sourceName: stmt.sourceName}, err
 }
 
-type RecordingStmtWithExecContext struct {
-	*RecordingStmt
+type recordingStmtWithExecContext struct {
+	*recordingStmt
 }
 
-func (stmt *RecordingStmtWithExecContext) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
+// ExecContext wraps the underlying drivers ExecContext call, capturing to the recorder
+func (stmt *recordingStmtWithExecContext) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
 	if stmtExecCtx, ok := stmt.Stmt.(driver.StmtExecContext); ok {
 		result, err := stmtExecCtx.ExecContext(ctx, args)
 		if err != nil {
@@ -506,11 +525,12 @@ func (stmt *RecordingStmtWithExecContext) ExecContext(ctx context.Context, args 
 	return nil, errors.New("StmtExecContext not implemented")
 }
 
-type RecordingStmtWithQueryContext struct {
-	*RecordingStmt
+type recordingStmtWithQueryContext struct {
+	*recordingStmt
 }
 
-func (stmt *RecordingStmtWithQueryContext) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
+// QueryContext wraps the underlying drivers QueryContext call, capturing to the recorder
+func (stmt *recordingStmtWithQueryContext) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
 	if stmtQueryCtx, ok := stmt.Stmt.(driver.StmtQueryContext); ok {
 		rows, err := stmtQueryCtx.QueryContext(ctx, args)
 		if err != nil {
@@ -536,27 +556,30 @@ func (stmt *RecordingStmtWithQueryContext) QueryContext(ctx context.Context, arg
 			})
 		}
 
-		return &RecordingRows{Rows: rows, recorder: stmt.recorder, sourceName: stmt.sourceName}, err
+		return &recordingRows{Rows: rows, recorder: stmt.recorder, sourceName: stmt.sourceName}, err
 	}
 
 	return nil, errors.New("StmtQueryContext not implemented")
 }
 
-type RecordingStmtWithExecQueryContext struct {
-	*RecordingStmt
-	*RecordingStmtWithExecContext
-	*RecordingStmtWithQueryContext
+type recordingStmtWithExecQueryContext struct {
+	*recordingStmt
+	*recordingStmtWithExecContext
+	*recordingStmtWithQueryContext
 }
 
-type RecordingRows struct {
+type recordingRows struct {
 	Rows       driver.Rows
 	recorder   *apitest.Recorder
 	sourceName string
 	RowsFound  int
 }
 
-func (rows *RecordingRows) Columns() []string { return rows.Rows.Columns() }
-func (rows *RecordingRows) Close() error {
+// Columns wraps the underlying drivers Columns call
+func (rows *recordingRows) Columns() []string { return rows.Rows.Columns() }
+
+// Close wraps the underlying drivers Close call, capturing to the recorder
+func (rows *recordingRows) Close() error {
 	if rows.recorder != nil {
 		rows.recorder.AddMessageResponse(apitest.MessageResponse{
 			Source:    rows.sourceName,
@@ -570,7 +593,8 @@ func (rows *RecordingRows) Close() error {
 	return rows.Rows.Close()
 }
 
-func (rows *RecordingRows) Next(dest []driver.Value) error {
+// underlying wraps the underlying drivers underlying call
+func (rows *recordingRows) Next(dest []driver.Value) error {
 	err := rows.Rows.Next(dest)
 	if err != io.EOF {
 		rows.RowsFound++

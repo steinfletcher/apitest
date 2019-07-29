@@ -7,41 +7,40 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type User struct {
+type user struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
-type App struct {
+type application struct {
 	Router *gin.Engine
 }
 
-func NewApp() *App {
+func newApp() *application {
 	router := gin.Default()
-	router.GET("/user/:id", GetUser())
-	return &App{Router: router}
+	router.GET("/user/:id", getUser())
+	return &application{Router: router}
 }
 
-func (a *App) Start() {
-	log.Fatal(http.ListenAndServe(":8888", a.Router))
+func (a *application) Start() {
+	log.Fatal(http.ListenAndServe("localhost:8888", a.Router))
 }
 
-func GetUser() gin.HandlerFunc {
+func getUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.SetCookie("TomsFavouriteDrink", "Beer", 0, "/", "here.com", false, false)
 
 		id := c.Param("id")
 		if id == "1234" {
-			user := &User{ID: id, Name: "Andy"}
+			user := &user{ID: id, Name: "Andy"}
 			c.JSON(http.StatusOK, user)
 			return
 		}
 
 		c.AbortWithStatus(http.StatusNotFound)
-		return
 	}
 }
 
 func main() {
-	NewApp().Start()
+	newApp().Start()
 }
