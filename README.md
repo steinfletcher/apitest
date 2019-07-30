@@ -47,6 +47,17 @@ go get -u github.com/steinfletcher/apitest
 | [JSONPath](https://github.com/steinfletcher/apitest-jsonpath)  | JSONPath assertion addons            |
 | [PlantUML](https://github.com/steinfletcher/apitest-plantuml)  | Export sequence diagrams as plantUML |
 
+### Credits
+
+This library was influenced by the following software packages:
+
+* [YatSpec](https://github.com/bodar/yatspec) for creating sequence diagrams from tests
+* [MockMVC](https://spring.io) and [superagent](https://github.com/visionmedia/superagent) for the concept and behavioural testing approach
+* [Gock](https://github.com/h2non/gock) for the approach to mocking HTTP services in Go
+* [Baloo](https://github.com/h2non/baloo) for API design
+
+Credit to [testify](https://github.com/stretchr/testify) which is this libraries' only dependency.
+
 ### Code snippets
 
 #### JSON body matcher
