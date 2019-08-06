@@ -627,7 +627,7 @@ var headerMatcher = func(req *http.Request, spec *MockRequest) error {
 			for _, value := range values {
 				match, err = regexp.MatchString(value, field)
 				if err != nil {
-					return fmt.Errorf("unable to match received header value %s against expected value %s", value, field)
+					return fmt.Errorf("failed to parse regexp for header %s with value %s", key, value)
 				}
 			}
 
@@ -675,7 +675,7 @@ var queryParamMatcher = func(req *http.Request, spec *MockRequest) error {
 			for _, value := range values {
 				match, err := regexp.MatchString(value, field)
 				if err != nil {
-					return fmt.Errorf("unable to match received query param value %s against expected value %s", value, field)
+					return fmt.Errorf("failed to parse regexp for query param %s with value %s", key, value)
 				}
 
 				if match {
@@ -731,7 +731,7 @@ var formDataMatcher = func(req *http.Request, spec *MockRequest) error {
 			for _, value := range values {
 				match, err := regexp.MatchString(value, field)
 				if err != nil {
-					return fmt.Errorf("unable to match received form data values %s against expected mock form data values %s", value, field)
+					return fmt.Errorf("failed to parse regexp for form data %s with value %s", key, value)
 				}
 
 				if match {

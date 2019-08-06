@@ -161,6 +161,8 @@ func TestMocks_HeaderMatcher(t *testing.T) {
 		{map[string]string{"B": "5", "A": "123"}, "A", "123", nil},
 		{map[string]string{"A": "123"}, "C", "3", errors.New("not all of received headers map[A:[123]] matched expected mock headers map[C:[3]]")},
 		{map[string]string{}, "", "", nil},
+		{map[string]string{"A": "apple"}, "A", "a([a-z]+)ple", nil},
+		{map[string]string{"A": "apple"}, "A", "a-z]+)ch_invalid_regexp", errors.New("failed to parse regexp for header A with value a-z]+)ch_invalid_regexp")},
 	}
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s %s", test.headerToMatchKey, test.headerToMatchValue), func(t *testing.T) {
@@ -249,6 +251,7 @@ func TestMocks_QueryMatcher_Success(t *testing.T) {
 		{"http://test.com/v2/path?b=2&a=1", map[string][]string{"b": {"2"}, "a": {"1"}}},
 		{"http://test.com/v2/path?b=2&a=1&a=2", map[string][]string{"a": {"2"}}},
 		{"http://test.com/v2/path?b=2&a=1&a=2", map[string][]string{"a": {"2", "1"}}},
+		{"http://test.com/v2/path?b=2&a=apple", map[string][]string{"a": {"a([a-z]+)ple"}}},
 	}
 	for _, test := range tests {
 		t.Run(test.requestUrl, func(t *testing.T) {
@@ -276,6 +279,7 @@ func TestMocks_QueryMatcher_Errors(t *testing.T) {
 		{"http://test.com/v2/path?a=1", map[string][]string{"b": {"1"}}, errors.New("not all of received query params map[a:[1]] matched expected mock query params map[b:[1]]")},
 		{"http://test.com/v2/path?b=2&a=1&a=2&a=3", map[string][]string{"a": {"4", "1", "2"}}, errors.New("b:[2]")},
 		{"http://test.com/v2/path?b=2&a=1&a=2&a=3", map[string][]string{"a": {"4", "1", "2"}}, errors.New("a:[1 2 3]")},
+		{"http://test.com/v2/path?b=2&a=1", map[string][]string{"a": {"a-z]+)ch_invalid_regexp"}}, errors.New("failed to parse regexp for query param a with value a-z]+)ch_invalid_regexp")},
 	}
 	for _, test := range tests {
 		t.Run(test.requestUrl, func(t *testing.T) {
@@ -362,6 +366,12 @@ func TestMocks_FormDataMatcher(t *testing.T) {
 			nil,
 		},
 		{
+			"single key match with regular expression",
+			map[string][]string{"a": {"apple"}},
+			map[string][]string{"a": {"a([a-z]+)ple"}},
+			nil,
+		},
+		{
 			"multiple key match",
 			map[string][]string{"a": {"1"}, "b": {"1"}},
 			map[string][]string{"a": {"1"}, "b": {"1"}},
@@ -396,6 +406,12 @@ func TestMocks_FormDataMatcher(t *testing.T) {
 			map[string][]string{"a": {"1", "2", "4"}},
 			map[string][]string{"a": {"1", "3", "4"}},
 			errors.New("not all of received form data values map[a:[1 2 4]] matched expected mock form data values map[a:[1 3 4]]"),
+		},
+		{
+			"error when regular expression provided is invalid",
+			map[string][]string{"a": {"1"}},
+			map[string][]string{"a": {"a-z]+)ch_invalid_regexp"}},
+			errors.New("failed to parse regexp for form data a with value a-z]+)ch_invalid_regexp"),
 		},
 	}
 
