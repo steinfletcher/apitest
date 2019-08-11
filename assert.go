@@ -2,8 +2,49 @@ package apitest
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"net/http"
+	"testing"
 )
+
+// Verifier is the assertion interface allowing consumers to inject a custom assertion implementation.
+// It also allows failure scenarios to be tested within apitest
+type Verifier interface {
+	Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) bool
+	JSONEq(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool
+}
+
+// testifyVerifier is a verifier that use https://github.com/stretchr/testify to perform assertions
+type testifyVerifier struct{}
+
+// JSONEq asserts that two JSON strings are equivalent
+func (a testifyVerifier) JSONEq(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool {
+	return assert.JSONEq(t, expected, actual, msgAndArgs)
+}
+
+// Equal asserts that two objects are equal
+func (a testifyVerifier) Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+	return assert.Equal(t, expected, actual, msgAndArgs)
+}
+
+func newTestifyVerifier() Verifier {
+	return testifyVerifier{}
+}
+
+// NoopVerifier is a verifier that does not perform verification
+type NoopVerifier struct{}
+
+var _ Verifier = NoopVerifier{}
+
+// JSONEq does not perform any assertion and always returns true
+func (n NoopVerifier) Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+	return true
+}
+
+// EqualError does not perform any assertion and always returns true
+func (n NoopVerifier) JSONEq(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool {
+	return true
+}
 
 // IsSuccess is a convenience function to assert on a range of happy path status codes
 var IsSuccess Assert = func(response *http.Response, request *http.Request) error {

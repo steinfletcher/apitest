@@ -683,6 +683,27 @@ func TestApiTest_ExposesRequestAndResponse(t *testing.T) {
 	assert.NotNil(t, apiTest.Response())
 }
 
+func TestApiTest_NoopVerifier(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+		_, err := w.Write([]byte(`{"a": 12345}`))
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	apitest.New().
+		Handler(handler).
+		Verifier(apitest.NoopVerifier{}).
+		Get("/hello").
+		Expect(t).
+		Body(`{"a": 123456}`).
+		Status(http.StatusBadGateway).
+		End()
+}
+
 // TestRealNetworking creates a server with two endpoints, /login sets a token via a cookie and /authenticated_resource
 // validates the token. A cookie jar is used to verify session persistence across multiple apitest instances
 func TestRealNetworking(t *testing.T) {

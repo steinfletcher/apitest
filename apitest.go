@@ -16,8 +16,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 // SystemUnderTestDefaultName default name for system under test
@@ -36,6 +34,7 @@ type APITest struct {
 	networkingEnabled    bool
 	networkingHTTPClient *http.Client
 	reporter             ReportFormatter
+	verifier             Verifier
 	recorder             *Recorder
 	handler              http.Handler
 	name                 string
@@ -214,6 +213,13 @@ type pair struct {
 // Intercept is a builder method for setting the request interceptor
 func (a *APITest) Intercept(interceptor Intercept) *APITest {
 	a.request.interceptor = interceptor
+	return a
+}
+
+// Verifier allows consumers to override the verification implementation.
+// By default testify is used to perform assertions
+func (a *APITest) Verifier(v Verifier) *APITest {
+	a.verifier = v
 	return a
 }
 
@@ -636,6 +642,10 @@ func (r *Response) runTest() *http.Response {
 		}
 	}()
 
+	if a.verifier == nil {
+		a.verifier = newTestifyVerifier()
+	}
+
 	a.assertResponse(res)
 	a.assertHeaders(res)
 	a.assertCookies(res)
@@ -778,7 +788,7 @@ func buildQueryCollection(params map[string][]string) []pair {
 
 func (a *APITest) assertResponse(res *http.Response) {
 	if a.response.status != 0 {
-		assert.Equal(a.t, a.response.status, res.StatusCode, fmt.Sprintf("Status code %d not equal to %d", res.StatusCode, a.response.status))
+		a.verifier.Equal(a.t, a.response.status, res.StatusCode, fmt.Sprintf("Status code %d not equal to %d", res.StatusCode, a.response.status))
 	}
 
 	if a.response.body != "" {
@@ -788,9 +798,9 @@ func (a *APITest) assertResponse(res *http.Response) {
 			res.Body = ioutil.NopCloser(bytes.NewBuffer(resBodyBytes))
 		}
 		if json.Valid([]byte(a.response.body)) {
-			assert.JSONEq(a.t, a.response.body, string(resBodyBytes))
+			a.verifier.JSONEq(a.t, a.response.body, string(resBodyBytes))
 		} else {
-			assert.Equal(a.t, a.response.body, string(resBodyBytes))
+			a.verifier.Equal(a.t, a.response.body, string(resBodyBytes))
 		}
 	}
 }
@@ -807,8 +817,8 @@ func (a *APITest) assertCookies(response *http.Response) {
 					mismatchedFields = append(mismatchedFields, errors...)
 				}
 			}
-			assert.Equal(a.t, true, foundCookie, "ExpectedCookie not found - "+*expectedCookie.name)
-			assert.Equal(a.t, 0, len(mismatchedFields), strings.Join(mismatchedFields, ","))
+			a.verifier.Equal(a.t, true, foundCookie, "ExpectedCookie not found - "+*expectedCookie.name)
+			a.verifier.Equal(a.t, 0, len(mismatchedFields), strings.Join(mismatchedFields, ","))
 		}
 	}
 
@@ -820,7 +830,7 @@ func (a *APITest) assertCookies(response *http.Response) {
 					foundCookie = true
 				}
 			}
-			assert.Equal(a.t, true, foundCookie, "ExpectedCookie not found - "+cookieName)
+			a.verifier.Equal(a.t, true, foundCookie, "ExpectedCookie not found - "+cookieName)
 		}
 	}
 
@@ -832,7 +842,7 @@ func (a *APITest) assertCookies(response *http.Response) {
 					foundCookie = true
 				}
 			}
-			assert.Equal(a.t, false, foundCookie, "ExpectedCookie found - "+cookieName)
+			a.verifier.Equal(a.t, false, foundCookie, "ExpectedCookie found - "+cookieName)
 		}
 	}
 }
@@ -937,5 +947,5 @@ func copyHttpRequest(request *http.Request) *http.Request {
 }
 
 func quoted(in string) string {
-	return string(fmt.Sprintf("%q", in))
+	return fmt.Sprintf("%q", in)
 }
