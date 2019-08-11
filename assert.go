@@ -36,12 +36,12 @@ type NoopVerifier struct{}
 
 var _ Verifier = NoopVerifier{}
 
-// JSONEq does not perform any assertion and always returns true
+// Equal does not perform any assertion and always returns true
 func (n NoopVerifier) Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) bool {
 	return true
 }
 
-// EqualError does not perform any assertion and always returns true
+// JSONEq does not perform any assertion and always returns true
 func (n NoopVerifier) JSONEq(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool {
 	return true
 }
