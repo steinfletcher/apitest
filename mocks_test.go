@@ -905,7 +905,7 @@ func TestMocks_Standalone_WithContainer(t *testing.T) {
 			Body(`{"a": 12345}`).
 			Status(http.StatusOK).
 			End(),
-	).Debug().
+	).
 		End()
 	defer reset()
 
