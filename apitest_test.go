@@ -3,6 +3,7 @@ package apitest_test
 import (
 	"fmt"
 	"github.com/steinfletcher/apitest"
+	"github.com/steinfletcher/apitest/mocks"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
@@ -498,7 +499,7 @@ func TestApiTest_Report(t *testing.T) {
 		RespondWith().
 		Status(http.StatusOK).
 		Body("1").
-		Times(2).
+		Times(1).
 		End()
 
 	reporter := &RecorderCaptor{}
@@ -537,7 +538,7 @@ func TestApiTest_Recorder(t *testing.T) {
 		RespondWith().
 		Status(http.StatusOK).
 		Body("1").
-		Times(2).
+		Times(1).
 		End()
 
 	reporter := &RecorderCaptor{}
@@ -808,6 +809,53 @@ func TestApiTest_AddsUrlEncodedFormBody(t *testing.T) {
 		FormData("children", "Jack").
 		FormData("children", "Ann").
 		FormData("pets", "Toby", "Henry", "Alice").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestApiTest_ErrorIfMockInvocationsDoNotMatchTimes(t *testing.T) {
+	getUser := apitest.NewMock().
+		Get("http://localhost:8080").
+		RespondWith().
+		Status(http.StatusOK).
+		Times(2).
+		End()
+
+	verifier := mocks.NewVerifier()
+	verifier.FailFn = func(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
+		assert.Equal(t, "mock was not invoked expected times: '2'", failureMessage)
+		return true
+	}
+
+	apitest.New().
+		Mocks(getUser).
+		Verifier(verifier).
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_ = getUserData()
+			w.WriteHeader(http.StatusOK)
+		})).
+		Get("/").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestApiTest_MatchesTimes(t *testing.T) {
+	getUser := apitest.NewMock().
+		Get("http://localhost:8080").
+		RespondWith().
+		Status(http.StatusOK).
+		Times(1).
+		End()
+
+	apitest.New().
+		Mocks(getUser).
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_ = getUserData()
+			w.WriteHeader(http.StatusOK)
+		})).
+		Get("/").
 		Expect(t).
 		Status(http.StatusOK).
 		End()

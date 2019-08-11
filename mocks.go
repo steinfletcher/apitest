@@ -200,6 +200,8 @@ type Mock struct {
 	response        *MockResponse
 	httpClient      *http.Client
 	debugStandalone bool
+	times           int
+	timesSet        bool
 }
 
 // Matches checks whether the given request matches the mock
@@ -241,7 +243,6 @@ type MockResponse struct {
 	cookies    []*Cookie
 	body       string
 	statusCode int
-	times      int
 }
 
 // StandaloneMocks for using mocks outside of API tests context
@@ -297,10 +298,10 @@ func NewMock() *Mock {
 	res := &MockResponse{
 		mock:    mock,
 		headers: map[string][]string{},
-		times:   1,
 	}
 	mock.request = req
 	mock.response = res
+	mock.times = 1
 	return mock
 }
 
@@ -534,7 +535,8 @@ func (r *MockResponse) Status(statusCode int) *MockResponse {
 
 // Times respond the given number of times
 func (r *MockResponse) Times(times int) *MockResponse {
-	r.times = times
+	r.mock.times = times
+	r.mock.timesSet = true
 	return r
 }
 

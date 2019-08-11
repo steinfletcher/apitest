@@ -12,6 +12,7 @@ import (
 type Verifier interface {
 	Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) bool
 	JSONEq(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool
+	Fail(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool
 }
 
 // testifyVerifier is a verifier that use https://github.com/stretchr/testify to perform assertions
@@ -25,6 +26,11 @@ func (a testifyVerifier) JSONEq(t *testing.T, expected string, actual string, ms
 // Equal asserts that two objects are equal
 func (a testifyVerifier) Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) bool {
 	return assert.Equal(t, expected, actual, msgAndArgs)
+}
+
+// Fail reports a failure
+func (a testifyVerifier) Fail(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
+	return assert.Fail(t, failureMessage, msgAndArgs)
 }
 
 func newTestifyVerifier() Verifier {
@@ -43,6 +49,11 @@ func (n NoopVerifier) Equal(t *testing.T, expected, actual interface{}, msgAndAr
 
 // JSONEq does not perform any assertion and always returns true
 func (n NoopVerifier) JSONEq(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool {
+	return true
+}
+
+// Fail does not perform any assertion and always returns true
+func (n NoopVerifier) Fail(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
 	return true
 }
 

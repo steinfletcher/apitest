@@ -592,7 +592,6 @@ func TestMocks_AddMatcher(t *testing.T) {
 			mockResponse: &MockResponse{
 				body:       `{"ok": true}`,
 				statusCode: 200,
-				times:      1,
 			},
 			matchErrors: nil,
 		},
@@ -627,7 +626,6 @@ func TestMocks_AddMatcher(t *testing.T) {
 			} else {
 				assert.Equal(t, test.mockResponse.body, mockResponse.body)
 				assert.Equal(t, test.mockResponse.statusCode, mockResponse.statusCode)
-				assert.Equal(t, test.mockResponse.times, mockResponse.times)
 			}
 		})
 	}
@@ -907,7 +905,7 @@ func TestMocks_Standalone_WithContainer(t *testing.T) {
 			Body(`{"a": 12345}`).
 			Status(http.StatusOK).
 			End(),
-	).
+	).Debug().
 		End()
 	defer reset()
 

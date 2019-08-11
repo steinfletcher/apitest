@@ -141,7 +141,7 @@ func (a *APITest) Handler(handler http.Handler) *APITest {
 func (a *APITest) Mocks(mocks ...*Mock) *APITest {
 	var m []*Mock
 	for i := range mocks {
-		times := mocks[i].response.times
+		times := mocks[i].response.mock.times
 		for j := 1; j <= times; j++ {
 			mockCopy := *mocks[i]
 			m = append(m, &mockCopy)
@@ -646,6 +646,7 @@ func (r *Response) runTest() *http.Response {
 		a.verifier = newTestifyVerifier()
 	}
 
+	a.assertMocks()
 	a.assertResponse(res)
 	a.assertHeaders(res)
 	a.assertCookies(res)
@@ -655,6 +656,14 @@ func (r *Response) runTest() *http.Response {
 	}
 
 	return copyHttpResponse(res)
+}
+
+func (a *APITest) assertMocks() {
+	for _, mock := range a.mocks {
+		if mock.isUsed == false && mock.timesSet {
+			a.verifier.Fail(a.t, fmt.Sprintf("mock was not invoked expected times: '%d'", mock.times))
+		}
+	}
 }
 
 func (a *APITest) assertFunc(res *http.Response, req *http.Request) error {
