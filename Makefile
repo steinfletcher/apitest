@@ -4,7 +4,7 @@ test:
 	go test ./... -v -race -covermode=atomic -coverprofile=coverage.out
 
 test-examples:
-	cd examples && go test -v -race ./... && \
+	cd examples && go test -v ./... && \
 	cd sequence-diagrams-with-sqlite-database && make test && cd ..
 
 fmt:
