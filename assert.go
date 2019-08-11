@@ -20,17 +20,17 @@ type testifyVerifier struct{}
 
 // JSONEq asserts that two JSON strings are equivalent
 func (a testifyVerifier) JSONEq(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool {
-	return assert.JSONEq(t, expected, actual, msgAndArgs)
+	return assert.JSONEq(t, expected, actual, msgAndArgs...)
 }
 
 // Equal asserts that two objects are equal
 func (a testifyVerifier) Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) bool {
-	return assert.Equal(t, expected, actual, msgAndArgs)
+	return assert.Equal(t, expected, actual, msgAndArgs...)
 }
 
 // Fail reports a failure
 func (a testifyVerifier) Fail(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
-	return assert.Fail(t, failureMessage, msgAndArgs)
+	return assert.Fail(t, failureMessage, msgAndArgs...)
 }
 
 func newTestifyVerifier() Verifier {
