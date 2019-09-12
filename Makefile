@@ -13,7 +13,7 @@ fmt:
 vet:
 	bash -c 'diff -u <(echo -n) <(go vet ./...)'
 
-test-all: fmt vet test test-examples
+test-all: fmt vet test
 
 docs:
 	cd docs && hugo server -w && cd -
