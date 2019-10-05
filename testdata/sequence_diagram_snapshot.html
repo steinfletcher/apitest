@@ -3,13 +3,30 @@
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/css/bootstrap.min.css">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js"></script>
     <script src="https://bramp.github.io/js-sequence-diagrams/js/sequence-diagram-min.js"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js"></script>
+    <style>
+        #scroll-to-top-button {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            z-index: 99;
+            font-size: 18px;
+            border: none;
+            outline: none;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
 
@@ -33,46 +50,47 @@
         </thead>
         <tbody>
         
-        <tr>
+        <tr id="log-0">
             <th scope="row">1</th>
             <td>
-<pre>GET http://example.com/abcdef?name=abc HTTP/1.1
+                <pre>GET http://example.com/abcdef?name=abc HTTP/1.1
 Content-Type: application/json
 
 </pre>
-
+                
             </td>
         </tr>
         
-        <tr>
+        <tr id="log-1">
             <th scope="row">2</th>
             <td>
-<pre>A</pre>
-<pre style="max-height: 1000px;"><code>B</code></pre>
+                <pre>A</pre>
+                <pre style="max-height: 1000px;"><code>B</code></pre>
             </td>
         </tr>
         
-        <tr>
+        <tr id="log-2">
             <th scope="row">3</th>
             <td>
-<pre>C</pre>
-<pre style="max-height: 1000px;"><code>D</code></pre>
+                <pre>C</pre>
+                <pre style="max-height: 1000px;"><code>D</code></pre>
             </td>
         </tr>
         
-        <tr>
+        <tr id="log-3">
             <th scope="row">4</th>
             <td>
-<pre>HTTP/1.1 204 No Content
+                <pre>HTTP/1.1 204 No Content
 
 </pre>
-
+                
             </td>
         </tr>
         
         </tbody>
     </table>
 </div>
+<button onclick="topFunction()" id="scroll-to-top-button" title="Go to top">Back to top</button>
 <script>
     Diagram.parse("reqSource-\x3ereqTarget: (1) GET \/abcdef?name=abc\nmesReqSource-\x3e: (2) A\nmesResSource-\x3e\x3e: (3) C\nresSource-\x3e\x3eresTarget: (4) 204\n").drawSVG("d", {theme: 'simple', 'font-size': 14});
 </script>
@@ -85,5 +103,39 @@ Content-Type: application/json
 <script type="application/json" id="metaJson">{"host":"example.com","method":"GET","name":"some test","path":"/user"}</script>
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.13.1/build/highlight.min.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>
+<script>
+    var elements = document.getElementsByTagName('text')
+    var regex = /\((\d{1,3})\)/ 
+    for (var i = 0; i < elements.length; i++) {
+        if (elements[i].innerHTML) {
+            var found = elements[i].innerHTML.match(regex);
+            if (found && found.length > 0) {
+                const logIndex = parseInt(found[1], 10) - 1;
+                elements[i].style.cursor = 'pointer';
+                elements[i].addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.getElementById("log-" + logIndex).scrollIntoView();
+                }, false);
+            }
+        }
+    }
+
+    var scrollToTopBtn = document.getElementById("scroll-to-top-button");
+    window.onscroll = function () {
+        scrollFunction()
+    };
+    function scrollFunction() {
+        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+            scrollToTopBtn.style.display = "block";
+        } else {
+            scrollToTopBtn.style.display = "none";
+        }
+    }
+
+    function topFunction() {
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+    }
+</script>
 </body>
 </html>
