@@ -700,7 +700,7 @@ func (a *APITest) doRequest() (*http.Response, *http.Request) {
 	} else {
 		res, err = a.networkingHTTPClient.Do(req)
 		if err != nil {
-			panic(err)
+			a.t.Fatal(err)
 		}
 	}
 
@@ -737,7 +737,7 @@ func (a *APITest) buildRequest() *http.Request {
 
 	req, _ := http.NewRequest(a.request.method, a.request.url, bytes.NewBufferString(a.request.body))
 	req.URL.RawQuery = formatQuery(a.request)
-	req.Host = "application"
+	req.Host = req.URL.Host
 
 	for k, v := range a.request.headers {
 		for _, headerValue := range v {

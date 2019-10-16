@@ -61,6 +61,23 @@ func TestApiTest_Cookies_ToHttpCookie(t *testing.T) {
 	}, *httpCookie)
 }
 
+func TestApiTest_Cookies_FromHttpCookie(t *testing.T) {
+	expiry, _ := time.Parse("1/2/2006 15:04:05", "03/01/2017 12:00:00")
+
+	cookie := NewCookie("Tom").
+		Value("LovesBeers").
+		Path("/at-the-lyric").
+		Domain("in.london").
+		Expires(expiry).
+		MaxAge(10).
+		Secure(true).
+		HttpOnly(false)
+
+	result := FromHttpCookie(cookie.ToHttpCookie())
+
+	assert.Equal(t, cookie, result)
+}
+
 func TestApiTest_Cookies_ToHttpCookie_PartiallyCreated(t *testing.T) {
 	expiry, _ := time.Parse("1/2/2006 15:04:05", "03/01/2017 12:00:00")
 
