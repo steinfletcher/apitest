@@ -73,7 +73,7 @@ func TestApiTest_Cookies_FromHttpCookie(t *testing.T) {
 		Secure(true).
 		HttpOnly(false)
 
-	result := FromHttpCookie(cookie.ToHttpCookie())
+	result := FromHTTPCookie(cookie.ToHttpCookie())
 
 	assert.Equal(t, cookie, result)
 }
