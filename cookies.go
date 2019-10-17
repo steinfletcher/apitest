@@ -106,7 +106,7 @@ func (cookie *Cookie) ToHttpCookie() *http.Cookie {
 	return &httpCookie
 }
 
-// FromHTTPCookie transforms an http cookie to a apitest.Cookie
+// FromHTTPCookie transforms an http cookie into a Cookie
 func FromHTTPCookie(httpCookie *http.Cookie) *Cookie {
 	return NewCookie(httpCookie.Name).
 		Value(httpCookie.Value).

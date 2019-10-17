@@ -737,7 +737,10 @@ func (a *APITest) buildRequest() *http.Request {
 
 	req, _ := http.NewRequest(a.request.method, a.request.url, bytes.NewBufferString(a.request.body))
 	req.URL.RawQuery = formatQuery(a.request)
-	req.Host = req.URL.Host
+	req.Host = SystemUnderTestDefaultName
+	if a.networkingEnabled {
+		req.Host = req.URL.Host
+	}
 
 	for k, v := range a.request.headers {
 		for _, headerValue := range v {
