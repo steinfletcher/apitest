@@ -8,25 +8,39 @@ const reportTemplate = `<!DOCTYPE html>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js"></script>
     <script src="https://bramp.github.io/js-sequence-diagrams/js/sequence-diagram-min.js"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js"></script>
     <style>
+        body {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
         #scroll-to-top-button {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            right: 30px;
-            z-index: 99;
-            font-size: 18px;
-            border: none;
-            outline: none;
             background-color: #555;
+            border: none;
+            border-radius: 4px;
+            bottom: 20px;
             color: white;
             cursor: pointer;
+            display: none;
+            font-size: 18px;
+            outline: none;
+            position: fixed;
+            right: 30px;
+            z-index: 99;
+        }
+
+        .copy-to-clipboard-button {
+            background-color: #fff;
+            border: 1px solid #eee;
+            cursor: pointer;
+            font-size: 12px;
+            outline: none;
             padding: 5px;
-            border-radius: 4px;
         }
     </style>
 </head>
@@ -56,7 +70,10 @@ const reportTemplate = `<!DOCTYPE html>
             <th scope="row">{{ inc $i }}</th>
             <td>
                 <pre>{{ $e.Header }}</pre>
-                {{if $e.Body }}<pre style="max-height: 1000px;"><code>{{ $e.Body }}</code></pre>{{end}}
+                {{if $e.Body }}
+                    <pre style="max-height: 1000px; margin-bottom: 0; border: 1px solid #eee;"><code id="event-message-{{$i}}">{{ $e.Body }}</code></pre>
+                    <button class="copy-to-clipboard-button" data-clipboard-target="#event-message-{{$i}}">copy to clipboard</button>
+                {{end}}
             </td>
         </tr>
         {{ end }}
@@ -68,14 +85,12 @@ const reportTemplate = `<!DOCTYPE html>
     Diagram.parse("{{ .WebSequenceDSL }}").drawSVG("d", {theme: 'simple', 'font-size': 14});
 </script>
 <style>
-    body {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
+    
 </style>
 {{if $.MetaJSON }}<script type="application/json" id="metaJson">{{$.MetaJSON}}</script>{{end}}
 <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.13.1/build/highlight.min.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>
+<script>new ClipboardJS('.copy-to-clipboard-button');</script>
 <script>
     var elements = document.getElementsByTagName('text')
     var regex = /\((\d{1,3})\)/ // match elements containing (0), (1), etc.
