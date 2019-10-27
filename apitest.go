@@ -460,6 +460,7 @@ func (r *Response) End() Result {
 	apiTest := r.apiTest
 	defer func() {
 		if apiTest.debugEnabled {
+			apiTest.finished = time.Now()
 			fmt.Println(fmt.Sprintf("Duration: %s\n", apiTest.finished.Sub(apiTest.started)))
 		}
 	}()
@@ -468,14 +469,12 @@ func (r *Response) End() Result {
 		apiTest.t.Fatal("either define a http.Handler or enable networking")
 	}
 
+	apiTest.started = time.Now()
 	if apiTest.reporter != nil {
 		res := apiTest.report()
 		return Result{Response: res}
 	}
-
-	apiTest.started = time.Now()
 	res := r.runTest()
-	apiTest.finished = time.Now()
 
 	return Result{Response: res}
 }
