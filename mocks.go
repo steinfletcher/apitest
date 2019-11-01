@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 )
 
 // Transport wraps components used to observe and manipulate the real request and response objects
@@ -195,6 +196,7 @@ func buildResponseFromMock(mockResponse *MockResponse) *http.Response {
 
 // Mock represents the entire interaction for a mock to be used for testing
 type Mock struct {
+	m               sync.Mutex
 	isUsed          bool
 	request         *MockRequest
 	response        *MockResponse
@@ -370,6 +372,8 @@ func (m *Mock) Method(method string) *MockRequest {
 func matches(req *http.Request, mocks []*Mock) (*MockResponse, error) {
 	mockError := newUnmatchedMockError()
 	for mockNumber, mock := range mocks {
+		mock.m.Lock() // lock is for isUsed when matches is called concurrently by RoundTripper
+		defer mock.m.Unlock()
 		if mock.isUsed {
 			continue
 		}
