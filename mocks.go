@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"testing"
 )
 
 // Transport wraps components used to observe and manipulate the real request and response objects
@@ -219,6 +220,7 @@ func (m *Mock) Matches(req *http.Request) []error {
 
 // MockRequest represents the http request side of a mock interaction
 type MockRequest struct {
+	t                  *testing.T
 	mock               *Mock
 	url                *url.URL
 	method             string
@@ -396,6 +398,16 @@ func (r *MockRequest) Body(b string) *MockRequest {
 	return r
 }
 
+// BodyFromFile configures the mock request to match the given body from a file
+func (r *MockRequest) BodyFromFile(f string) *MockRequest {
+	b, err := ioutil.ReadFile(f)
+	if err != nil {
+		panic(err)
+	}
+	r.body = string(b)
+	return r
+}
+
 // Header configures the mock request to match the given header
 func (r *MockRequest) Header(key, value string) *MockRequest {
 	normalizedKey := textproto.CanonicalMIMEHeaderKey(key)
@@ -528,6 +540,16 @@ func (r *MockResponse) Cookie(name, value string) *MockResponse {
 // Body respond with the given body
 func (r *MockResponse) Body(body string) *MockResponse {
 	r.body = body
+	return r
+}
+
+// BodyFromFile respond with the given body from a file
+func (r *MockResponse) BodyFromFile(f string) *MockResponse {
+	b, err := ioutil.ReadFile(f)
+	if err != nil {
+		panic(err)
+	}
+	r.body = string(b)
 	return r
 }
 

@@ -673,7 +673,7 @@ func TestMocks_Matches(t *testing.T) {
 		Get("/user/1234").
 		RespondWith().
 		Status(http.StatusOK).
-		Body(`{"name": "jon", "id": "1234"}`).
+		BodyFromFile("testdata/mock_response_body.json").
 		End()
 
 	mockResponse, matchErrors := matches(req, []*Mock{getUser, getPreferences})
@@ -688,7 +688,7 @@ func TestMocks_Matches_Errors(t *testing.T) {
 
 	testMock := NewMock().
 		Post("/test/mock").
-		Body(`{"bodyKey":"bodyVal"}`).
+		BodyFromFile("testdata/mock_request_body.json").
 		Query("queryKey", "queryVal").
 		QueryPresent("queryKey2").
 		QueryParams(map[string]string{"queryKey": "queryVal"}).
