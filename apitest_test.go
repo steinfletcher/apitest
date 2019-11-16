@@ -324,7 +324,6 @@ func TestApiTest_MatchesBodyFromFile(t *testing.T) {
 		End()
 }
 
-
 func TestApiTest_MatchesJSONResponseBodyWithWhitespace(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
