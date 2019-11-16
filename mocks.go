@@ -15,7 +15,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"testing"
 )
 
 // Transport wraps components used to observe and manipulate the real request and response objects
@@ -220,7 +219,6 @@ func (m *Mock) Matches(req *http.Request) []error {
 
 // MockRequest represents the http request side of a mock interaction
 type MockRequest struct {
-	t                  *testing.T
 	mock               *Mock
 	url                *url.URL
 	method             string
