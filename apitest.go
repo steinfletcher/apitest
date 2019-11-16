@@ -278,9 +278,26 @@ func (r *Request) Body(b string) *Request {
 	return r
 }
 
+// BodyFromFile is a builder method to set the request body
+func (r *Request) BodyFromFile(f string) *Request {
+	b, err := ioutil.ReadFile(f)
+	if err != nil {
+		r.apiTest.t.Fatal(err)
+	}
+	r.body = string(b)
+	return r
+}
+
 // JSON is a convenience method for setting the request body and content type header as "application/json"
 func (r *Request) JSON(b string) *Request {
 	r.body = b
+	r.ContentType("application/json")
+	return r
+}
+
+// JSONFromFile is a convenience method for setting the request body and content type header as "application/json"
+func (r *Request) JSONFromFile(f string) *Request {
+	r.BodyFromFile(f)
 	r.ContentType("application/json")
 	return r
 }
@@ -384,6 +401,16 @@ type Assert func(*http.Response, *http.Request) error
 // Body is the expected response body
 func (r *Response) Body(b string) *Response {
 	r.body = b
+	return r
+}
+
+// BodyFromFile reads the given file and uses the content as the expected response body
+func (r *Response) BodyFromFile(f string) *Response {
+	b, err := ioutil.ReadFile(f)
+	if err != nil {
+		r.apiTest.t.Fatal(err)
+	}
+	r.body = string(b)
 	return r
 }
 

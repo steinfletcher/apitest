@@ -275,6 +275,56 @@ func TestApiTest_MatchesJSONResponseBody(t *testing.T) {
 		End()
 }
 
+func TestApiTest_MatchesJSONBodyFromFile(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		data, _ := ioutil.ReadAll(r.Body)
+		assert.JSONEq(t, `{"a": 12345}`, string(data))
+
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+		_, err := w.Write([]byte(`{"a": 12345}`))
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	apitest.New().
+		Handler(handler).
+		Post("/hello").
+		JSONFromFile("testdata/request_body.json").
+		Expect(t).
+		BodyFromFile("testdata/response_body.json").
+		Status(http.StatusCreated).
+		End()
+}
+
+func TestApiTest_MatchesBodyFromFile(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		data, _ := ioutil.ReadAll(r.Body)
+		assert.JSONEq(t, `{"a": 12345}`, string(data))
+
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+		_, err := w.Write([]byte(`{"a": 12345}`))
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	apitest.New().
+		Handler(handler).
+		Post("/hello").
+		BodyFromFile("testdata/request_body.json").
+		Header("ContentType", "application/json").
+		Expect(t).
+		BodyFromFile("testdata/response_body.json").
+		Status(http.StatusCreated).
+		End()
+}
+
+
 func TestApiTest_MatchesJSONResponseBodyWithWhitespace(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
