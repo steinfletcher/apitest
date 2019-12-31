@@ -11,7 +11,7 @@
 
 # apitest
 
-A simple and extensible behavioural testing library in golang. Supports mocking external http calls and renders sequence diagrams on completion.
+A simple and extensible behavioural testing library. Supports mocking external http calls and renders sequence diagrams on completion.
 
 In behavioural tests the internal structure of the app is not known by the tests. Data is input to the system and the outputs are expected to meet certain conditions.
 
