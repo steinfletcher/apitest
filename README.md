@@ -42,10 +42,11 @@ go get -u github.com/steinfletcher/apitest
 
 ### Companion libraries
 
-| Library                                                        | Comment                              |
-| -------------------------------------------------------------- | ------------------------------------ |
-| [JSONPath](https://github.com/steinfletcher/apitest-jsonpath)  | JSONPath assertion addons            |
-| [PlantUML](https://github.com/steinfletcher/apitest-plantuml)  | Export sequence diagrams as plantUML |
+| Library                                                        | Comment                                        |
+| -------------------------------------------------------------- | -----------------------------------------------|
+| [JSONPath](https://github.com/steinfletcher/apitest-jsonpath)  | JSONPath assertion addons                      |
+| [PlantUML](https://github.com/steinfletcher/apitest-plantuml)  | Export sequence diagrams as plantUML           |
+| [DynamoDB](https://github.com/steinfletcher/apitest-dynamodb)  | Add DynamoDB interactions to sequence diagrams |
 
 ### Credits
 
