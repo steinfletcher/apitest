@@ -793,6 +793,7 @@ func TestMocks_Request_SetsTheMethod(t *testing.T) {
 		{http.MethodPut, func(m *Mock) { m.Put("/") }},
 		{http.MethodDelete, func(m *Mock) { m.Delete("/") }},
 		{http.MethodPatch, func(m *Mock) { m.Patch("/") }},
+		{http.MethodHead, func(m *Mock) { m.Head("/") }},
 	}
 	for _, test := range tests {
 		t.Run(test.expectedMethod, func(t *testing.T) {

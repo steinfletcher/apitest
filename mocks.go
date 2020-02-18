@@ -327,6 +327,13 @@ func (m *Mock) Get(u string) *MockRequest {
 	return m.request
 }
 
+// Head configures the mock to match http method HEAD
+func (m *Mock) Head(u string) *MockRequest {
+	m.parseUrl(u)
+	m.request.method = http.MethodHead
+	return m.request
+}
+
 // Put configures the mock to match http method PUT
 func (m *Mock) Put(u string) *MockRequest {
 	m.parseUrl(u)
