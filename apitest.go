@@ -959,6 +959,7 @@ func copyHttpRequest(request *http.Request) *http.Request {
 		ProtoMinor:    request.ProtoMinor,
 		ProtoMajor:    request.ProtoMajor,
 		ContentLength: request.ContentLength,
+		RemoteAddr:    request.RemoteAddr,
 	}
 
 	if request.Body != nil {
