@@ -288,9 +288,22 @@ func (r *Request) BodyFromFile(f string) *Request {
 	return r
 }
 
-// JSON is a convenience method for setting the request body and content type header as "application/json"
-func (r *Request) JSON(b string) *Request {
-	r.body = b
+// JSON is a convenience method for setting the request body and content type header as "application/json".
+// If v is not a string or []byte it will marshall the provided variable as json
+func (r *Request) JSON(v interface{}) *Request {
+	switch x := v.(type) {
+	case string:
+		r.body = x
+	case []byte:
+		r.body = string(x)
+	default:
+		asJSON, err := json.Marshal(x)
+		if err != nil {
+			r.apiTest.t.Fatal(err)
+			return nil
+		}
+		r.body = string(asJSON)
+	}
 	r.ContentType("application/json")
 	return r
 }

@@ -39,6 +39,51 @@ func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 		End()
 }
 
+func TestApiTest_JSONBody(t *testing.T) {
+	type bodyStruct struct {
+		A int `json:"a"`
+	}
+
+	tests := map[string]struct {
+		body interface{}
+	}{
+		"string": {
+			body: `{"a": 12345}`,
+		},
+		"[]byte": {
+			body: []byte(`{"a": 12345}`),
+		},
+		"struct": {
+			body: bodyStruct{A: 12345},
+		},
+		"map": {
+			body: map[string]interface{}{"a": 12345},
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			handler := http.NewServeMux()
+			handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+				data, _ := ioutil.ReadAll(r.Body)
+				assert.JSONEq(t, `{"a": 12345}`, string(data))
+				if r.Header.Get("Content-Type") != "application/json" {
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+				w.WriteHeader(http.StatusOK)
+			})
+
+			apitest.New().
+				Handler(handler).
+				Post("/hello").
+				JSON(test.body).
+				Expect(t).
+				Status(http.StatusOK).
+				End()
+		})
+	}
+}
+
 func TestApiTest_AddsJSONBodyToRequestUsingJSON(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
