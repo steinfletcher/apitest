@@ -1004,6 +1004,7 @@ func TestMocks_ApiTest_SupportsObservingMocks(t *testing.T) {
 			if res == nil || req == nil || a == nil {
 				t.Fatal("expected request and response to be defined")
 			}
+			assert.NotNil(t, res.Request, "expected request to be set in response")
 			observedMocks = append(observedMocks, &mockInteraction{response: res, request: req})
 		}).
 		Mocks(getUser, getPreferences).

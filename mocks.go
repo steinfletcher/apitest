@@ -107,7 +107,9 @@ func (r *Transport) RoundTrip(req *http.Request) (mockResponse *http.Response, m
 
 	matchedResponse, matchErrors := matches(req, r.mocks)
 	if matchErrors == nil {
-		return buildResponseFromMock(matchedResponse), nil
+		res := buildResponseFromMock(matchedResponse)
+		res.Request = req
+		return res, nil
 	}
 
 	if r.debugEnabled {
