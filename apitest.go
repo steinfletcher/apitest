@@ -137,6 +137,12 @@ func (a *APITest) Handler(handler http.Handler) *APITest {
 	return a
 }
 
+// HandlerFunc defines the http handler that is invoked when the test is run
+func (a *APITest) HandlerFunc(handlerFunc http.HandlerFunc) *APITest {
+	a.handler = handlerFunc
+	return a
+}
+
 // Mocks is a builder method for setting the mocks
 func (a *APITest) Mocks(mocks ...*Mock) *APITest {
 	var m []*Mock
@@ -689,10 +695,7 @@ func (r *Response) runTest() *http.Response {
 	a.assertResponse(res)
 	a.assertHeaders(res)
 	a.assertCookies(res)
-	err := a.assertFunc(res, req)
-	if err != nil {
-		a.t.Fatal(err.Error())
-	}
+	a.assertFunc(res, req)
 
 	return copyHttpResponse(res)
 }
@@ -705,16 +708,15 @@ func (a *APITest) assertMocks() {
 	}
 }
 
-func (a *APITest) assertFunc(res *http.Response, req *http.Request) error {
+func (a *APITest) assertFunc(res *http.Response, req *http.Request) {
 	if len(a.response.assert) > 0 {
 		for _, assertFn := range a.response.assert {
 			err := assertFn(copyHttpResponse(res), copyHttpRequest(req))
 			if err != nil {
-				return err
+				a.verifier.Equal(a.t, nil, err)
 			}
 		}
 	}
-	return nil
 }
 
 func (a *APITest) doRequest() (*http.Response, *http.Request) {

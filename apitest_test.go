@@ -2,14 +2,15 @@ package apitest_test
 
 import (
 	"fmt"
-	"github.com/steinfletcher/apitest"
-	"github.com/steinfletcher/apitest/mocks"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/steinfletcher/apitest"
+	"github.com/steinfletcher/apitest/mocks"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -546,19 +547,17 @@ func TestApiTest_EndReturnsTheResult(t *testing.T) {
 	type resBody struct {
 		B string `json:"b"`
 	}
-	handler := http.NewServeMux()
-	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusCreated)
-		w.Header().Set("Content-Type", "application/json")
-		_, err := w.Write([]byte(`{"a": 12345, "b": "hi"}`))
-		if err != nil {
-			panic(err)
-		}
-	})
 
 	var r resBody
 	apitest.New().
-		Handler(handler).
+		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusCreated)
+			w.Header().Set("Content-Type", "application/json")
+			_, err := w.Write([]byte(`{"a": 12345, "b": "hi"}`))
+			if err != nil {
+				panic(err)
+			}
+		}).
 		Get("/hello").
 		Expect(t).
 		Body(`{
