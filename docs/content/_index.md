@@ -7,7 +7,7 @@ type: docs
 
 ## Overview
 
-A simple and extensible behavioural testing library written in golang. You can use `apitest` to simplify testing of REST based services or HTTP handlers. 
+A simple and extensible behavioural testing library for Go. You can use `apitest` to simplify testing of REST based services or HTTP handlers. 
 
 `apitest` supports mocking external http calls and renders sequence diagrams on test completion.
 
