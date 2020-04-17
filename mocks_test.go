@@ -242,6 +242,57 @@ func TestMocks_HeaderNotPresentMatcher(t *testing.T) {
 	}
 }
 
+func TestMocks_BasicAuth(t *testing.T) {
+	tests := map[string]struct {
+		reqUsername   string
+		reqPassword   string
+		mockUsername  string
+		mockPassword  string
+		expectedError error
+	}{
+		"matches": {
+			reqUsername:   "myUser",
+			reqPassword:   "myPassword",
+			mockUsername:  "myUser",
+			mockPassword:  "myPassword",
+			expectedError: nil,
+		},
+		"not matches username": {
+			reqUsername:   "notMyUser",
+			reqPassword:   "myPassword",
+			mockUsername:  "myUser",
+			mockPassword:  "myPassword",
+			expectedError: errors.New("basic auth request username 'notMyUser' did not match mock username 'myUser'"),
+		},
+		"not matches password": {
+			reqUsername:   "myUser",
+			reqPassword:   "notMyPassword",
+			mockUsername:  "myUser",
+			mockPassword:  "myPassword",
+			expectedError: errors.New("basic auth request password 'notMyPassword' did not match mock password 'myPassword'"),
+		},
+		"not matches if no auth header": {
+			mockUsername:  "myUser",
+			mockPassword:  "myPassword",
+			expectedError: errors.New("request did not contain valid HTTP Basic Authentication string"),
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			if test.reqUsername != "" {
+				req.SetBasicAuth(test.reqUsername, test.reqPassword)
+			}
+
+			mockRequest := NewMock().Get("/").BasicAuth(test.mockUsername, test.mockPassword)
+
+			matchError := basicAuthMatcher(req, mockRequest)
+
+			assert.Equal(t, test.expectedError, matchError)
+		})
+	}
+}
+
 func TestMocks_QueryMatcher_Success(t *testing.T) {
 	tests := []struct {
 		requestUrl   string

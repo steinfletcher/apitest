@@ -225,6 +225,8 @@ type MockRequest struct {
 	url                *url.URL
 	method             string
 	headers            map[string][]string
+	basicAuthUsername  string
+	basicAuthPassword  string
 	headerPresent      []string
 	headerNotPresent   []string
 	formData           map[string][]string
@@ -443,6 +445,13 @@ func (r *MockRequest) HeaderNotPresent(key string) *MockRequest {
 	return r
 }
 
+// BasicAuth configures the mock request to match the given basic auth parameters
+func (r *MockRequest) BasicAuth(username, password string) *MockRequest {
+	r.basicAuthUsername = username
+	r.basicAuthPassword = password
+	return r
+}
+
 // FormData configures the mock request to math the given form data
 func (r *MockRequest) FormData(key string, values ...string) *MockRequest {
 	r.formData[key] = append(r.formData[key], values...)
@@ -475,8 +484,7 @@ func (r *MockRequest) QueryParams(queryParams map[string]string) *MockRequest {
 	return r
 }
 
-// QueryCollection configures the mock request to match a number of repeating query params, e.g.
-//   ?a=1&a=2&a=3
+// QueryCollection configures the mock request to match a number of repeating query params, e.g. ?a=1&a=2&a=3
 func (r *MockRequest) QueryCollection(queryParams map[string][]string) *MockRequest {
 	for k, v := range queryParams {
 		for _, val := range v {
@@ -686,6 +694,29 @@ var headerMatcher = func(req *http.Request, spec *MockRequest) error {
 			return fmt.Errorf("not all of received headers %s matched expected mock headers %s", receivedHeaders, mockHeaders)
 		}
 	}
+	return nil
+}
+
+var basicAuthMatcher = func(req *http.Request, spec *MockRequest) error {
+	if spec.basicAuthUsername == "" {
+		return nil
+	}
+
+	username, password, ok := req.BasicAuth()
+	if !ok {
+		return errors.New("request did not contain valid HTTP Basic Authentication string")
+	}
+
+	if spec.basicAuthUsername != username {
+		return fmt.Errorf("basic auth request username '%s' did not match mock username '%s'",
+			username, spec.basicAuthUsername)
+	}
+
+	if spec.basicAuthPassword != password {
+		return fmt.Errorf("basic auth request password '%s' did not match mock password '%s'",
+			password, spec.basicAuthPassword)
+	}
+
 	return nil
 }
 
@@ -924,6 +955,7 @@ var defaultMatchers = []Matcher{
 	schemeMatcher,
 	methodMatcher,
 	headerMatcher,
+	basicAuthMatcher,
 	headerPresentMatcher,
 	headerNotPresentMatcher,
 	queryParamMatcher,
