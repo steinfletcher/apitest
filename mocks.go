@@ -475,6 +475,17 @@ func (r *MockRequest) QueryParams(queryParams map[string]string) *MockRequest {
 	return r
 }
 
+// QueryCollection configures the mock request to match a number of repeating query params, e.g.
+//   ?a=1&a=2&a=3
+func (r *MockRequest) QueryCollection(queryParams map[string][]string) *MockRequest {
+	for k, v := range queryParams {
+		for _, val := range v {
+			r.query[k] = append(r.query[k], val)
+		}
+	}
+	return r
+}
+
 // QueryPresent configures the mock request to match when a query param is present, regardless of value
 func (r *MockRequest) QueryPresent(key string) *MockRequest {
 	r.queryPresent = append(r.queryPresent, key)

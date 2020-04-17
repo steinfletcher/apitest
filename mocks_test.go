@@ -310,6 +310,34 @@ func TestMocks_QueryParams_DoesNotOverwriteQuery(t *testing.T) {
 	assert.Nil(t, matchError)
 }
 
+func TestMocks_QueryCollection(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "http://test.com/v2/path?a=1&a=2&b=3&c=4", nil)
+	mockRequest := NewMock().
+		Get("http://test.com").
+		Query("b", "3").
+		QueryParams(map[string]string{"c": "4"}).
+		QueryCollection(map[string][]string{"a": {"1", "2"}})
+
+	matchError := queryParamMatcher(req, mockRequest)
+
+	assert.Equal(t, 3, len(mockRequest.query))
+	assert.Nil(t, matchError)
+}
+
+func TestMocks_QueryCollection_Fails(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "http://test.com/v2/path?a=1&a=2&b=3&c=4", nil)
+	mockRequest := NewMock().
+		Get("http://test.com").
+		Query("b", "3").
+		QueryParams(map[string]string{"c": "4"}).
+		QueryCollection(map[string][]string{"a": {"1", "2", "3"}})
+
+	matchError := queryParamMatcher(req, mockRequest)
+
+	assert.Equal(t, 3, len(mockRequest.query))
+	assert.Error(t, matchError)
+}
+
 func TestMocks_QueryPresent(t *testing.T) {
 	tests := []struct {
 		requestUrl    string
