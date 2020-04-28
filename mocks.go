@@ -198,7 +198,7 @@ func buildResponseFromMock(mockResponse *MockResponse) *http.Response {
 
 // Mock represents the entire interaction for a mock to be used for testing
 type Mock struct {
-	m               sync.Mutex
+	m               *sync.Mutex
 	isUsed          bool
 	request         *MockRequest
 	response        *MockResponse
@@ -217,6 +217,20 @@ func (m *Mock) Matches(req *http.Request) []error {
 		}
 	}
 	return errs
+}
+
+func (m *Mock) copy() *Mock {
+	newMock := *m
+
+	newMock.m = &sync.Mutex{}
+
+	req := *m.request
+	newMock.request = &req
+
+	res := *m.response
+	newMock.response = &res
+
+	return &newMock
 }
 
 // MockRequest represents the http request side of a mock interaction
@@ -293,21 +307,21 @@ func (r *StandaloneMocks) End() func() {
 
 // NewMock create a new mock, ready for configuration using the builder pattern
 func NewMock() *Mock {
-	mock := &Mock{}
-	req := &MockRequest{
+	mock := &Mock{
+		m:     &sync.Mutex{},
+		times: 1,
+	}
+	mock.request = &MockRequest{
 		mock:     mock,
 		headers:  map[string][]string{},
 		formData: map[string][]string{},
 		query:    map[string][]string{},
 		matchers: defaultMatchers,
 	}
-	res := &MockResponse{
+	mock.response = &MockResponse{
 		mock:    mock,
 		headers: map[string][]string{},
 	}
-	mock.request = req
-	mock.response = res
-	mock.times = 1
 	return mock
 }
 
@@ -384,18 +398,20 @@ func matches(req *http.Request, mocks []*Mock) (*MockResponse, error) {
 	mockError := newUnmatchedMockError()
 	for mockNumber, mock := range mocks {
 		mock.m.Lock() // lock is for isUsed when matches is called concurrently by RoundTripper
-		defer mock.m.Unlock()
 		if mock.isUsed {
+			mock.m.Unlock()
 			continue
 		}
 
 		errs := mock.Matches(req)
 		if len(errs) == 0 {
 			mock.isUsed = true
+			mock.m.Unlock()
 			return mock.response, nil
 		}
 
 		mockError = mockError.addErrors(mockNumber+1, errs...)
+		mock.m.Unlock()
 	}
 
 	return nil, mockError
