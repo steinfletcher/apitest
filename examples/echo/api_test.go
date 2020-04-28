@@ -10,19 +10,17 @@ import (
 
 func TestGetUser_CookieMatching(t *testing.T) {
 	apitest.New().
-		Handler(newApp().app).
+		Handler(newApp()).
 		Get("/user/1234").
 		Expect(t).
-		Cookies(apitest.NewCookie("TomsFavouriteDrink").
-			Value("Beer").
-			Path("/")).
+		Cookies(apitest.NewCookie("CookieForAndy").Value("Andy")).
 		Status(http.StatusOK).
 		End()
 }
 
 func TestGetUser_Success(t *testing.T) {
 	apitest.New().
-		Handler(newApp().app).
+		Handler(newApp()).
 		Get("/user/1234").
 		Expect(t).
 		Body(`{"id": "1234", "name": "Andy"}`).
@@ -32,7 +30,7 @@ func TestGetUser_Success(t *testing.T) {
 
 func TestGetUser_Success_JSONPath(t *testing.T) {
 	apitest.New().
-		Handler(newApp().app).
+		Handler(newApp()).
 		Get("/user/1234").
 		Expect(t).
 		Assert(jsonpath.Equal(`$.id`, "1234")).
@@ -42,7 +40,7 @@ func TestGetUser_Success_JSONPath(t *testing.T) {
 
 func TestGetUser_NotFound(t *testing.T) {
 	apitest.New().
-		Handler(newApp().app).
+		Handler(newApp()).
 		Get("/user/1515").
 		Expect(t).
 		Status(http.StatusNotFound).

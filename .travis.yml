@@ -19,7 +19,7 @@ install:
   - hugo version
 
 script:
-  - make test
+  - make test test-examples
 
 before_deploy: cd docs && hugo && cd ..
 
