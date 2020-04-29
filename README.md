@@ -15,6 +15,8 @@ A simple and extensible behavioural testing library. Supports mocking external h
 
 In behavioural tests the internal structure of the app is not known by the tests. Data is input to the system and the outputs are expected to meet certain conditions.
 
+Join the conversation at #apitest on https://gophers.slack.com.
+
 <span>Logo by <a target="_blank" href="https://twitter.com/egonelbre">@egonelbre</a><span>
 
 ## Documentation
