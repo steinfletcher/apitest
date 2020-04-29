@@ -149,8 +149,7 @@ func (a *APITest) Mocks(mocks ...*Mock) *APITest {
 	for i := range mocks {
 		times := mocks[i].response.mock.times
 		for j := 1; j <= times; j++ {
-			mockCopy := *mocks[i]
-			m = append(m, &mockCopy)
+			m = append(m, mocks[i].copy())
 		}
 	}
 	a.mocks = m
