@@ -738,7 +738,7 @@ func (a *APITest) doRequest() (*http.Response, *http.Request) {
 		a.serveHttp(resRecorder, copyHttpRequest(req))
 		res = resRecorder.Result()
 	} else {
-		res, err = a.networkingHTTPClient.Do(req)
+		res, err = a.networkingHTTPClient.Do(copyHttpRequest(req))
 		if err != nil {
 			a.t.Fatal(err)
 		}
