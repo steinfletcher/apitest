@@ -226,7 +226,7 @@ func TestApi(t *testing.T) {
 	apitest.New().
 		Handler(handler).
 		Get("/hello").
-		BasicAuth("username:password").
+		BasicAuth("username", "password").
 		Expect(t).
 		Status(http.StatusOK).
 		End()

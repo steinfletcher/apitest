@@ -1,0 +1,71 @@
+version: 2.1
+defaults: &defaults
+  working_directory: /tmp/persist_to_workspace
+orbs:
+  aws-s3: circleci/aws-s3@1.0.15
+
+jobs:
+
+  test:
+    <<: *defaults
+    docker:
+      - image: circleci/golang:1.14
+
+    steps:
+      - run:
+          name: run tests tools
+          command: make test test-examples
+
+  upload-coverage:
+    <<: *defaults
+    docker:
+      - image: circleci/golang:1.14
+    steps:
+      - run:
+          name: install tools
+          command: |
+            go get -u -v github.com/axw/gocov/gocov
+            go get -u -v github.com/mattn/goveralls
+      - run:
+          name: generate coverage report
+          command: |
+#            goveralls -coverprofile=coverage.out -service=circle-ci -repotoken $COVERALLS_TOKEN
+
+  deploy-docs:
+    <<: *defaults
+    docker:
+      - image: musitude/go-build
+    steps:
+      - run:
+          name: install hugo
+          command: |
+            wget https://github.com/gohugoio/hugo/releases/download/v0.51/hugo_0.51_Linux-64bit.tar.gz
+            tar -xzvf hugo_0.51_Linux-64bit.tar.gz
+            chmod +x hugo
+            export PATH=$PATH:$PWD
+            hugo version
+
+      - run:
+          name: build docs
+          command: |
+            cd docs && hugo && cd ..
+#            aws configure set preview.cloudfront true
+#            aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+
+workflows:
+  version: 2
+
+  pipeline:
+    jobs:
+      - test:
+          filters:
+            branches:
+              only: feature/circleci
+            tags:
+              ignore: /.*/
+      - upload-coverage:
+          requires:
+            - test
+      - deploy-docs:
+          requires:
+            - upload-coverage
