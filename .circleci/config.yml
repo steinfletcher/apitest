@@ -1,6 +1,8 @@
 version: 2.1
+
 defaults: &defaults
   working_directory: /tmp/persist_to_workspace
+
 orbs:
   aws-s3: circleci/aws-s3@1.0.15
 
@@ -12,15 +14,22 @@ jobs:
       - image: circleci/golang:1.14
 
     steps:
+      - checkout
       - run:
           name: run tests tools
           command: make test test-examples
+      - persist_to_workspace:
+          root: /tmp/persist_to_workspace
+          paths:
+            - .
 
   upload-coverage:
     <<: *defaults
     docker:
       - image: circleci/golang:1.14
     steps:
+      - attach_workspace:
+         at: /tmp/persist_to_workspace
       - run:
           name: install tools
           command: |
@@ -29,28 +38,27 @@ jobs:
       - run:
           name: generate coverage report
           command: |
-#            goveralls -coverprofile=coverage.out -service=circle-ci -repotoken $COVERALLS_TOKEN
+            goveralls -coverprofile=coverage.out -service=circle-ci -repotoken $COVERALLS_TOKEN
 
   deploy-docs:
     <<: *defaults
     docker:
-      - image: musitude/go-build
+      - image: musitude/go-build:latest
     steps:
-      - run:
-          name: install hugo
-          command: |
-            wget https://github.com/gohugoio/hugo/releases/download/v0.51/hugo_0.51_Linux-64bit.tar.gz
-            tar -xzvf hugo_0.51_Linux-64bit.tar.gz
-            chmod +x hugo
-            export PATH=$PATH:$PWD
-            hugo version
-
+      - attach_workspace:
+          at: /tmp/persist_to_workspace
       - run:
           name: build docs
+          command: cd docs && hugo && cd ..
+      - aws-s3/sync:
+          from: docs/public/
+          overwrite: true
+          to: $S3_BUCKET
+      - run:
+          name: invalidate cloudfront cache
           command: |
-            cd docs && hugo && cd ..
-#            aws configure set preview.cloudfront true
-#            aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+            aws configure set preview.cloudfront true
+            aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
 
 workflows:
   version: 2
@@ -60,7 +68,7 @@ workflows:
       - test:
           filters:
             branches:
-              only: feature/circleci
+              only: master
             tags:
               ignore: /.*/
       - upload-coverage:
