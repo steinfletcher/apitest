@@ -151,7 +151,7 @@ func TestMocks_HostMatcher(t *testing.T) {
 	}
 }
 
-func TestMocks_HeaderMatcher(t *testing.T) {
+func TestMocks_HeadersRegexpMatcher(t *testing.T) {
 	tests := []struct {
 		requestHeaders     map[string]string
 		headerToMatchKey   string
@@ -172,9 +172,37 @@ func TestMocks_HeaderMatcher(t *testing.T) {
 			}
 			mockRequest := NewMock().Get("/assert")
 			if test.headerToMatchKey != "" {
+				mockRequest.HeaderRegexp(test.headerToMatchKey, test.headerToMatchValue)
+			}
+			matchError := headersRegexpMatcher(req, mockRequest)
+			assert.Equal(t, test.expectedError, matchError)
+		})
+	}
+}
+
+func TestMocks_HeadersMatcher(t *testing.T) {
+	tests := []struct {
+		requestHeaders     map[string]string
+		headerToMatchKey   string
+		headerToMatchValue string
+		expectedError      error
+	}{
+		{map[string]string{"B": "5", "A": "123"}, "A", "123", nil},
+		{map[string]string{"A": "123"}, "C", "3", errors.New("could not match header=C")},
+		{map[string]string{}, "", "", nil},
+		{map[string]string{"A": "apple"}, "A", "a([a-z]+)ple", errors.New("could not match header=A")},
+	}
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%s %s", test.headerToMatchKey, test.headerToMatchValue), func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/assert", nil)
+			for k, v := range test.requestHeaders {
+				req.Header.Set(k, v)
+			}
+			mockRequest := NewMock().Get("/assert")
+			if test.headerToMatchKey != "" {
 				mockRequest.Header(test.headerToMatchKey, test.headerToMatchValue)
 			}
-			matchError := headerMatcher(req, mockRequest)
+			matchError := headersMatcher(req, mockRequest)
 			assert.Equal(t, test.expectedError, matchError)
 		})
 	}
@@ -189,7 +217,7 @@ func TestMocks_MockRequest_Header_WorksWithHeaders(t *testing.T) {
 	req.Header.Set("A", "12345")
 	req.Header.Set("B", "67890")
 
-	matchError := headerMatcher(req, mock)
+	matchError := headersRegexpMatcher(req, mock)
 
 	assert.Nil(t, matchError)
 }
@@ -785,7 +813,7 @@ func TestMocks_Matches_Errors(t *testing.T) {
 	assert.Equal(t, &unmatchedMockError{errors: map[int][]error{
 		1: {
 			errors.New("received method GET did not match mock method POST"),
-			errors.New("not all of received headers map[] matched expected mock headers map[Headerkey:[headerVal headerVal]]"),
+			errors.New("could not match header=Headerkey"),
 			errors.New("not all of received query params map[] matched expected mock query params map[queryKey:[queryVal queryVal]]"),
 			errors.New("expected query param queryKey2 not received"),
 			errors.New("expected a body but received none"),

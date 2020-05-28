@@ -11,6 +11,7 @@ import (
 	"net/http/httputil"
 	"net/textproto"
 	"net/url"
+	"regexp"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -83,8 +84,9 @@ func New(name ...string) *APITest {
 		formData: map[string][]string{},
 	}
 	response := &Response{
-		apiTest: apiTest,
-		headers: map[string][]string{},
+		apiTest:       apiTest,
+		headers:       map[string][]string{},
+		headersRegexp: map[string][]string{},
 	}
 	apiTest.request = request
 	apiTest.response = response
@@ -402,6 +404,7 @@ type Response struct {
 	status             int
 	body               string
 	headers            map[string][]string
+	headersRegexp      map[string][]string
 	headersPresent     []string
 	headersNotPresent  []string
 	cookies            []*Cookie
@@ -457,21 +460,28 @@ func (r *Response) CookieNotPresent(cookieName string) *Response {
 	return r
 }
 
-// Header is a builder method to set the request headers
+// Header is a builder method to define assertions on response headers
 func (r *Response) Header(key, value string) *Response {
 	normalizedName := textproto.CanonicalMIMEHeaderKey(key)
 	r.headers[normalizedName] = append(r.headers[normalizedName], value)
 	return r
 }
 
-// HeaderPresent is a builder method to set the request headers that should be present in the response
+// HeaderRegexp is a builder method to defined response assertions for http headers using regular expressions
+func (r *Response) HeaderRegexp(key, value string) *Response {
+	normalizedName := textproto.CanonicalMIMEHeaderKey(key)
+	r.headersRegexp[normalizedName] = append(r.headersRegexp[normalizedName], value)
+	return r
+}
+
+// HeaderPresent is a builder method to define assertions on response header keys
 func (r *Response) HeaderPresent(name string) *Response {
 	normalizedName := textproto.CanonicalMIMEHeaderKey(name)
 	r.headersPresent = append(r.headersPresent, normalizedName)
 	return r
 }
 
-// HeaderNotPresent is a builder method to set the request headers that should not be present in the response
+// HeaderNotPresent is a builder method to define assertions on response header keys
 func (r *Response) HeaderNotPresent(name string) *Response {
 	normalizedName := textproto.CanonicalMIMEHeaderKey(name)
 	r.headersNotPresent = append(r.headersNotPresent, normalizedName)
@@ -912,6 +922,29 @@ func (a *APITest) assertHeaders(res *http.Response) {
 			if !found {
 				a.t.Fatalf("could not match header=%s", expectedHeader)
 			}
+		}
+	}
+
+	headersRegexp := a.response.headersRegexp
+	for key, values := range headersRegexp {
+		var match bool
+		var err error
+		receivedHeaders := res.Header
+		for _, field := range receivedHeaders[key] {
+			for _, value := range values {
+				match, err = regexp.MatchString(fmt.Sprintf("^%s$", value), field)
+				if err != nil {
+					a.t.Fatalf("failed to parse regexp for header %s with value %s", key, value)
+				}
+			}
+
+			if match {
+				break
+			}
+		}
+
+		if !match {
+			a.t.Fatalf("not all of received headers %s matched expected mock headers %s", receivedHeaders, headersRegexp)
 		}
 	}
 

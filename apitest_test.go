@@ -514,7 +514,7 @@ func TestApiTest_MatchesResponseHttpCookies_OnlySuppliedFields(t *testing.T) {
 		End()
 }
 
-func TestApiTest_MatchesResponseHeaders_WithMixedKeyCase(t *testing.T) {
+func TestApiTest_MatchesHeaders(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("ABC", "12345")
@@ -522,6 +522,7 @@ func TestApiTest_MatchesResponseHeaders_WithMixedKeyCase(t *testing.T) {
 		w.Header().Set("Authorization", "12345")
 		w.Header().Add("authorizATION", "00000")
 		w.Header().Add("Authorization", "98765")
+		w.Header().Add("X-Auth-Error", "token expired at 2018-01-12T12:11:01")
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -537,6 +538,7 @@ func TestApiTest_MatchesResponseHeaders_WithMixedKeyCase(t *testing.T) {
 		Header("Authorization", "12345").
 		Header("Authorization", "00000").
 		Header("authorization", "98765").
+		HeaderRegexp("X-Auth-Error", "token expired at.*").
 		HeaderPresent("Def").
 		HeaderPresent("Authorization").
 		HeaderNotPresent("XYZ").

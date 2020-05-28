@@ -239,6 +239,7 @@ type MockRequest struct {
 	url                *url.URL
 	method             string
 	headers            map[string][]string
+	headersRegexp      map[string][]string
 	basicAuthUsername  string
 	basicAuthPassword  string
 	headerPresent      []string
@@ -312,11 +313,12 @@ func NewMock() *Mock {
 		times: 1,
 	}
 	mock.request = &MockRequest{
-		mock:     mock,
-		headers:  map[string][]string{},
-		formData: map[string][]string{},
-		query:    map[string][]string{},
-		matchers: defaultMatchers,
+		mock:          mock,
+		headers:       map[string][]string{},
+		headersRegexp: map[string][]string{},
+		formData:      map[string][]string{},
+		query:         map[string][]string{},
+		matchers:      defaultMatchers,
 	}
 	mock.response = &MockResponse{
 		mock:    mock,
@@ -437,6 +439,13 @@ func (r *MockRequest) BodyFromFile(f string) *MockRequest {
 func (r *MockRequest) Header(key, value string) *MockRequest {
 	normalizedKey := textproto.CanonicalMIMEHeaderKey(key)
 	r.headers[normalizedKey] = append(r.headers[normalizedKey], value)
+	return r
+}
+
+// HeaderRegexp configures the mock request to match the given header using a regular expression
+func (r *MockRequest) HeaderRegexp(key, value string) *MockRequest {
+	normalizedKey := textproto.CanonicalMIMEHeaderKey(key)
+	r.headersRegexp[normalizedKey] = append(r.headersRegexp[normalizedKey], value)
 	return r
 }
 
@@ -687,8 +696,8 @@ var schemeMatcher Matcher = func(r *http.Request, spec *MockRequest) error {
 	})
 }
 
-var headerMatcher = func(req *http.Request, spec *MockRequest) error {
-	mockHeaders := spec.headers
+var headersRegexpMatcher = func(req *http.Request, spec *MockRequest) error {
+	mockHeaders := spec.headersRegexp
 	for key, values := range mockHeaders {
 		var match bool
 		var err error
@@ -708,6 +717,24 @@ var headerMatcher = func(req *http.Request, spec *MockRequest) error {
 
 		if !match {
 			return fmt.Errorf("not all of received headers %s matched expected mock headers %s", receivedHeaders, mockHeaders)
+		}
+	}
+	return nil
+}
+
+var headersMatcher = func(req *http.Request, spec *MockRequest) error {
+	for expectedHeader, expectedValues := range spec.headers {
+		for _, expectedValue := range expectedValues {
+			found := false
+			for _, resValue := range req.Header[expectedHeader] {
+				if expectedValue == resValue {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return fmt.Errorf("could not match header=%s", expectedHeader)
+			}
 		}
 	}
 	return nil
@@ -970,7 +997,8 @@ var defaultMatchers = []Matcher{
 	hostMatcher,
 	schemeMatcher,
 	methodMatcher,
-	headerMatcher,
+	headersMatcher,
+	headersRegexpMatcher,
 	basicAuthMatcher,
 	headerPresentMatcher,
 	headerNotPresentMatcher,
