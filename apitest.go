@@ -50,6 +50,7 @@ type APITest struct {
 	meta                 map[string]interface{}
 	started              time.Time
 	finished             time.Time
+	mockMisses           []error
 }
 
 // InboundRequest used to wrap the incoming request with a timestamp
@@ -73,7 +74,8 @@ type RecorderHook func(*Recorder)
 // New creates a new api test. The name is optional and will appear in test reports
 func New(name ...string) *APITest {
 	apiTest := &APITest{
-		meta: map[string]interface{}{},
+		meta:       map[string]interface{}{},
+		mockMisses: []error{},
 	}
 
 	request := &Request{
@@ -671,7 +673,7 @@ func (r *Response) runTest() *http.Response {
 			a.httpClient,
 			a.debugEnabled,
 			a.mocksObservers,
-			r.apiTest,
+			a,
 		)
 		defer a.transport.Reset()
 		a.transport.Hijack()
@@ -704,6 +706,16 @@ func (a *APITest) assertMocks() {
 		if mock.isUsed == false && mock.timesSet {
 			a.verifier.Fail(a.t, fmt.Sprintf("mock was not invoked expected times: '%d'", mock.times))
 		}
+	}
+	if len(a.mockMisses) > 0 {
+		failStrings := []string{}
+		for _, err := range a.mockMisses {
+			failStrings = append(failStrings, err.Error())
+		}
+
+		failString := strings.Join(failStrings, "\n\t * ")
+
+		a.verifier.Fail(a.t, fmt.Sprintf(" - %d Requests missed any mock: \n%s", len(a.mockMisses), failString))
 	}
 }
 

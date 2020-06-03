@@ -33,7 +33,9 @@ func newTransport(
 	debugEnabled bool,
 	observers []Observe,
 	apiTest *APITest) *Transport {
-
+	if apiTest == nil {
+		apiTest = &APITest{mocks: mocks, mockMisses: nil, debugEnabled: debugEnabled}
+	}
 	t := &Transport{
 		mocks:        mocks,
 		httpClient:   httpClient,
@@ -105,7 +107,7 @@ func (r *Transport) RoundTrip(req *http.Request) (mockResponse *http.Response, m
 		}()
 	}
 
-	matchedResponse, matchErrors := matches(req, r.mocks)
+	matchedResponse, matchErrors := matches(req, r.mocks, r.debugEnabled)
 	if matchErrors == nil {
 		res := buildResponseFromMock(matchedResponse)
 		res.Request = req
@@ -116,6 +118,9 @@ func (r *Transport) RoundTrip(req *http.Request) (mockResponse *http.Response, m
 		fmt.Printf("failed to match mocks. Errors: %s\n", matchErrors)
 	}
 
+	if r.apiTest.mockMisses != nil {
+		r.apiTest.mockMisses = append(r.apiTest.mockMisses, matchErrors)
+	}
 	return nil, matchErrors
 }
 
@@ -298,7 +303,7 @@ func (r *StandaloneMocks) End() func() {
 		r.httpClient,
 		r.debug,
 		nil,
-		nil,
+		&APITest{mocks: r.mocks, mockMisses: nil},
 	)
 	resetFunc := func() { transport.Reset() }
 	transport.Hijack()
@@ -394,7 +399,7 @@ func (m *Mock) Method(method string) *MockRequest {
 	return m.request
 }
 
-func matches(req *http.Request, mocks []*Mock) (*MockResponse, error) {
+func matches(req *http.Request, mocks []*Mock, debugEnabled bool) (*MockResponse, error) {
 	mockError := newUnmatchedMockError()
 	for mockNumber, mock := range mocks {
 		mock.m.Lock() // lock is for isUsed when matches is called concurrently by RoundTripper
@@ -405,8 +410,13 @@ func matches(req *http.Request, mocks []*Mock) (*MockResponse, error) {
 
 		errs := mock.Matches(req)
 		if len(errs) == 0 {
-			mock.isUsed = true
+			if mock.timesSet {
+				mock.isUsed = true
+			}
 			mock.m.Unlock()
+			if debugEnabled {
+				fmt.Printf("Matched Mock(%s)\n", mock.request.url)
+			}
 			return mock.response, nil
 		}
 
@@ -615,12 +625,13 @@ func (r *MockResponse) End() *Mock {
 
 // EndStandalone finalises the response definition of standalone mocks
 func (r *MockResponse) EndStandalone(other ...*Mock) func() {
+	mocks := append([]*Mock{r.mock}, other...)
 	transport := newTransport(
-		append([]*Mock{r.mock}, other...),
+		mocks,
 		r.mock.httpClient,
 		r.mock.debugStandalone,
 		nil,
-		nil,
+		&APITest{mocks: mocks, mockMisses: nil},
 	)
 	resetFunc := func() { transport.Reset() }
 	transport.Hijack()
@@ -656,9 +667,13 @@ var hostMatcher Matcher = func(r *http.Request, spec *MockRequest) error {
 		return nil
 	}
 	matched, err := regexp.MatchString(mockHost, r.URL.Path)
-	return errorOrNil(matched && err != nil, func() string {
-		return fmt.Sprintf("received host %s did not match mock host %s", receivedHost, mockHost)
-	})
+	if err != nil {
+		return err
+	}
+	if !matched {
+		return fmt.Errorf("received host %s did not match mock host %s", receivedHost, mockHost)
+	}
+	return nil
 }
 
 var methodMatcher Matcher = func(r *http.Request, spec *MockRequest) error {

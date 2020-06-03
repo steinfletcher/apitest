@@ -954,6 +954,52 @@ func TestApiTest_MatchesTimes(t *testing.T) {
 		End()
 }
 
+func TestMocks_ApiTest_MissDetection_onMultipleMocks(t *testing.T) {
+	var failString = ""
+	verifier := mocks.NewVerifier()
+	verifier.FailFn = func(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
+		failString = failureMessage
+		return true
+	}
+	apitest.New().
+		Verifier(verifier).
+		Mocks(getMock("http://host1/some/url/2"),
+			getMock("http://host2/some/url/2"),
+			getMock("http://host3/some/url/2")).
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, _ = http.Get("http://host1/some/url/2")
+			_, _ = http.Get("http://host2/some/url/2")
+			_, _ = http.Get("http://host3/some/url/2")
+			//missing hit
+			_, _ = http.Get("http://host4/some/url/3")
+			w.WriteHeader(http.StatusOK)
+		})).
+		Get("/").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+	assert.Equal(t, ` - 1 Requests missed any mock: 
+received request did not match any mocks
+
+Mock 1 mismatches:
+• received path /some/url/3 did not match mock path /some/url/2
+• received host host4 did not match mock host host1
+
+Mock 2 mismatches:
+• received path /some/url/3 did not match mock path /some/url/2
+• received host host4 did not match mock host host2
+
+Mock 3 mismatches:
+• received path /some/url/3 did not match mock path /some/url/2
+• received host host4 did not match mock host host3
+
+`, failString)
+}
+
+func getMock(url string) *apitest.Mock {
+	return apitest.NewMock().Get(url).RespondWith().Status(http.StatusOK).End()
+}
+
 type RecorderCaptor struct {
 	capturedRecorder apitest.Recorder
 }
