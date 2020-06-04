@@ -17,6 +17,9 @@ type MockVerifier struct {
 
 	FailFn      func(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool
 	FailInvoked bool
+
+	NoErrorFn      func(t *testing.T, err error, msgAndArgs ...interface{}) bool
+	NoErrorInvoked bool
 }
 
 func NewVerifier() MockVerifier {
@@ -28,6 +31,9 @@ func NewVerifier() MockVerifier {
 			return true
 		},
 		FailFn: func(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
+			return true
+		},
+		NoErrorFn: func(t *testing.T, err error, msgAndArgs ...interface{}) bool {
 			return true
 		},
 	}
@@ -49,4 +55,10 @@ func (m MockVerifier) JSONEq(t *testing.T, expected string, actual string, msgAn
 func (m MockVerifier) Fail(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
 	m.FailInvoked = true
 	return m.FailFn(t, failureMessage, msgAndArgs)
+}
+
+// NoError asserts that a function returned no error
+func (m MockVerifier) NoError(t *testing.T, err error, msgAndArgs ...interface{}) bool {
+	m.NoErrorInvoked = true
+	return m.NoErrorFn(t, err, msgAndArgs)
 }
