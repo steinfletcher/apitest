@@ -13,6 +13,7 @@ type Verifier interface {
 	Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) bool
 	JSONEq(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool
 	Fail(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool
+	NoError(t *testing.T, err error, msgAndArgs ...interface{}) bool
 }
 
 // testifyVerifier is a verifier that use https://github.com/stretchr/testify to perform assertions
@@ -31,6 +32,11 @@ func (a testifyVerifier) Equal(t *testing.T, expected, actual interface{}, msgAn
 // Fail reports a failure
 func (a testifyVerifier) Fail(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
 	return assert.Fail(t, failureMessage, msgAndArgs...)
+}
+
+// NoError asserts that a function returned no error
+func (a testifyVerifier) NoError(t *testing.T, err error, msgAndArgs ...interface{}) bool {
+	return assert.NoError(t, err, msgAndArgs...)
 }
 
 func newTestifyVerifier() Verifier {
@@ -54,6 +60,11 @@ func (n NoopVerifier) JSONEq(t *testing.T, expected string, actual string, msgAn
 
 // Fail does not perform any assertion and always returns true
 func (n NoopVerifier) Fail(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
+	return true
+}
+
+// NoError asserts that a function returned no error
+func (n NoopVerifier) NoError(t *testing.T, err error, msgAndArgs ...interface{}) bool {
 	return true
 }
 

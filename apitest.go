@@ -399,18 +399,16 @@ func (r *Request) Expect(t *testing.T) *Response {
 
 // Response is the user defined expected response from the application under test
 type Response struct {
-	status             int
-	body               string
-	headers            map[string][]string
-	headersPresent     []string
-	headersNotPresent  []string
-	cookies            []*Cookie
-	cookiesPresent     []string
-	cookiesNotPresent  []string
-	jsonPathExpression string
-	jsonPathAssert     func(interface{})
-	apiTest            *APITest
-	assert             []Assert
+	status            int
+	body              string
+	headers           map[string][]string
+	headersPresent    []string
+	headersNotPresent []string
+	cookies           []*Cookie
+	cookiesPresent    []string
+	cookiesNotPresent []string
+	apiTest           *APITest
+	assert            []Assert
 }
 
 // Assert is a user defined custom assertion function
@@ -712,7 +710,7 @@ func (a *APITest) assertFunc(res *http.Response, req *http.Request) {
 		for _, assertFn := range a.response.assert {
 			err := assertFn(copyHttpResponse(res), copyHttpRequest(req))
 			if err != nil {
-				a.verifier.Equal(a.t, nil, err)
+				a.verifier.NoError(a.t, err)
 			}
 		}
 	}
