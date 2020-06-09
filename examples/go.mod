@@ -14,10 +14,10 @@ require (
 	github.com/gavv/monotime v0.0.0-20190418164738-30dba4353424 // indirect
 	github.com/gin-gonic/gin v1.6.2
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/gofiber/fiber v1.11.0
 	github.com/golang/protobuf v1.4.0 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gorilla/mux v1.7.4
-	github.com/gorilla/schema v1.1.0 // indirect
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/iris-contrib/blackfriday v2.0.0+incompatible // indirect
 	github.com/iris-contrib/formBinder v5.0.0+incompatible // indirect
@@ -25,6 +25,7 @@ require (
 	github.com/iris-contrib/httpexpect v0.0.0-20180314041918-ebe99fcebbce // indirect
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f // indirect
+	github.com/julienschmidt/httprouter v1.3.0
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/kataras/golog v0.0.12 // indirect
 	github.com/kataras/iris v11.1.1+incompatible
@@ -47,15 +48,14 @@ require (
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
-	github.com/steinfletcher/apitest v1.4.6
-	github.com/steinfletcher/apitest-jsonpath v1.1.1
+	github.com/steinfletcher/apitest v1.4.8
+	github.com/steinfletcher/apitest-jsonpath v1.5.1
 	github.com/valyala/fasttemplate v1.1.0 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0 // indirect
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	github.com/yudai/pp v2.0.1+incompatible // indirect
-	golang.org/x/crypto v0.0.0-20200427165652-729f1e841bcc // indirect
 	golang.org/x/net v0.0.0-20200425230154-ff2c4b7c35a0 // indirect
 	golang.org/x/sys v0.0.0-20200427175716-29b57079015a // indirect
 )
