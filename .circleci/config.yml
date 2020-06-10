@@ -65,13 +65,13 @@ workflows:
 
   pipeline:
     jobs:
-      - test:
+      - test
+      - upload-coverage:
           filters:
             branches:
               only: master
             tags:
               ignore: /.*/
-      - upload-coverage:
           requires:
             - test
       - deploy-docs:
