@@ -39,8 +39,8 @@ go get -u github.com/steinfletcher/apitest
 | [gorilla](https://github.com/steinfletcher/apitest/tree/master/examples/gorilla)                     | the gorilla web toolkit                                                                                    |
 | [iris](https://github.com/steinfletcher/apitest/tree/master/examples/iris)                           | iris web framework                                                                                         |
 | [echo](https://github.com/steinfletcher/apitest/tree/master/examples/echo)                           | High performance, extensible, minimalist Go web framework                                                  |
-| [fiber](https://github.com/steinfletcher/apitest/tree/master/examples/fiber)                         | Express inspired web framework written in Go                                                  |
-| [httprouter](https://github.com/steinfletcher/apitest/tree/master/examples/httprouter)               | High performance HTTP request router that scales well                                                  |
+| [fiber](https://github.com/steinfletcher/apitest/tree/master/examples/fiber)                         | Express inspired web framework written in Go                                                               |
+| [httprouter](https://github.com/steinfletcher/apitest/tree/master/examples/httprouter)               | High performance HTTP request router that scales well                                                      |
 | [mocks](https://github.com/steinfletcher/apitest/tree/master/examples/mocks)                         | example mocking out external http calls                                                                    |
 | [sequence diagrams](https://github.com/steinfletcher/apitest/tree/master/examples/sequence-diagrams) | generate sequence diagrams from tests. See the [demo](http://demo-html.apitest.dev.s3-website-eu-west-1.amazonaws.com/)  |
 
