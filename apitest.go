@@ -149,7 +149,9 @@ func (a *APITest) Mocks(mocks ...*Mock) *APITest {
 	for i := range mocks {
 		times := mocks[i].response.mock.times
 		for j := 1; j <= times; j++ {
-			m = append(m, mocks[i].copy())
+			mockCpy := mocks[i].copy()
+			mockCpy.times = 1
+			m = append(m, mockCpy)
 		}
 	}
 	a.mocks = m
@@ -513,18 +515,38 @@ func (r *Response) End() Result {
 	}
 
 	apiTest.started = time.Now()
+	var res *http.Response
 	if apiTest.reporter != nil {
-		res := apiTest.report()
-		return Result{Response: res}
+		res = apiTest.report()
+	} else {
+		res = r.runTest()
 	}
-	res := r.runTest()
 
-	return Result{Response: res}
+	var unmatchedMocks []UnmatchedMock
+	for _, m := range r.apiTest.mocks {
+		if m.isUsed == false {
+			unmatchedMocks = append(unmatchedMocks, UnmatchedMock{
+				URL: *m.request.url,
+			})
+			break
+		}
+	}
+
+	return Result{
+		Response:       res,
+		unmatchedMocks: unmatchedMocks,
+	}
 }
 
 // Result provides the final result
 type Result struct {
-	Response *http.Response
+	Response       *http.Response
+	unmatchedMocks []UnmatchedMock
+}
+
+// UnmatchedMocks returns any mocks that were not used, e.g. there was not a matching http Request for the mock
+func (r Result) UnmatchedMocks() []UnmatchedMock {
+	return r.unmatchedMocks
 }
 
 // JSON unmarshal the result response body to a valid struct
@@ -700,7 +722,7 @@ func (r *Response) runTest() *http.Response {
 func (a *APITest) assertMocks() {
 	for _, mock := range a.mocks {
 		if mock.isUsed == false && mock.timesSet {
-			a.verifier.Fail(a.t, fmt.Sprintf("mock was not invoked expected times: '%d'", mock.times))
+			a.verifier.Fail(a.t, "mock was not invoked expected times")
 		}
 	}
 }

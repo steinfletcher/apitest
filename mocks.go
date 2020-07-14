@@ -256,6 +256,11 @@ type MockRequest struct {
 	matchers           []Matcher
 }
 
+// UnmatchedMock exposes some information about mocks that failed to match a request
+type UnmatchedMock struct {
+	URL url.URL
+}
+
 // MockResponse represents the http response side of a mock interaction
 type MockResponse struct {
 	mock       *Mock

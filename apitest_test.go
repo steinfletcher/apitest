@@ -917,11 +917,11 @@ func TestApiTest_ErrorIfMockInvocationsDoNotMatchTimes(t *testing.T) {
 
 	verifier := mocks.NewVerifier()
 	verifier.FailFn = func(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
-		assert.Equal(t, "mock was not invoked expected times: '2'", failureMessage)
+		assert.Equal(t, "mock was not invoked expected times", failureMessage)
 		return true
 	}
 
-	apitest.New().
+	res := apitest.New().
 		Mocks(getUser).
 		Verifier(verifier).
 		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -932,6 +932,10 @@ func TestApiTest_ErrorIfMockInvocationsDoNotMatchTimes(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		End()
+
+	unmatchedMocks := res.UnmatchedMocks()
+	assert.NotEmpty(t, unmatchedMocks)
+	assert.Equal(t, "http://localhost:8080", unmatchedMocks[0].URL.String())
 }
 
 func TestApiTest_MatchesTimes(t *testing.T) {
@@ -942,7 +946,7 @@ func TestApiTest_MatchesTimes(t *testing.T) {
 		Times(1).
 		End()
 
-	apitest.New().
+	res := apitest.New().
 		Mocks(getUser).
 		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_ = getUserData()
@@ -952,6 +956,8 @@ func TestApiTest_MatchesTimes(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		End()
+
+	assert.Empty(t, res.UnmatchedMocks())
 }
 
 type RecorderCaptor struct {
