@@ -188,7 +188,9 @@ func buildResponseFromMock(mock *Mock) *http.Response {
 		}
 	}
 
+	mock.m.Lock()
 	mock.numberResponses++
+	mock.m.Unlock()
 	res := &http.Response{
 		Body: &countingCloser{strings.NewReader(response.body), func() {
 			mock.numberCloses++
