@@ -343,6 +343,7 @@ func TestMocks_QueryMatcher_Errors(t *testing.T) {
 			}
 
 			matchError := queryParamMatcher(req, mockRequest)
+			assert.NotNil(t, matchError)
 			assert.Contains(t, matchError.Error(), test.expectedError.Error())
 		})
 	}
@@ -697,14 +698,14 @@ func TestMocks_AddMatcher(t *testing.T) {
 				Status(http.StatusOK).
 				End()
 
-			mockResponse, matchErrors := matches(req, []*Mock{testMock})
+			mock, matchErrors := matches(req, []*Mock{testMock})
 
 			assert.Equal(t, test.matchErrors, matchErrors)
 			if test.mockResponse == nil {
-				assert.Nil(t, mockResponse)
+				assert.Nil(t, mock)
 			} else {
-				assert.Equal(t, test.mockResponse.body, mockResponse.body)
-				assert.Equal(t, test.mockResponse.statusCode, mockResponse.statusCode)
+				assert.Equal(t, test.mockResponse.body, mock.response.body)
+				assert.Equal(t, test.mockResponse.statusCode, mock.response.statusCode)
 			}
 		})
 	}
@@ -755,11 +756,11 @@ func TestMocks_Matches(t *testing.T) {
 		BodyFromFile("testdata/mock_response_body.json").
 		End()
 
-	mockResponse, matchErrors := matches(req, []*Mock{getUser, getPreferences})
+	mock, matchErrors := matches(req, []*Mock{getUser, getPreferences})
 
 	assert.Nil(t, matchErrors)
-	assert.NotNil(t, mockResponse)
-	assert.Equal(t, `{"is_contactable": true}`, mockResponse.body)
+	assert.NotNil(t, mock)
+	assert.Equal(t, `{"is_contactable": true}`, mock.response.body)
 }
 
 func TestMocks_Matches_Errors(t *testing.T) {
@@ -889,7 +890,7 @@ func TestMocks_Response_SetsTextPlainIfNoContentTypeSet(t *testing.T) {
 		RespondWith().
 		Body("abcdef")
 
-	response := buildResponseFromMock(mockResponse)
+	response := buildResponseFromMock(mockResponse.mock)
 
 	bytes, _ := ioutil.ReadAll(response.Body)
 	assert.Equal(t, string(bytes), "abcdef")
@@ -902,7 +903,7 @@ func TestMocks_Response_SetsTheBodyAsJSON(t *testing.T) {
 		RespondWith().
 		Body(`{"a": 123}`)
 
-	response := buildResponseFromMock(mockResponse)
+	response := buildResponseFromMock(mockResponse.mock)
 
 	bytes, _ := ioutil.ReadAll(response.Body)
 	assert.Equal(t, string(bytes), `{"a": 123}`)
@@ -916,7 +917,7 @@ func TestMocks_Response_SetsTheBodyAsOther(t *testing.T) {
 		Body(`<html>123</html>`).
 		Header("Content-Type", "text/html")
 
-	response := buildResponseFromMock(mockResponse)
+	response := buildResponseFromMock(mockResponse.mock)
 
 	bytes, _ := ioutil.ReadAll(response.Body)
 	assert.Equal(t, string(bytes), `<html>123</html>`)
@@ -931,7 +932,7 @@ func TestMocks_Response_Headers_WithNormalizedKeys(t *testing.T) {
 		Headers(map[string]string{"B": "2"}).
 		Header("c", "3")
 
-	response := buildResponseFromMock(mockResponse)
+	response := buildResponseFromMock(mockResponse.mock)
 
 	assert.Equal(t, http.Header(map[string][]string{"A": {"1"}, "B": {"2"}, "C": {"3"}}), response.Header)
 }
@@ -944,7 +945,7 @@ func TestMocks_Response_Cookies(t *testing.T) {
 		Cookies(NewCookie("B").Value("2")).
 		Cookie("C", "3")
 
-	response := buildResponseFromMock(mockResponse)
+	response := buildResponseFromMock(mockResponse.mock)
 
 	assert.Equal(t, []*http.Cookie{
 		{Name: "A", Value: "1", Raw: "A=1"},
@@ -1210,6 +1211,7 @@ func getUserData() []byte {
 	if err != nil {
 		panic(err)
 	}
+	_ = res.Body.Close()
 	return bytes
 }
 
@@ -1267,6 +1269,7 @@ func NewHttpGet(cli *http.Client) HttpGet {
 		if err != nil {
 			panic(err)
 		}
+		_ = res.Body.Close()
 
 		err = json.Unmarshal(bytes, response)
 		if err != nil {

@@ -960,6 +960,46 @@ func TestApiTest_MatchesTimes(t *testing.T) {
 	assert.Empty(t, res.UnmatchedMocks())
 }
 
+func TestMocks_ApiTest_TestResponsesAreNotClosed_Fails(t *testing.T) {
+	verifier := mocks.NewVerifier()
+	var failString string
+	verifier.FailFn = func(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
+		failString = failureMessage
+		return true
+	}
+	apitest.New().
+		Mocks(apitest.NewMock().
+			Get("http://localhost:8080/hello").
+			RespondWith().
+			Body(`{"a": 12345}`).
+			Status(http.StatusOK).
+			End()).
+		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			res, err := http.DefaultClient.Get("http://localhost:8080/hello")
+			if err != nil {
+				panic(err)
+			}
+
+			_, err = ioutil.ReadAll(res.Body)
+			if err != nil {
+				panic(err)
+			}
+
+			_, err = w.Write([]byte("{}"))
+			if err != nil {
+				panic(err)
+			}
+			w.WriteHeader(http.StatusOK)
+		}).
+		Verifier(verifier).
+		Get("/user").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	assert.Equal(t, "Response body was not closed for http://localhost:8080/hello", failString)
+}
+
 type RecorderCaptor struct {
 	capturedRecorder apitest.Recorder
 }
@@ -974,6 +1014,7 @@ func getUserData() []byte {
 		panic(err)
 	}
 	data, err := ioutil.ReadAll(res.Body)
+	_ = res.Body.Close()
 	if err != nil {
 		panic(err)
 	}

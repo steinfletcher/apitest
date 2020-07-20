@@ -724,6 +724,9 @@ func (a *APITest) assertMocks() {
 		if mock.isUsed == false && mock.timesSet {
 			a.verifier.Fail(a.t, "mock was not invoked expected times")
 		}
+		if mock.numberResponses != mock.numberCloses {
+			a.verifier.Fail(a.t, fmt.Sprintf("Response body was not closed for %s", mock.request.url))
+		}
 	}
 }
 
@@ -964,6 +967,7 @@ func copyHttpResponse(response *http.Response) *http.Response {
 	var resBodyBytes []byte
 	if response.Body != nil {
 		resBodyBytes, _ = ioutil.ReadAll(response.Body)
+		_ = response.Body.Close()
 		response.Body = ioutil.NopCloser(bytes.NewBuffer(resBodyBytes))
 	}
 

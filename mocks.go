@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -105,9 +106,9 @@ func (r *Transport) RoundTrip(req *http.Request) (mockResponse *http.Response, m
 		}()
 	}
 
-	matchedResponse, matchErrors := matches(req, r.mocks)
+	mock, matchErrors := matches(req, r.mocks)
 	if matchErrors == nil {
-		res := buildResponseFromMock(matchedResponse)
+		res := buildResponseFromMock(mock)
 		res.Request = req
 		return res, nil
 	}
@@ -153,18 +154,31 @@ func (r *Transport) Reset() {
 	http.DefaultTransport = r.nativeTransport
 }
 
-func buildResponseFromMock(mockResponse *MockResponse) *http.Response {
-	if mockResponse == nil {
+var _ io.ReadCloser = &countingCloser{}
+
+type countingCloser struct {
+	io.Reader
+	Closer func()
+}
+
+func (c countingCloser) Close() error {
+	c.Closer()
+	return nil
+}
+
+func buildResponseFromMock(mock *Mock) *http.Response {
+	if mock.response == nil {
 		return nil
 	}
 
-	contentTypeHeader := mockResponse.headers["Content-Type"]
+	response := mock.response
+	contentTypeHeader := response.headers["Content-Type"]
 	var contentType string
 
 	// if the content type isn't set and the body contains json, set content type as json
-	if len(mockResponse.body) > 0 {
+	if len(response.body) > 0 {
 		if len(contentTypeHeader) == 0 {
-			if json.Valid([]byte(mockResponse.body)) {
+			if json.Valid([]byte(response.body)) {
 				contentType = "application/json"
 			} else {
 				contentType = "text/plain"
@@ -174,16 +188,19 @@ func buildResponseFromMock(mockResponse *MockResponse) *http.Response {
 		}
 	}
 
+	mock.numberResponses++
 	res := &http.Response{
-		Body:          ioutil.NopCloser(strings.NewReader(mockResponse.body)),
-		Header:        mockResponse.headers,
-		StatusCode:    mockResponse.statusCode,
+		Body: &countingCloser{strings.NewReader(response.body), func() {
+			mock.numberCloses++
+		}},
+		Header:        response.headers,
+		StatusCode:    response.statusCode,
 		ProtoMajor:    1,
 		ProtoMinor:    1,
-		ContentLength: int64(len(mockResponse.body)),
+		ContentLength: int64(len(response.body)),
 	}
 
-	for _, cookie := range mockResponse.cookies {
+	for _, cookie := range response.cookies {
 		if v := cookie.ToHttpCookie().String(); v != "" {
 			res.Header.Add("Set-Cookie", v)
 		}
@@ -206,6 +223,8 @@ type Mock struct {
 	debugStandalone bool
 	times           int
 	timesSet        bool
+	numberCloses    int32
+	numberResponses int32
 }
 
 // Matches checks whether the given request matches the mock
@@ -229,6 +248,8 @@ func (m *Mock) copy() *Mock {
 
 	res := *m.response
 	newMock.response = &res
+	newMock.numberResponses = m.numberResponses
+	newMock.numberCloses = m.numberCloses
 
 	return &newMock
 }
@@ -313,8 +334,10 @@ func (r *StandaloneMocks) End() func() {
 // NewMock create a new mock, ready for configuration using the builder pattern
 func NewMock() *Mock {
 	mock := &Mock{
-		m:     &sync.Mutex{},
-		times: 1,
+		m:               &sync.Mutex{},
+		times:           1,
+		numberCloses:    0,
+		numberResponses: 0,
 	}
 	mock.request = &MockRequest{
 		mock:     mock,
@@ -399,7 +422,7 @@ func (m *Mock) Method(method string) *MockRequest {
 	return m.request
 }
 
-func matches(req *http.Request, mocks []*Mock) (*MockResponse, error) {
+func matches(req *http.Request, mocks []*Mock) (*Mock, error) {
 	mockError := newUnmatchedMockError()
 	for mockNumber, mock := range mocks {
 		mock.m.Lock() // lock is for isUsed when matches is called concurrently by RoundTripper
@@ -412,7 +435,7 @@ func matches(req *http.Request, mocks []*Mock) (*MockResponse, error) {
 		if len(errs) == 0 {
 			mock.isUsed = true
 			mock.m.Unlock()
-			return mock.response, nil
+			return mock, nil
 		}
 
 		mockError = mockError.addErrors(mockNumber+1, errs...)
