@@ -725,7 +725,7 @@ func (a *APITest) assertMocks() {
 			a.verifier.Fail(a.t, "mock was not invoked expected times")
 		}
 		if mock.numberResponses != mock.numberCloses {
-			a.verifier.Fail(a.t, fmt.Sprintf("Response body was not closed for %s", mock.request.url))
+			a.t.Logf("WARN: Response body was not closed for %s", mock.request.url)
 		}
 	}
 }

@@ -996,8 +996,7 @@ func TestMocks_ApiTest_TestResponsesAreNotClosed_Fails(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		End()
-
-	assert.Equal(t, "Response body was not closed for http://localhost:8080/hello", failString)
+	assert.Empty(t, failString)
 }
 
 type RecorderCaptor struct {
