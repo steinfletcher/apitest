@@ -36,6 +36,7 @@ go get -u github.com/steinfletcher/apitest
 | Example                                                                                              | Comment                                                                                                    |
 | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | [gin](https://github.com/steinfletcher/apitest/tree/master/examples/gin)                             | popular martini-like web framework                                                                         |
+| [graphql](https://github.com/steinfletcher/apitest/tree/master/examples/graphql)                     | using gqlgen.com to generate a graphql server                                                              |
 | [gorilla](https://github.com/steinfletcher/apitest/tree/master/examples/gorilla)                     | the gorilla web toolkit                                                                                    |
 | [iris](https://github.com/steinfletcher/apitest/tree/master/examples/iris)                           | iris web framework                                                                                         |
 | [echo](https://github.com/steinfletcher/apitest/tree/master/examples/echo)                           | High performance, extensible, minimalist Go web framework                                                  |
