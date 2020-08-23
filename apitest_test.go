@@ -15,6 +15,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test(t *testing.T) {
+	apitest.New().
+		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte(`{"id": "1234", "name": "Andy"}`))
+			w.WriteHeader(http.StatusOK)
+		}).
+		Get("/user/1234").
+		Expect(t).
+		Body(`{"id": "1234", "name": "Andy"}`).
+		Status(http.StatusOK).
+		End()
+}
+
 func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {

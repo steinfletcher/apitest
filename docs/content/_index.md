@@ -7,9 +7,17 @@ type: docs
 
 ## Overview
 
-A simple and extensible behavioural testing library for Go. You can use `apitest` to simplify testing of REST based services or HTTP handlers. 
+A simple and extensible testing library for Go. You can use `apitest` to simplify testing of REST services, HTTP handlers and HTTP clients.
 
-`apitest` supports mocking external http calls and renders sequence diagrams on test completion.
+Features:
+
+* Mock external http calls
+* Render sequence diagrams on test completion
+* Extensible - supports various injection points (see {{< relref "docs/configuration#hooks" >}})
+* Custom assert functions
+* Custom mock matchers
+* Various 3rd party addons - jsonpath assertions, css selector assertions, aws integration and more.
+
 
 ## Installation
 
@@ -19,13 +27,7 @@ Using `go get`
 go get -u github.com/steinfletcher/apitest
 ```
 
-Using `dep`
-
-```bash
-dep ensure -add github.com/steinfletcher/apitest
-```
-
-apitest is tested against Go `1.11.x` and `stable` and follows semantic versioning managed through GitHub releases.
+`apitest` follows semantic versioning and is managed using GitHub releases.
 
 ## Anatomy of a test
 
@@ -36,9 +38,12 @@ A test consists of three main parts
 - [Assertions]({{< relref "/docs/assertions.md" >}}): defines how the application under test should respond. This is typically a http response
 
 ```go
-func TestGetUser(t *testing.T) {
+func TestHandler(t *testing.T) {
 	apitest.New().                              // configuration
-		Handler(newApp().app).
+		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte(`{"id": "1234", "name": "Andy"}`))
+			w.WriteHeader(http.StatusOK)
+		}).
 		Get("/user/1234").                      // request
 		Expect(t).
 		Body(`{"id": "1234", "name": "Andy"}`). // expectations
