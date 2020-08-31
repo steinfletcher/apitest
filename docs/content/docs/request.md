@@ -137,6 +137,11 @@ Body("<html>content</html>").
 Header("Content-Type", "text/html")
 ```
 
+## GraphQL
+
+The following helpers are provided to simplify building GraphQL requests.
+
+
 ## Basic auth
 
 A helper method is provided to add preemptive basic authentication to the request. 

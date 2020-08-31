@@ -12,7 +12,15 @@ func TestQuery_Empty(t *testing.T) {
 	apitest.New().
 		Handler(graph.NewHandler()).
 		Post("/query").
-		JSON(`{"query": "query { todos { text done user { name } } }"}`).
+		GraphQLQuery(`query {
+			todos {
+				text
+				done
+				user {
+					name
+				}
+			}
+		}`).
 		Expect(t).
 		Status(http.StatusOK).
 		Body(`{
@@ -38,7 +46,7 @@ func TestQuery_WithTodo(t *testing.T) {
 	apitest.New().
 		Handler(handler).
 		Post("/query").
-		JSON(`{"query": "query { todos { text done user { name } } }"}`).
+		GraphQLQuery("query { todos { text done user { name } } }").
 		Expect(t).
 		Status(http.StatusOK).
 		Body(`{

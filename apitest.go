@@ -322,6 +322,40 @@ func (r *Request) JSONFromFile(f string) *Request {
 	return r
 }
 
+// GraphQLQuery is a convenience method for building a graphql POST request
+func (r *Request) GraphQLQuery(query string, variables ...map[string]interface{}) *Request {
+	q := GraphQLRequestBody{
+		Query: query,
+	}
+
+	if len(variables) > 0 {
+		q.Variables = variables[0]
+	}
+
+	return r.GraphQLRequest(q)
+}
+
+// GraphQLRequest builds a graphql POST request
+func (r *Request) GraphQLRequest(body GraphQLRequestBody) *Request {
+	r.ContentType("application/json")
+
+	data, err := json.Marshal(body)
+	if err != nil {
+		r.apiTest.t.Fatal(err)
+	}
+
+	r.body = string(data)
+
+	return r
+}
+
+// GraphQLRequestBody represents the POST request body as per the GraphQL spec
+type GraphQLRequestBody struct {
+	Query         string                 `json:"query"`
+	Variables     map[string]interface{} `json:"variables,omitempty"`
+	OperationName string                 `json:"operationName,omitempty"`
+}
+
 // Query is a convenience method to add a query parameter to the request.
 func (r *Request) Query(key, value string) *Request {
 	r.query[key] = append(r.query[key], value)
