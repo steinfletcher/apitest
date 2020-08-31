@@ -1,6 +1,7 @@
 package apitest_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -309,6 +310,72 @@ func TestApiTest_AddsBasicAuthToRequest(t *testing.T) {
 		Handler(handler).
 		Get("/hello").
 		BasicAuth("username", "password").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestApiTest_GraphQLQuery(t *testing.T) {
+	apitest.New().
+		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			bodyBytes, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var req apitest.GraphQLRequestBody
+			if err := json.Unmarshal(bodyBytes, &req); err != nil {
+				t.Fatal(err)
+			}
+
+			assert.Equal(t, apitest.GraphQLRequestBody{
+				Query: `query { todos { text } }`,
+			}, req)
+
+			w.WriteHeader(http.StatusOK)
+		}).
+		Post("/query").
+		GraphQLQuery(`query { todos { text } }`).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestApiTest_GraphQLRequest(t *testing.T) {
+	apitest.New().
+		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			bodyBytes, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var req apitest.GraphQLRequestBody
+			if err := json.Unmarshal(bodyBytes, &req); err != nil {
+				t.Fatal(err)
+			}
+
+			expected := apitest.GraphQLRequestBody{
+				Query:         `query { todos { text } }`,
+				OperationName: "myOperation",
+				Variables: map[string]interface{}{
+					"a": float64(1),
+					"b": "2",
+				},
+			}
+
+			assert.Equal(t, expected, req)
+
+			w.WriteHeader(http.StatusOK)
+		}).
+		Post("/query").
+		GraphQLRequest(apitest.GraphQLRequestBody{
+			Query: "query { todos { text } }",
+			Variables: map[string]interface{}{
+				"a": 1,
+				"b": "2",
+			},
+			OperationName: "myOperation",
+		}).
 		Expect(t).
 		Status(http.StatusOK).
 		End()
