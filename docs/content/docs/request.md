@@ -139,8 +139,23 @@ Header("Content-Type", "text/html")
 
 ## GraphQL
 
-The following helpers are provided to simplify building GraphQL requests.
+The following helpers simplify building GraphQL requests.
 
+```go
+Post("/graphql").
+GraphQLQuery(`query { todos { text } }`).
+```
+
+```go
+Post("/graphql").
+GraphQLRequest(apitest.GraphQLRequestBody{
+	Query: "query someTest($arg: String!) { test(who: $arg) }",
+	Variables: map[string]interface{}{
+		"arg": "myArg",
+	},
+	OperationName: "myOperation",
+}).
+```
 
 ## Basic auth
 
