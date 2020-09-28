@@ -109,6 +109,11 @@ func (r *Transport) RoundTrip(req *http.Request) (mockResponse *http.Response, m
 	if matchErrors == nil {
 		res := buildResponseFromMock(matchedResponse)
 		res.Request = req
+
+		if matchedResponse.timeout {
+			return nil, timeoutError{}
+		}
+
 		return res, nil
 	}
 
@@ -264,6 +269,7 @@ type UnmatchedMock struct {
 // MockResponse represents the http response side of a mock interaction
 type MockResponse struct {
 	mock       *Mock
+	timeout    bool
 	headers    map[string][]string
 	cookies    []*Cookie
 	body       string
@@ -554,6 +560,12 @@ func (r *MockRequest) AddMatcher(matcher Matcher) *MockRequest {
 // RespondWith finalises the mock request phase of set up and allowing the definition of response attributes to be defined
 func (r *MockRequest) RespondWith() *MockResponse {
 	return r.mock.response
+}
+
+// Timeout forces the mock to return a http timeout
+func (r *MockResponse) Timeout() *MockResponse {
+	r.timeout = true
+	return r
 }
 
 // Header respond with the given header
@@ -990,3 +1002,9 @@ var defaultMatchers = []Matcher{
 	cookiePresentMatcher,
 	cookieNotPresentMatcher,
 }
+
+type timeoutError struct{}
+
+func (timeoutError) Error() string   { return "deadline exceeded" }
+func (timeoutError) Timeout() bool   { return true }
+func (timeoutError) Temporary() bool { return true }
