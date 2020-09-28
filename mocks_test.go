@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -1021,6 +1022,28 @@ func TestMocks_Standalone_WithCustomHTTPClient(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+}
+
+func TestMocks_WithHTTPTimeout(t *testing.T) {
+	httpClient := customCli
+	defer NewMock().
+		HttpClient(httpClient).
+		Post("http://localhost:8080/path").
+		Body(`{"a", 12345}`).
+		RespondWith().
+		Timeout().
+		EndStandalone()()
+
+	_, err := httpClient.Post("http://localhost:8080/path",
+		"application/json",
+		strings.NewReader(`{"a", 12345}`))
+
+	assert.Error(t, err)
+	var isTimeout bool
+	if err, ok := err.(net.Error); ok && err.Timeout() {
+		isTimeout = true
+	}
+	assert.True(t, isTimeout)
 }
 
 func TestMocks_ApiTest_WithMocks(t *testing.T) {
