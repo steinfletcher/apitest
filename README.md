@@ -119,8 +119,9 @@ func TestApi(t *testing.T) {
 		Handler(handler).
 		Get("/hello").
 		Expect(t).
-		Assert(func(res *http.Response, req *http.Request) {
+		Assert(func(res *http.Response, req *http.Request) error {
 			assert.Equal(t, http.StatusOK, res.StatusCode)
+			return nil
 		}).
 		End()
 }
