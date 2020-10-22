@@ -988,16 +988,19 @@ func (a *APITest) assertCookies(response *http.Response) {
 
 func (a *APITest) assertHeaders(res *http.Response) {
 	for expectedHeader, expectedValues := range a.response.headers {
-		for _, expectedValue := range expectedValues {
-			found := false
-			for _, resValue := range res.Header[expectedHeader] {
-				if expectedValue == resValue {
-					found = true
-					break
+		resHeaderValues, foundHeader := res.Header[expectedHeader]
+		a.verifier.Equal(a.t, true, foundHeader, fmt.Sprintf("expected header '%s' not present in response", expectedHeader))
+
+		if foundHeader {
+			for _, expectedValue := range expectedValues {
+				foundValue := false
+				for _, resValue := range resHeaderValues {
+					if expectedValue == resValue {
+						foundValue = true
+						break
+					}
 				}
-			}
-			if !found {
-				a.t.Fatalf("could not match header=%s", expectedHeader)
+				a.verifier.Equal(a.t, true, foundValue, fmt.Sprintf("mismatched values for header '%s'. Expected %s but received %s", expectedHeader, expectedValue, strings.Join(resHeaderValues, ",")))
 			}
 		}
 	}
