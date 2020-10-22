@@ -54,6 +54,69 @@ func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 		End()
 }
 
+func TestApiTest_RequestURLFormat(t *testing.T) {
+	apitest.New().
+		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			assert.Equal(t, "/user/1234", r.URL.Path)
+		}).
+		Get("/user/%s", "1234").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	apitest.New().
+		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			assert.Equal(t, "/user/1234", r.URL.Path)
+		}).
+		Put("/user/%s", "1234").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	apitest.New().
+		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			assert.Equal(t, "/user/1234", r.URL.Path)
+		}).
+		Patch("/user/%s", "1234").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	apitest.New().
+		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			assert.Equal(t, "/user/1234", r.URL.Path)
+		}).
+		Post("/user/%s", "1234").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	apitest.New().
+		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			assert.Equal(t, "/user/1234", r.URL.Path)
+		}).
+		Delete("/user/%s", "1234").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	apitest.New().
+		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			assert.Equal(t, "/user/1234", r.URL.Path)
+		}).
+		Method(http.MethodGet).
+		URL("/user/%d", 1234).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
 func TestApiTest_JSONBody(t *testing.T) {
 	type bodyStruct struct {
 		A int `json:"a"`
@@ -397,6 +460,26 @@ func TestApiTest_MatchesJSONResponseBody(t *testing.T) {
 		Get("/hello").
 		Expect(t).
 		Body(`{"a": 12345}`).
+		Status(http.StatusCreated).
+		End()
+}
+
+func TestApiTest_MatchesJSONResponseBodyWithTemplate(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+		_, err := w.Write([]byte(`{"a": 12345}`))
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	apitest.New().
+		Handler(handler).
+		Get("/hello").
+		Expect(t).
+		Body(`{"a": %d}`, 12345).
 		Status(http.StatusCreated).
 		End()
 }
