@@ -237,51 +237,80 @@ func (a *APITest) Method(method string) *Request {
 }
 
 // Get is a convenience method for setting the request as http.MethodGet
-func (a *APITest) Get(url string) *Request {
+func (a *APITest) Get(url string, args ...interface{}) *Request {
 	a.request.method = http.MethodGet
-	a.request.url = url
+	if len(args) > 0 {
+		a.request.url = fmt.Sprintf(url, args...)
+	} else {
+		a.request.url = url
+	}
 	return a.request
 }
 
 // Post is a convenience method for setting the request as http.MethodPost
-func (a *APITest) Post(url string) *Request {
+func (a *APITest) Post(url string, args ...interface{}) *Request {
 	r := a.request
 	r.method = http.MethodPost
-	r.url = url
+	if len(args) > 0 {
+		a.request.url = fmt.Sprintf(url, args...)
+	} else {
+		a.request.url = url
+	}
 	return r
 }
 
 // Put is a convenience method for setting the request as http.MethodPut
-func (a *APITest) Put(url string) *Request {
+func (a *APITest) Put(url string, args ...interface{}) *Request {
 	r := a.request
 	r.method = http.MethodPut
-	r.url = url
+	if len(args) > 0 {
+		a.request.url = fmt.Sprintf(url, args...)
+	} else {
+		a.request.url = url
+	}
 	return r
 }
 
 // Delete is a convenience method for setting the request as http.MethodDelete
-func (a *APITest) Delete(url string) *Request {
+func (a *APITest) Delete(url string, args ...interface{}) *Request {
 	a.request.method = http.MethodDelete
-	a.request.url = url
+	if len(args) > 0 {
+		a.request.url = fmt.Sprintf(url, args...)
+	} else {
+		a.request.url = url
+	}
 	return a.request
 }
 
 // Patch is a convenience method for setting the request as http.MethodPatch
-func (a *APITest) Patch(url string) *Request {
+func (a *APITest) Patch(url string, args ...interface{}) *Request {
 	a.request.method = http.MethodPatch
-	a.request.url = url
+	if len(args) > 0 {
+		a.request.url = fmt.Sprintf(url, args...)
+	} else {
+		a.request.url = url
+	}
 	return a.request
 }
 
 // URL is a builder method for setting the url of the request
-func (r *Request) URL(url string) *Request {
-	r.url = url
+func (r *Request) URL(url string, args ...interface{}) *Request {
+	if len(args) > 0 {
+		r.url = fmt.Sprintf(url, args...)
+	} else {
+		r.url = url
+	}
 	return r
 }
 
 // Body is a builder method to set the request body
-func (r *Request) Body(b string) *Request {
+func (r *Request) Body(b string, args ...interface{}) *Request {
 	r.body = b
+	if len(args) > 0 {
+		r.body = fmt.Sprintf(b, args...)
+	} else {
+		r.body = b
+	}
 	return r
 }
 
@@ -450,9 +479,13 @@ type Response struct {
 // Assert is a user defined custom assertion function
 type Assert func(*http.Response, *http.Request) error
 
-// Body is the expected response body
-func (r *Response) Body(b string) *Response {
-	r.body = b
+// Body is the expected response body. The optional 'args' can be used for templating
+func (r *Response) Body(b string, args ...interface{}) *Response {
+	if len(args) > 0 {
+		r.body = fmt.Sprintf(b, args...)
+	} else {
+		r.body = b
+	}
 	return r
 }
 
