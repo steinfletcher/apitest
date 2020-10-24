@@ -243,12 +243,22 @@ func (a *APITest) Get(url string) *Request {
 	return a.request
 }
 
+// Getf is a convenience method that adds formatting support to Get
+func (a *APITest) Getf(format string, args ...interface{}) *Request {
+	return a.Get(fmt.Sprintf(format, args...))
+}
+
 // Post is a convenience method for setting the request as http.MethodPost
 func (a *APITest) Post(url string) *Request {
 	r := a.request
 	r.method = http.MethodPost
 	r.url = url
 	return r
+}
+
+// Postf is a convenience method that adds formatting support to Post
+func (a *APITest) Postf(format string, args ...interface{}) *Request {
+	return a.Post(fmt.Sprintf(format, args...))
 }
 
 // Put is a convenience method for setting the request as http.MethodPut
@@ -259,11 +269,21 @@ func (a *APITest) Put(url string) *Request {
 	return r
 }
 
+// Putf is a convenience method that adds formatting support to Put
+func (a *APITest) Putf(format string, args ...interface{}) *Request {
+	return a.Put(fmt.Sprintf(format, args...))
+}
+
 // Delete is a convenience method for setting the request as http.MethodDelete
 func (a *APITest) Delete(url string) *Request {
 	a.request.method = http.MethodDelete
 	a.request.url = url
 	return a.request
+}
+
+// Deletef is a convenience method that adds formatting support to Delete
+func (a *APITest) Deletef(format string, args ...interface{}) *Request {
+	return a.Delete(fmt.Sprintf(format, args...))
 }
 
 // Patch is a convenience method for setting the request as http.MethodPatch
@@ -273,9 +293,20 @@ func (a *APITest) Patch(url string) *Request {
 	return a.request
 }
 
+// Patchf is a convenience method that adds formatting support to Patch
+func (a *APITest) Patchf(format string, args ...interface{}) *Request {
+	return a.Patch(fmt.Sprintf(format, args...))
+}
+
 // URL is a builder method for setting the url of the request
 func (r *Request) URL(url string) *Request {
 	r.url = url
+	return r
+}
+
+// URLf is a builder method for setting the url of the request and supports a formatter
+func (r *Request) URLf(format string, args ...interface{}) *Request {
+	r.url = fmt.Sprintf(format, args...)
 	return r
 }
 
@@ -453,6 +484,12 @@ type Assert func(*http.Response, *http.Request) error
 // Body is the expected response body
 func (r *Response) Body(b string) *Response {
 	r.body = b
+	return r
+}
+
+// Bodyf is the expected response body that supports a formatter
+func (r *Response) Bodyf(format string, args ...interface{}) *Response {
+	r.body = fmt.Sprintf(format, args...)
 	return r
 }
 
