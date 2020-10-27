@@ -459,6 +459,11 @@ func (r *MockRequest) Body(b string) *MockRequest {
 	return r
 }
 
+// Bodyf configures the mock request to match the given body. Supports formatting the body
+func (r *MockRequest) Bodyf(format string, args ...interface{}) *MockRequest {
+	return r.Body(fmt.Sprintf(format, args...))
+}
+
 // BodyFromFile configures the mock request to match the given body from a file
 func (r *MockRequest) BodyFromFile(f string) *MockRequest {
 	b, err := ioutil.ReadFile(f)
@@ -621,13 +626,18 @@ func (r *MockResponse) Cookie(name, value string) *MockResponse {
 	return r
 }
 
-// Body respond with the given body
+// Body sets the mock response body
 func (r *MockResponse) Body(body string) *MockResponse {
 	r.body = body
 	return r
 }
 
-// BodyFromFile respond with the given body from a file
+// Bodyf sets the mock response body. Supports formatting
+func (r *MockResponse) Bodyf(format string, args ...interface{}) *MockResponse {
+	return r.Body(fmt.Sprintf(format, args...))
+}
+
+// BodyFromFile defines the mock response body from a file
 func (r *MockResponse) BodyFromFile(f string) *MockResponse {
 	b, err := ioutil.ReadFile(f)
 	if err != nil {

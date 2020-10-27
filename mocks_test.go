@@ -916,6 +916,18 @@ func TestMocks_URLFormatterSupport(t *testing.T) {
 	})
 }
 
+func TestMocks_BodyFormatterSupport(t *testing.T) {
+	t.Run("request body", func(tc *testing.T) {
+		req := NewMock().Post("/user/1").Bodyf(`{"name": "%s"}`, "Jan")
+		assert.Equal(tc, `{"name": "Jan"}`, req.body)
+	})
+
+	t.Run("response body", func(tc *testing.T) {
+		res := NewMock().Get("/user/1").RespondWith().Bodyf(`{"name": "%s"}`, "Den")
+		assert.Equal(tc, `{"name": "Den"}`, res.body)
+	})
+}
+
 func TestMocks_Response_SetsTextPlainIfNoContentTypeSet(t *testing.T) {
 	mockResponse := NewMock().
 		Get("assert").
