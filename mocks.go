@@ -356,6 +356,11 @@ func (m *Mock) Get(u string) *MockRequest {
 	return m.request
 }
 
+// Getf configures the mock to match http method GET and supports formatting
+func (m *Mock) Getf(format string, args ...interface{}) *MockRequest {
+	return m.Get(fmt.Sprintf(format, args...))
+}
+
 // Head configures the mock to match http method HEAD
 func (m *Mock) Head(u string) *MockRequest {
 	m.parseUrl(u)
@@ -370,11 +375,21 @@ func (m *Mock) Put(u string) *MockRequest {
 	return m.request
 }
 
+// Putf configures the mock to match http method PUT and supports formatting
+func (m *Mock) Putf(format string, args ...interface{}) *MockRequest {
+	return m.Put(fmt.Sprintf(format, args...))
+}
+
 // Post configures the mock to match http method POST
 func (m *Mock) Post(u string) *MockRequest {
 	m.parseUrl(u)
 	m.request.method = http.MethodPost
 	return m.request
+}
+
+// Postf configures the mock to match http method POST and supports formatting
+func (m *Mock) Postf(format string, args ...interface{}) *MockRequest {
+	return m.Post(fmt.Sprintf(format, args...))
 }
 
 // Delete configures the mock to match http method DELETE
@@ -384,11 +399,21 @@ func (m *Mock) Delete(u string) *MockRequest {
 	return m.request
 }
 
+// Deletef configures the mock to match http method DELETE and supports formatting
+func (m *Mock) Deletef(format string, args ...interface{}) *MockRequest {
+	return m.Delete(fmt.Sprintf(format, args...))
+}
+
 // Patch configures the mock to match http method PATCH
 func (m *Mock) Patch(u string) *MockRequest {
 	m.parseUrl(u)
 	m.request.method = http.MethodPatch
 	return m.request
+}
+
+// Patchf configures the mock to match http method PATCH and supports formatting
+func (m *Mock) Patchf(format string, args ...interface{}) *MockRequest {
+	return m.Patch(fmt.Sprintf(format, args...))
 }
 
 func (m *Mock) parseUrl(u string) {

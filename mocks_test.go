@@ -884,6 +884,38 @@ func TestMocks_Request_SetsTheMethod(t *testing.T) {
 	}
 }
 
+func TestMocks_URLFormatterSupport(t *testing.T) {
+	t.Run("Getf", func(tc *testing.T) {
+		req := NewMock().Getf("/user/%d", 1)
+		assert.Equal(tc, "/user/1", req.url.Path)
+		assert.Equal(tc, "GET", req.method)
+	})
+
+	t.Run("Putf", func(tc *testing.T) {
+		req := NewMock().Putf("/user/%d", 1)
+		assert.Equal(tc, "/user/1", req.url.Path)
+		assert.Equal(tc, "PUT", req.method)
+	})
+
+	t.Run("Patchf", func(tc *testing.T) {
+		req := NewMock().Patchf("/user/%d", 1)
+		assert.Equal(tc, "/user/1", req.url.Path)
+		assert.Equal(tc, "PATCH", req.method)
+	})
+
+	t.Run("Deletef", func(tc *testing.T) {
+		req := NewMock().Deletef("/user/%d", 1)
+		assert.Equal(tc, "/user/1", req.url.Path)
+		assert.Equal(tc, "DELETE", req.method)
+	})
+
+	t.Run("Postf", func(tc *testing.T) {
+		req := NewMock().Postf("/user/%d", 1)
+		assert.Equal(tc, "/user/1", req.url.Path)
+		assert.Equal(tc, "POST", req.method)
+	})
+}
+
 func TestMocks_Response_SetsTextPlainIfNoContentTypeSet(t *testing.T) {
 	mockResponse := NewMock().
 		Get("assert").
