@@ -1069,6 +1069,7 @@ func copyHttpRequest(request *http.Request) *http.Request {
 		ContentLength: request.ContentLength,
 		RemoteAddr:    request.RemoteAddr,
 	}
+	resCopy = resCopy.WithContext(request.Context())
 
 	if request.Body != nil {
 		bodyBytes, _ := ioutil.ReadAll(request.Body)
