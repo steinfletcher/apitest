@@ -1,6 +1,7 @@
 package apitest_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -938,6 +939,27 @@ func TestApiTest_ExposesRequestAndResponse(t *testing.T) {
 
 	assert.NotNil(t, apiTest.Request())
 	assert.NotNil(t, apiTest.Response())
+}
+
+func TestApiTest_RequestContextIsPreserved(t *testing.T) {
+	ctxKey := struct{}{}
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		value := r.Context().Value(ctxKey).([]byte)
+		w.Write(value)
+	})
+
+	interceptor := func(r *http.Request) {
+		*r = *r.WithContext(context.WithValue(r.Context(), ctxKey, []byte("world")))
+	}
+
+	apitest.New().
+		Handler(handler).
+		Intercept(interceptor).
+		Get("/hello").
+		Expect(t).
+		Body("world").
+		End()
 }
 
 func TestApiTest_NoopVerifier(t *testing.T) {
