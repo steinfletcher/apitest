@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://apitest.dev/svg/dummy.svg" width="150">
+    <img src="https://apitest.dev/static/images/dummy.svg" width="150">
 </p>
 
 <p align="center">
