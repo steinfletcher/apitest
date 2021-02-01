@@ -15,31 +15,35 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Transport wraps components used to observe and manipulate the real request and response objects
 type Transport struct {
-	debugEnabled    bool
-	mocks           []*Mock
-	nativeTransport http.RoundTripper
-	httpClient      *http.Client
-	observers       []Observe
-	apiTest         *APITest
+	debugEnabled             bool
+	mockResponseDelayEnabled bool
+	mocks                    []*Mock
+	nativeTransport          http.RoundTripper
+	httpClient               *http.Client
+	observers                []Observe
+	apiTest                  *APITest
 }
 
 func newTransport(
 	mocks []*Mock,
 	httpClient *http.Client,
 	debugEnabled bool,
+	mockResponseDelayEnabled bool,
 	observers []Observe,
 	apiTest *APITest) *Transport {
 
 	t := &Transport{
-		mocks:        mocks,
-		httpClient:   httpClient,
-		debugEnabled: debugEnabled,
-		observers:    observers,
-		apiTest:      apiTest,
+		mocks:                    mocks,
+		httpClient:               httpClient,
+		debugEnabled:             debugEnabled,
+		mockResponseDelayEnabled: mockResponseDelayEnabled,
+		observers:                observers,
+		apiTest:                  apiTest,
 	}
 	if httpClient != nil {
 		t.nativeTransport = httpClient.Transport
@@ -112,6 +116,10 @@ func (r *Transport) RoundTrip(req *http.Request) (mockResponse *http.Response, m
 
 		if matchedResponse.timeout {
 			return nil, timeoutError{}
+		}
+
+		if r.mockResponseDelayEnabled && matchedResponse.fixedDelayMillis > 0 {
+			time.Sleep(time.Duration(matchedResponse.fixedDelayMillis) * time.Millisecond)
 		}
 
 		return res, nil
@@ -268,12 +276,13 @@ type UnmatchedMock struct {
 
 // MockResponse represents the http response side of a mock interaction
 type MockResponse struct {
-	mock       *Mock
-	timeout    bool
-	headers    map[string][]string
-	cookies    []*Cookie
-	body       string
-	statusCode int
+	mock             *Mock
+	timeout          bool
+	headers          map[string][]string
+	cookies          []*Cookie
+	body             string
+	statusCode       int
+	fixedDelayMillis int64
 }
 
 // StandaloneMocks for using mocks outside of API tests context
@@ -308,6 +317,7 @@ func (r *StandaloneMocks) End() func() {
 		r.mocks,
 		r.httpClient,
 		r.debug,
+		false,
 		nil,
 		nil,
 	)
@@ -653,6 +663,14 @@ func (r *MockResponse) Status(statusCode int) *MockResponse {
 	return r
 }
 
+// FixedDelay will return the response after the given number of milliseconds.
+// APITest::EnableMockResponseDelay must be set for this to take effect.
+// If Timeout is set this has no effect.
+func (r *MockResponse) FixedDelay(delay int64) *MockResponse {
+	r.fixedDelayMillis = delay
+	return r
+}
+
 // Times respond the given number of times
 func (r *MockResponse) Times(times int) *MockResponse {
 	r.mock.times = times
@@ -671,6 +689,7 @@ func (r *MockResponse) EndStandalone(other ...*Mock) func() {
 		append([]*Mock{r.mock}, other...),
 		r.mock.httpClient,
 		r.mock.debugStandalone,
+		false,
 		nil,
 		nil,
 	)

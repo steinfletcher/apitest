@@ -30,26 +30,27 @@ var responseDebugPrefix = fmt.Sprintf("<%s", divider)
 
 // APITest is the top level struct holding the test spec
 type APITest struct {
-	debugEnabled         bool
-	networkingEnabled    bool
-	networkingHTTPClient *http.Client
-	reporter             ReportFormatter
-	verifier             Verifier
-	recorder             *Recorder
-	handler              http.Handler
-	name                 string
-	request              *Request
-	response             *Response
-	observers            []Observe
-	mocksObservers       []Observe
-	recorderHook         RecorderHook
-	mocks                []*Mock
-	t                    *testing.T
-	httpClient           *http.Client
-	transport            *Transport
-	meta                 map[string]interface{}
-	started              time.Time
-	finished             time.Time
+	debugEnabled             bool
+	mockResponseDelayEnabled bool
+	networkingEnabled        bool
+	networkingHTTPClient     *http.Client
+	reporter                 ReportFormatter
+	verifier                 Verifier
+	recorder                 *Recorder
+	handler                  http.Handler
+	name                     string
+	request                  *Request
+	response                 *Response
+	observers                []Observe
+	mocksObservers           []Observe
+	recorderHook             RecorderHook
+	mocks                    []*Mock
+	t                        *testing.T
+	httpClient               *http.Client
+	transport                *Transport
+	meta                     map[string]interface{}
+	started                  time.Time
+	finished                 time.Time
 }
 
 // InboundRequest used to wrap the incoming request with a timestamp
@@ -104,6 +105,12 @@ func (a *APITest) EnableNetworking(cli ...*http.Client) *APITest {
 		return a
 	}
 	a.networkingHTTPClient = http.DefaultClient
+	return a
+}
+
+// EnableMockResponseDelay turns on mock response delays (defaults to OFF)
+func (a *APITest) EnableMockResponseDelay() *APITest {
+	a.mockResponseDelayEnabled = true
 	return a
 }
 
@@ -761,6 +768,7 @@ func (r *Response) runTest() *http.Response {
 			a.mocks,
 			a.httpClient,
 			a.debugEnabled,
+			a.mockResponseDelayEnabled,
 			a.mocksObservers,
 			r.apiTest,
 		)

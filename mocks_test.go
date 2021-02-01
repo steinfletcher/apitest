@@ -1104,6 +1104,7 @@ func TestMocks_ApiTest_WithMocks(t *testing.T) {
 				Get("/user").
 				RespondWith().
 				Body(`{"name": "jon", "id": "1234"}`).
+				FixedDelay(5000).
 				Status(http.StatusOK).
 				End()
 
@@ -1194,10 +1195,12 @@ func TestMocks_ApiTest_SupportsObservingMocksWithReport(t *testing.T) {
 		RespondWith().
 		Status(http.StatusOK).
 		Body("2").
+		FixedDelay(1000).
 		End()
 
 	New().
 		Report(reporter).
+		EnableMockResponseDelay().
 		ObserveMocks(func(res *http.Response, req *http.Request, a *APITest) {
 			observeMocksCalled = true
 			if res == nil || req == nil || a == nil {
@@ -1228,6 +1231,8 @@ func TestMocks_ApiTest_SupportsObservingMocksWithReport(t *testing.T) {
 
 	assert.Equal(t, 3, len(observedMocks))
 	assert.True(t, observeMocksCalled)
+	oneSecondInNanoSecs := int64(1000000000)
+	assert.Greater(t, reporter.capturedRecorder.Meta["duration"], oneSecondInNanoSecs)
 }
 
 func TestMocks_ApiTest_SupportsMultipleMocks(t *testing.T) {
