@@ -28,6 +28,11 @@ func WrapWithRecorder(driverName string, recorder *apitest.Recorder) driver.Driv
 	return recordingDriver
 }
 
+// WrapConnectorWithRecorder wraps an existing connector with a Recorder
+func WrapConnectorWithRecorder(connector driver.Connector, sourceName string, recorder *apitest.Recorder) driver.Connector {
+	return &recordingConnector{recorder: recorder, sourceName: sourceName, Connector: connector}
+}
+
 type recordingDriver struct {
 	Driver     driver.Driver
 	recorder   *apitest.Recorder
