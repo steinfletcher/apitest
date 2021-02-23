@@ -1030,10 +1030,10 @@ var bodyMatcher = func(req *http.Request, spec *MockRequest) error {
 	}
 
 	if isJSON {
-		return fmt.Errorf("received body did not match expected mock body\n%s", diff(reqJSON, matchJSON))
+		return fmt.Errorf("received body did not match expected mock body\n%s", diff(matchJSON, reqJSON))
 	}
 
-	return fmt.Errorf("received body did not match expected mock body\n%s", diff(bodyStr, mockBody))
+	return fmt.Errorf("received body did not match expected mock body\n%s", diff(mockBody, bodyStr))
 }
 
 func errorOrNil(statement bool, errorMessage func() string) error {
