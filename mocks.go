@@ -16,6 +16,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/davecgh/go-spew/spew"
+	"github.com/pmezard/go-difflib/difflib"
 )
 
 // Transport wraps components used to observe and manipulate the real request and response objects
@@ -1026,7 +1029,11 @@ var bodyMatcher = func(req *http.Request, spec *MockRequest) error {
 		return nil
 	}
 
-	return fmt.Errorf("received body %s did not match expected mock body %s", bodyStr, mockBody)
+	if isJSON {
+		return fmt.Errorf("received body did not match expected mock body\n%s", diff(reqJSON, matchJSON))
+	}
+
+	return fmt.Errorf("received body did not match expected mock body\n%s", diff(bodyStr, mockBody))
 }
 
 func errorOrNil(statement bool, errorMessage func() string) error {
@@ -1062,3 +1069,60 @@ type timeoutError struct{}
 func (timeoutError) Error() string   { return "deadline exceeded" }
 func (timeoutError) Timeout() bool   { return true }
 func (timeoutError) Temporary() bool { return true }
+
+var spewConfig = spew.ConfigState{
+	Indent:                  " ",
+	DisablePointerAddresses: true,
+	DisableCapacities:       true,
+	SortKeys:                true,
+	DisableMethods:          true,
+}
+
+func diff(expected interface{}, actual interface{}) string {
+	if expected == nil || actual == nil {
+		return ""
+	}
+
+	et, ek := typeAndKind(expected)
+	at, _ := typeAndKind(actual)
+
+	if et != at {
+		return ""
+	}
+
+	if ek != reflect.Struct && ek != reflect.Map && ek != reflect.Slice && ek != reflect.Array && ek != reflect.String {
+		return ""
+	}
+
+	var e, a string
+	if et != reflect.TypeOf("") {
+		e = spewConfig.Sdump(expected)
+		a = spewConfig.Sdump(actual)
+	} else {
+		e = reflect.ValueOf(expected).String()
+		a = reflect.ValueOf(actual).String()
+	}
+
+	diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+		A:        difflib.SplitLines(e),
+		B:        difflib.SplitLines(a),
+		FromFile: "Expected",
+		FromDate: "",
+		ToFile:   "Actual",
+		ToDate:   "",
+		Context:  1,
+	})
+
+	return "\n\nDiff:\n" + diff
+}
+
+func typeAndKind(v interface{}) (reflect.Type, reflect.Kind) {
+	t := reflect.TypeOf(v)
+	k := t.Kind()
+
+	if k == reflect.Ptr {
+		t = t.Elem()
+		k = t.Kind()
+	}
+	return t, k
+}

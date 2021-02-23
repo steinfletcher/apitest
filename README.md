@@ -64,8 +64,6 @@ This library was influenced by the following software packages:
 * [Gock](https://github.com/h2non/gock) for the approach to mocking HTTP services in Go
 * [Baloo](https://github.com/h2non/baloo) for API design
 
-Credit to [testify](https://github.com/stretchr/testify) which is this libraries' only dependency.
-
 ### Code snippets
 
 #### JSON body matcher
