@@ -3,8 +3,6 @@ package apitest
 import (
 	"net/http"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestRecorder_ResponseStatus_RecordsFinalResponseStatus(t *testing.T) {
@@ -15,7 +13,7 @@ func TestRecorder_ResponseStatus_RecordsFinalResponseStatus(t *testing.T) {
 		AddHttpResponse(HttpResponse{Value: &http.Response{StatusCode: http.StatusBadRequest}}).
 		ResponseStatus()
 
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, status)
 }
 
@@ -23,7 +21,7 @@ func TestRecorder_ResponseStatus_ErrorsIfNoEventsDefined(t *testing.T) {
 	_, err := NewTestRecorder().
 		ResponseStatus()
 
-	assert.Error(t, err, "no events are defined")
+	assert.Equal(t, true, err != nil, "no events are defined")
 }
 
 func TestRecorder_ResponseStatus_ErrorsIfFinalEventNotAResponse(t *testing.T) {
@@ -31,7 +29,7 @@ func TestRecorder_ResponseStatus_ErrorsIfFinalEventNotAResponse(t *testing.T) {
 		AddHttpRequest(HttpRequest{}).
 		ResponseStatus()
 
-	assert.Error(t, err, "final event should be a response type")
+	assert.Equal(t, true, err != nil, "final event should be a response type")
 }
 
 func TestRecorder_ResponseStatus_HandlesEventTypes(t *testing.T) {
@@ -41,7 +39,7 @@ func TestRecorder_ResponseStatus_HandlesEventTypes(t *testing.T) {
 
 	status, _ := rec.ResponseStatus()
 	assert.Equal(t, -1, status)
-	assert.Len(t, rec.Events, 2)
+	assert.Equal(t, 2, len(rec.Events))
 }
 
 func TestRecorder_AddsTitle(t *testing.T) {

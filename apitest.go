@@ -786,7 +786,7 @@ func (r *Response) runTest() *http.Response {
 	}()
 
 	if a.verifier == nil {
-		a.verifier = newTestifyVerifier()
+		a.verifier = newDefaultVerifier()
 	}
 
 	a.assertMocks()
@@ -1105,3 +1105,5 @@ func copyHttpRequest(request *http.Request) *http.Request {
 func quoted(in string) string {
 	return fmt.Sprintf("%q", in)
 }
+
+var assert = DefaultVerifier{}

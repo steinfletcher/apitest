@@ -13,9 +13,9 @@ import (
 
 	"github.com/steinfletcher/apitest"
 	"github.com/steinfletcher/apitest/mocks"
-
-	"github.com/stretchr/testify/assert"
 )
+
+var assert = apitest.DefaultVerifier{}
 
 func Test(t *testing.T) {
 	apitest.New().
@@ -780,13 +780,14 @@ func TestApiTest_Report(t *testing.T) {
 	r := reporter.capturedRecorder
 	assert.Equal(t, "POST /hello", r.Title)
 	assert.Equal(t, "some test", r.SubTitle)
-	assert.Len(t, r.Events, 4)
+	assert.Equal(t, 4, len(r.Events))
 	assert.Equal(t, 200, r.Meta["status_code"])
 	assert.Equal(t, "/hello", r.Meta["path"])
 	assert.Equal(t, "POST", r.Meta["method"])
 	assert.Equal(t, "some test", r.Meta["name"])
 	assert.Equal(t, "abc.com", r.Meta["host"])
-	assert.NotEmpty(t, r.Meta["duration"])
+	_, ok := r.Meta["duration"]
+	assert.Equal(t, true, ok)
 }
 
 func TestApiTest_Recorder(t *testing.T) {
@@ -834,7 +835,7 @@ func TestApiTest_Recorder(t *testing.T) {
 		End()
 
 	r := reporter.capturedRecorder
-	assert.Len(t, r.Events, 6)
+	assert.Equal(t, 6, len(r.Events))
 	assert.Equal(t, messageRequest, r.Events[0])
 	assert.Equal(t, messageResponse, r.Events[1])
 }
@@ -858,7 +859,7 @@ func TestApiTest_Observe(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 
-	assert.True(t, observeCalled)
+	assert.Equal(t, true, observeCalled)
 }
 
 func TestApiTest_Observe_DumpsTheHttpRequestAndResponse(t *testing.T) {
@@ -903,7 +904,7 @@ func TestApiTest_ObserveWithReport(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 
-	assert.True(t, observeCalled)
+	assert.Equal(t, true, observeCalled)
 }
 
 func TestApiTest_Intercept(t *testing.T) {
@@ -937,8 +938,8 @@ func TestApiTest_Intercept(t *testing.T) {
 func TestApiTest_ExposesRequestAndResponse(t *testing.T) {
 	apiTest := apitest.New()
 
-	assert.NotNil(t, apiTest.Request())
-	assert.NotNil(t, apiTest.Response())
+	assert.Equal(t, true, apiTest.Request() != nil)
+	assert.Equal(t, true, apiTest.Response() != nil)
 }
 
 func TestApiTest_RequestContextIsPreserved(t *testing.T) {
@@ -1119,7 +1120,7 @@ func TestApiTest_ErrorIfMockInvocationsDoNotMatchTimes(t *testing.T) {
 		End()
 
 	unmatchedMocks := res.UnmatchedMocks()
-	assert.NotEmpty(t, unmatchedMocks)
+	assert.Equal(t, true, len(unmatchedMocks) > 0)
 	assert.Equal(t, "http://localhost:8080", unmatchedMocks[0].URL.String())
 }
 
@@ -1142,7 +1143,7 @@ func TestApiTest_MatchesTimes(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 
-	assert.Empty(t, res.UnmatchedMocks())
+	assert.Equal(t, 0, len(res.UnmatchedMocks()))
 }
 
 type RecorderCaptor struct {

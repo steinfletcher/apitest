@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestApiTest_Cookies_ExpectedCookie(t *testing.T) {
@@ -149,7 +147,7 @@ func TestCompareCookies(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			found, mismatches := compareCookies(test.expected, &test.actual)
 
-			assert.True(t, found)
+			assert.Equal(t, true, found)
 			assert.Equal(t, test.mismatches, mismatches)
 		})
 	}

@@ -9,8 +9,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestSequenceDiagramFormatter_Format(t *testing.T) {
@@ -20,7 +18,7 @@ func TestSequenceDiagramFormatter_Format(t *testing.T) {
 	formatter.Format(aRecorder())
 
 	assert.Equal(t, ".sequence", mockFS.CapturedMkdirAllPath)
-	assert.True(t, strings.HasSuffix(mockFS.CapturedCreateName, "html"))
+	assert.Equal(t, true, strings.HasSuffix(mockFS.CapturedCreateName, "html"))
 
 	expected, _ := ioutil.ReadFile("testdata/sequence_diagram_snapshot.html")
 	actual, _ := ioutil.ReadFile(mockFS.CapturedCreateFile)
@@ -92,7 +90,7 @@ func TestNewSequenceDiagramFormatter_OverridesPath(t *testing.T) {
 func TestRecorderBuilder(t *testing.T) {
 	recorder := aRecorder()
 
-	assert.Len(t, recorder.Events, 4)
+	assert.Equal(t, 4, len(recorder.Events))
 	assert.Equal(t, "title", recorder.Title)
 	assert.Equal(t, "subTitle", recorder.SubTitle)
 	assert.Equal(t, map[string]interface{}{
@@ -112,7 +110,7 @@ func TestNewHTMLTemplateModel_ErrorsIfNoEventsDefined(t *testing.T) {
 
 	_, err := newHTMLTemplateModel(recorder)
 
-	assert.Error(t, err, "no events are defined")
+	assert.Equal(t, err.Error(), "no events are defined")
 }
 
 func TestNewHTMLTemplateModel_Success(t *testing.T) {
@@ -120,14 +118,14 @@ func TestNewHTMLTemplateModel_Success(t *testing.T) {
 
 	model, err := newHTMLTemplateModel(recorder)
 
-	assert.Nil(t, err)
-	assert.Len(t, model.LogEntries, 4)
+	assert.NoError(t, err)
+	assert.Equal(t, 4, len(model.LogEntries))
 	assert.Equal(t, "title", model.Title)
 	assert.Equal(t, "subTitle", model.SubTitle)
 	assert.Equal(t, template.JS(`{"host":"example.com","method":"GET","name":"some test","path":"/user"}`), model.MetaJSON)
 	assert.Equal(t, http.StatusNoContent, model.StatusCode)
 	assert.Equal(t, "badge badge-success", model.BadgeClass)
-	assert.Contains(t, model.WebSequenceDSL, "GET /abcdef")
+	assert.Equal(t, true, strings.Contains(model.WebSequenceDSL, "GET /abcdef"))
 }
 
 func aRecorder() *Recorder {
@@ -151,9 +149,9 @@ func TestNewHttpRequestLogEntry(t *testing.T) {
 
 	logEntry, err := newHTTPRequestLogEntry(req)
 
-	assert.Nil(t, err)
-	assert.True(t, strings.Contains(logEntry.Header, "GET /path"))
-	assert.True(t, strings.Contains(logEntry.Header, "HTTP/1.1"))
+	assert.NoError(t, err)
+	assert.Equal(t, true, strings.Contains(logEntry.Header, "GET /path"))
+	assert.Equal(t, true, strings.Contains(logEntry.Header, "HTTP/1.1"))
 	assert.JSONEq(t, logEntry.Body, `{"a": 12345}`)
 }
 
@@ -168,9 +166,9 @@ func TestNewHttpResponseLogEntry_JSON(t *testing.T) {
 
 	logEntry, err := newHTTPResponseLogEntry(response)
 
-	assert.Nil(t, err)
-	assert.True(t, strings.Contains(logEntry.Header, `HTTP/1.1 200 OK`))
-	assert.True(t, strings.Contains(logEntry.Header, `Content-Length: 21`))
+	assert.NoError(t, err)
+	assert.Equal(t, true, strings.Contains(logEntry.Header, `HTTP/1.1 200 OK`))
+	assert.Equal(t, true, strings.Contains(logEntry.Header, `Content-Length: 21`))
 	assert.JSONEq(t, logEntry.Body, `{"a": 12345}`)
 }
 
@@ -185,9 +183,9 @@ func TestNewHttpResponseLogEntry_PlainText(t *testing.T) {
 
 	logEntry, err := newHTTPResponseLogEntry(response)
 
-	assert.Nil(t, err)
-	assert.True(t, strings.Contains(logEntry.Header, `HTTP/1.1 200 OK`))
-	assert.True(t, strings.Contains(logEntry.Header, `Content-Length: 21`))
+	assert.NoError(t, err)
+	assert.Equal(t, true, strings.Contains(logEntry.Header, `HTTP/1.1 200 OK`))
+	assert.Equal(t, true, strings.Contains(logEntry.Header, `Content-Length: 21`))
 	assert.Equal(t, logEntry.Body, `abcdef`)
 }
 
