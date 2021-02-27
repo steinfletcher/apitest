@@ -19,6 +19,9 @@ var recorder *apitest.Recorder
 
 func init() {
 	recorder = apitest.NewTestRecorder()
+
+	// Wrap your database driver of choice with a recorder
+	// and register it so you can use it later
 	wrappedDriver := apitestdb.WrapWithRecorder("mysql", recorder)
 	sql.Register("wrappedMysql", wrappedDriver)
 }
@@ -95,10 +98,28 @@ func postUserMock(username string) *apitest.Mock {
 
 func apiTest(name string) *apitest.APITest {
 	dsn := os.Getenv("MYSQL_DSN")
+
+	// Connect using the previously registered driver
 	testDB, err := sqlx.Connect("wrappedMysql", dsn)
 	if err != nil {
 		panic(err)
 	}
+
+	// You can also use the WrapConnectorWithRecorder method
+	// without having to register a new database driver
+	//
+	// cfg, err := mysql.ParseDSN(dsn)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	//
+	// connector, err := mysql.NewConnector(cfg)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	//
+	// wrappedConnector := apitestdb.WrapConnectorWithRecorder(connector, "mysql", recorder)
+	// testDB := sqlx.NewDb(sql.OpenDB(wrappedConnector), "mysql")
 
 	app := newApp(testDB)
 

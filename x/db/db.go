@@ -39,7 +39,7 @@ type recordingDriver struct {
 	sourceName string
 }
 
-// Open wraps opening a connection to the database with a recorder
+// Open wraps the underlying driver's Open method
 func (d *recordingDriver) Open(name string) (driver.Conn, error) {
 	conn, err := d.Driver.Open(name)
 	if err != nil {
@@ -79,7 +79,7 @@ type recordingDriverContext struct {
 	*recordingDriver
 }
 
-// OpenConnector wraps the underlying driver OpenConnector call
+// OpenConnector wraps the underlying driver's OpenConnector method
 func (d *recordingDriverContext) OpenConnector(name string) (driver.Connector, error) {
 	if driverCtx, ok := d.Driver.(driver.DriverContext); ok {
 		connector, err := driverCtx.OpenConnector(name)
@@ -98,7 +98,7 @@ type recordingConnector struct {
 	sourceName string
 }
 
-// Connect wraps the
+// Connect wraps the underlying connector's Connect method
 func (c *recordingConnector) Connect(context context.Context) (driver.Conn, error) {
 	conn, err := c.Connector.Connect(context)
 	if err != nil {
@@ -134,6 +134,7 @@ func (c *recordingConnector) Connect(context context.Context) (driver.Conn, erro
 	return recordingConn, nil
 }
 
+// Driver wraps the underlying connector's Driver method
 func (c *recordingConnector) Driver() driver.Driver { return c.Connector.Driver() }
 
 type recordingConn struct {
@@ -142,7 +143,7 @@ type recordingConn struct {
 	sourceName string
 }
 
-// Prepare wraps the underlying prepare statement call with a recorder, allowing the statement to be observed
+// Prepare wraps the underlying conn's Prepare method
 func (conn *recordingConn) Prepare(query string) (driver.Stmt, error) {
 	stmt, err := conn.Conn.Prepare(query)
 	if err != nil {
@@ -169,17 +170,18 @@ func (conn *recordingConn) Prepare(query string) (driver.Stmt, error) {
 	return recordingStmt, nil
 }
 
-// Close will close the wrapped drivers connection
+// Close wraps the underlying conn's Close method
 func (conn *recordingConn) Close() error { return conn.Conn.Close() }
 
-//Begin begins a new transaction for the wrapped driver
+// Begin wraps the underlying conn's Begin method
 func (conn *recordingConn) Begin() (driver.Tx, error) { return conn.Conn.Begin() }
 
 type recordingConnWithQuery struct {
 	*recordingConn
 }
 
-// Query executes a query with arguments for the wrapped driver, capturing the query to the recorder
+// Query wraps the underlying conn's Query method
+// It also sends the query as a message to the recorder
 func (conn *recordingConnWithQuery) Query(query string, args []driver.Value) (driver.Rows, error) {
 	if connQuery, ok := conn.Conn.(driver.Queryer); ok {
 		rows, err := connQuery.Query(query, args)
@@ -211,7 +213,8 @@ type recordingConnWithQueryContext struct {
 	*recordingConn
 }
 
-// QueryContext wraps the underlying drivers queryContext call, capturing to the recorder
+// QueryContext wraps the underlying conn's QueryContext method
+// It also sends the query as a message to the recorder
 func (conn *recordingConnWithQueryContext) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
 	if connQueryCtx, ok := conn.Conn.(driver.QueryerContext); ok {
 		rows, err := connQueryCtx.QueryContext(ctx, query, args)
@@ -247,7 +250,8 @@ type recordingConnWithExec struct {
 	*recordingConn
 }
 
-// Exec wraps the underlying drivers Exec call, capturing to the recorder
+// Exec wraps the underlying conn's Exec method
+// It also sends the query and the number of rows affected as messages to the recorder
 func (conn *recordingConnWithExec) Exec(query string, args []driver.Value) (driver.Result, error) {
 	if connExec, ok := conn.Conn.(driver.Execer); ok {
 		result, err := connExec.Exec(query, args)
@@ -290,7 +294,8 @@ type recordingConnWithExecContext struct {
 	*recordingConn
 }
 
-// ExecContext wraps the underlying drivers ExecContext call, capturing to the recorder
+// ExecContext wraps the underlying conn's ExecContext method
+// It also sends the query and the number of rows affected as messages to the recorder
 func (conn *recordingConnWithExecContext) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
 	if connExecCtx, ok := conn.Conn.(driver.ExecerContext); ok {
 		result, err := connExecCtx.ExecContext(ctx, query, args)
@@ -337,7 +342,7 @@ type recordingConnWithPrepareContext struct {
 	*recordingConn
 }
 
-// PrepareContext wraps the underlying drivers PrepareContext call, capturing to the recorder
+// PrepareContext wraps the underlying conn's PrepareContext method
 func (conn *recordingConnWithPrepareContext) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
 	if connPrepareCtx, ok := conn.Conn.(driver.ConnPrepareContext); ok {
 		stmt, err := connPrepareCtx.PrepareContext(ctx, query)
@@ -376,7 +381,7 @@ type recordingConnWithBeginTx struct {
 	*recordingConn
 }
 
-// BeginTx wraps the underlying drivers BeginTx call
+// BeginTx wraps the underlying conn's BeginTx method
 func (conn *recordingConnWithBeginTx) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
 	if connBeginTx, ok := conn.Conn.(driver.ConnBeginTx); ok {
 		return connBeginTx.BeginTx(ctx, opts)
@@ -389,7 +394,7 @@ type recordingConnWithPing struct {
 	*recordingConn
 }
 
-// Ping wraps the underlying drivers Ping call
+// Ping wraps the underlying conn's Ping method
 func (conn *recordingConnWithPing) Ping(ctx context.Context) error {
 	if connPinger, ok := conn.Conn.(driver.Pinger); ok {
 		return connPinger.Ping(ctx)
@@ -420,17 +425,18 @@ type recordingStmt struct {
 	query      string
 }
 
-// Close wraps the underlying drivers Close call
+// Close wraps the underlying stmt's Close method
 func (stmt *recordingStmt) Close() error {
 	return stmt.Stmt.Close()
 }
 
-// NumInput wraps the underlying drivers NumInput call
+// NumInput wraps the underlying stmt's NumInput method
 func (stmt *recordingStmt) NumInput() int {
 	return stmt.Stmt.NumInput()
 }
 
-// Exec wraps the underlying drivers Exec call, capturing to the recorder
+// Exec wraps the underlying stmt's Exec method
+// It also sends the query and the number of rows affected as messages to the recorder
 func (stmt *recordingStmt) Exec(args []driver.Value) (driver.Result, error) {
 	result, err := stmt.Stmt.Exec(args)
 	if stmt.recorder != nil {
@@ -461,7 +467,8 @@ func (stmt *recordingStmt) Exec(args []driver.Value) (driver.Result, error) {
 	return result, err
 }
 
-// Query executes a query with arguments for the wrapped driver, capturing the query to the recorder
+// Query wraps the underlying stmt's Query method
+// It also sends the query as a message to the recorder
 func (stmt *recordingStmt) Query(args []driver.Value) (driver.Rows, error) {
 	rows, err := stmt.Stmt.Query(args)
 
@@ -486,7 +493,8 @@ type recordingStmtWithExecContext struct {
 	*recordingStmt
 }
 
-// ExecContext wraps the underlying drivers ExecContext call, capturing to the recorder
+// ExecContext wraps the underlying stmt's ExecContext method
+// It also sends the query and the number of rows affected as messages to the recorder
 func (stmt *recordingStmtWithExecContext) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
 	if stmtExecCtx, ok := stmt.Stmt.(driver.StmtExecContext); ok {
 		result, err := stmtExecCtx.ExecContext(ctx, args)
@@ -534,7 +542,8 @@ type recordingStmtWithQueryContext struct {
 	*recordingStmt
 }
 
-// QueryContext wraps the underlying drivers QueryContext call, capturing to the recorder
+// QueryContext wraps the underlying stmt's QueryContext method
+// It also sends the query as a message to the recorder
 func (stmt *recordingStmtWithQueryContext) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
 	if stmtQueryCtx, ok := stmt.Stmt.(driver.StmtQueryContext); ok {
 		rows, err := stmtQueryCtx.QueryContext(ctx, args)
@@ -580,10 +589,11 @@ type recordingRows struct {
 	RowsFound  int
 }
 
-// Columns wraps the underlying drivers Columns call
+// Columns wraps the underlying rows' Columns method
 func (rows *recordingRows) Columns() []string { return rows.Rows.Columns() }
 
-// Close wraps the underlying drivers Close call, capturing to the recorder
+// Close wraps the underlying rows' Close method
+// It also sends the number of rows found by the query as a message to the recorder
 func (rows *recordingRows) Close() error {
 	if rows.recorder != nil {
 		rows.recorder.AddMessageResponse(apitest.MessageResponse{
@@ -598,7 +608,7 @@ func (rows *recordingRows) Close() error {
 	return rows.Rows.Close()
 }
 
-// underlying wraps the underlying drivers underlying call
+// Next wraps the underlying rows' Next method
 func (rows *recordingRows) Next(dest []driver.Value) error {
 	err := rows.Rows.Next(dest)
 	if err != io.EOF {

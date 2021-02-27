@@ -17,6 +17,9 @@ var recorder *apitest.Recorder
 
 func init() {
 	recorder = apitest.NewTestRecorder()
+
+	// Wrap your database driver of choice with a recorder
+	// and register it so you can use it later
 	wrappedDriver := apitestdb.WrapWithRecorder("sqlite3", recorder)
 	sql.Register("wrappedSqlite", wrappedDriver)
 }
@@ -89,6 +92,8 @@ func postUserMock(username string) *apitest.Mock {
 
 func apiTest(name string) *apitest.APITest {
 	dsn := os.Getenv("SQLITE_DSN")
+
+	// Connect using the previously registered driver
 	testDB, err := sqlx.Connect("wrappedSqlite", dsn)
 	if err != nil {
 		panic(err)

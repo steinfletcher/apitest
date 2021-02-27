@@ -2,6 +2,7 @@ package test
 
 import (
 	"database/sql"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/pressly/goose"
 	"github.com/steinfletcher/apitest"
@@ -15,6 +16,9 @@ var Recorder *apitest.Recorder
 
 func init() {
 	Recorder = apitest.NewTestRecorder()
+
+	// Wrap your database driver of choice with a recorder
+	// and register it so you can use it later
 	wrappedDriver := apitestdb.WrapWithRecorder("postgres", Recorder)
 	sql.Register("wrappedPostgres", wrappedDriver)
 }
@@ -37,9 +41,22 @@ func DBSetup(setup func(db *sqlx.DB)) *sqlx.DB {
 
 // DBConnect connect to a wrapped postgres connection
 func DBConnect() *sqlx.DB {
+	// Connect using the previously registered driver
 	testDB, err := sqlx.Connect("wrappedPostgres", dsn)
 	if err != nil {
 		panic(err)
 	}
+
+	// You can also use the WrapConnectorWithRecorder method
+	// without having to register a new database driver
+	//
+	// connector, err := pq.NewConnector(dsn)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	//
+	// wrappedConnector := apitestdb.WrapConnectorWithRecorder(connector, "postgres", Recorder)
+	// testDB := sqlx.NewDb(sql.OpenDB(wrappedConnector), "postgres")
+
 	return testDB
 }
