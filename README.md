@@ -45,6 +45,7 @@ go get -u github.com/steinfletcher/apitest
 | [httprouter](https://github.com/steinfletcher/apitest/tree/master/examples/httprouter)               | High performance HTTP request router that scales well                                                      |
 | [mocks](https://github.com/steinfletcher/apitest/tree/master/examples/mocks)                         | example mocking out external http calls                                                                    |
 | [sequence diagrams](https://github.com/steinfletcher/apitest/tree/master/examples/sequence-diagrams) | generate sequence diagrams from tests. See the [demo](http://demo-html.apitest.dev.s3-website-eu-west-1.amazonaws.com/)  |
+| [Ginkgo](https://github.com/steinfletcher/apitest/tree/master/examples/ginkgo) | Ginkgo BDD test framework|
 
 ### Companion libraries
 
