@@ -1101,7 +1101,7 @@ func TestApiTest_ErrorIfMockInvocationsDoNotMatchTimes(t *testing.T) {
 		End()
 
 	verifier := mocks.NewVerifier()
-	verifier.FailFn = func(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
+	verifier.FailFn = func(t apitest.TestingT, failureMessage string, msgAndArgs ...interface{}) bool {
 		assert.Equal(t, "mock was not invoked expected times", failureMessage)
 		return true
 	}

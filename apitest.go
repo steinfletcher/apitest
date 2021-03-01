@@ -14,7 +14,6 @@ import (
 	"runtime/debug"
 	"sort"
 	"strings"
-	"testing"
 	"time"
 )
 
@@ -45,7 +44,7 @@ type APITest struct {
 	mocksObservers           []Observe
 	recorderHook             RecorderHook
 	mocks                    []*Mock
-	t                        *testing.T
+	t                        TestingT
 	httpClient               *http.Client
 	transport                *Transport
 	meta                     map[string]interface{}
@@ -466,7 +465,7 @@ func (r *Request) FormData(name string, values ...string) *Request {
 }
 
 // Expect marks the request spec as complete and following code will define the expected response
-func (r *Request) Expect(t *testing.T) *Response {
+func (r *Request) Expect(t TestingT) *Response {
 	r.apiTest.t = t
 	return r.apiTest.response
 }
