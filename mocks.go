@@ -487,6 +487,20 @@ func (r *MockRequest) BodyFromFile(f string) *MockRequest {
 	return r
 }
 
+// JSON is a convenience method for setting the mock request body
+func (r *MockRequest) JSON(v interface{}) *MockRequest {
+	switch x := v.(type) {
+	case string:
+		r.body = x
+	case []byte:
+		r.body = string(x)
+	default:
+		asJSON, _ := json.Marshal(x)
+		r.body = string(asJSON)
+	}
+	return r
+}
+
 // Header configures the mock request to match the given header
 func (r *MockRequest) Header(key, value string) *MockRequest {
 	normalizedKey := textproto.CanonicalMIMEHeaderKey(key)
@@ -657,6 +671,20 @@ func (r *MockResponse) BodyFromFile(f string) *MockResponse {
 		panic(err)
 	}
 	r.body = string(b)
+	return r
+}
+
+// JSON is a convenience method for setting the mock response body
+func (r *MockResponse) JSON(v interface{}) *MockResponse {
+	switch x := v.(type) {
+	case string:
+		r.body = x
+	case []byte:
+		r.body = string(x)
+	default:
+		asJSON, _ := json.Marshal(x)
+		r.body = string(asJSON)
+	}
 	return r
 }
 

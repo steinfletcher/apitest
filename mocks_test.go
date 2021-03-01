@@ -635,6 +635,23 @@ func TestMocks_BodyMatcher(t *testing.T) {
 	}
 }
 
+func TestMocks_RequestBody(t *testing.T) {
+	tests := map[string]struct {
+		requestBody interface{}
+	}{
+		"supports string input": {`{"a":1}`},
+		"supports maps":         {map[string]int{"a": 1}},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/path", strings.NewReader(`{"a":1}`))
+			err := bodyMatcher(req, NewMock().Get("/").JSON(test.requestBody))
+			assert.NoError(t, err)
+		})
+	}
+}
+
 func TestMocks_PathMatcher(t *testing.T) {
 	tests := []struct {
 		requestUrl    string
@@ -949,6 +966,19 @@ func TestMocks_Response_SetsTheBodyAsJSON(t *testing.T) {
 
 	bytes, _ := ioutil.ReadAll(response.Body)
 	assert.Equal(t, string(bytes), `{"a": 123}`)
+	assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
+}
+
+func TestMocks_ResponseJSON(t *testing.T) {
+	mockResponse := NewMock().
+		Get("assert").
+		RespondWith().
+		JSON(map[string]int{"a": 123})
+
+	response := buildResponseFromMock(mockResponse)
+
+	bytes, _ := ioutil.ReadAll(response.Body)
+	assert.Equal(t, string(bytes), `{"a":123}`)
 	assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
 }
 
