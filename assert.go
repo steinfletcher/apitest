@@ -2,40 +2,48 @@ package apitest
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"net/http"
-	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
+
+// TestingT is an interface to wrap the native *testing.T interface, this allows integration with GinkgoT() interface
+// GinkgoT interface defined in https://github.com/onsi/ginkgo/blob/55c858784e51c26077949c81b6defb6b97b76944/ginkgo_dsl.go#L91
+type TestingT interface {
+	Errorf(format string, args ...interface{})
+	Fatal(args ...interface{})
+	Fatalf(format string, args ...interface{})
+}
 
 // Verifier is the assertion interface allowing consumers to inject a custom assertion implementation.
 // It also allows failure scenarios to be tested within apitest
 type Verifier interface {
-	Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) bool
-	JSONEq(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool
-	Fail(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool
-	NoError(t *testing.T, err error, msgAndArgs ...interface{}) bool
+	Equal(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool
+	JSONEq(t TestingT, expected string, actual string, msgAndArgs ...interface{}) bool
+	Fail(t TestingT, failureMessage string, msgAndArgs ...interface{}) bool
+	NoError(t TestingT, err error, msgAndArgs ...interface{}) bool
 }
 
 // testifyVerifier is a verifier that use https://github.com/stretchr/testify to perform assertions
 type testifyVerifier struct{}
 
 // JSONEq asserts that two JSON strings are equivalent
-func (a testifyVerifier) JSONEq(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool {
+func (a testifyVerifier) JSONEq(t TestingT, expected string, actual string, msgAndArgs ...interface{}) bool {
 	return assert.JSONEq(t, expected, actual, msgAndArgs...)
 }
 
 // Equal asserts that two objects are equal
-func (a testifyVerifier) Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+func (a testifyVerifier) Equal(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
 	return assert.Equal(t, expected, actual, msgAndArgs...)
 }
 
 // Fail reports a failure
-func (a testifyVerifier) Fail(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
+func (a testifyVerifier) Fail(t TestingT, failureMessage string, msgAndArgs ...interface{}) bool {
 	return assert.Fail(t, failureMessage, msgAndArgs...)
 }
 
 // NoError asserts that a function returned no error
-func (a testifyVerifier) NoError(t *testing.T, err error, msgAndArgs ...interface{}) bool {
+func (a testifyVerifier) NoError(t TestingT, err error, msgAndArgs ...interface{}) bool {
 	return assert.NoError(t, err, msgAndArgs...)
 }
 
@@ -49,22 +57,22 @@ type NoopVerifier struct{}
 var _ Verifier = NoopVerifier{}
 
 // Equal does not perform any assertion and always returns true
-func (n NoopVerifier) Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+func (n NoopVerifier) Equal(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
 	return true
 }
 
 // JSONEq does not perform any assertion and always returns true
-func (n NoopVerifier) JSONEq(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool {
+func (n NoopVerifier) JSONEq(t TestingT, expected string, actual string, msgAndArgs ...interface{}) bool {
 	return true
 }
 
 // Fail does not perform any assertion and always returns true
-func (n NoopVerifier) Fail(t *testing.T, failureMessage string, msgAndArgs ...interface{}) bool {
+func (n NoopVerifier) Fail(t TestingT, failureMessage string, msgAndArgs ...interface{}) bool {
 	return true
 }
 
 // NoError asserts that a function returned no error
-func (n NoopVerifier) NoError(t *testing.T, err error, msgAndArgs ...interface{}) bool {
+func (n NoopVerifier) NoError(t TestingT, err error, msgAndArgs ...interface{}) bool {
 	return true
 }
 
