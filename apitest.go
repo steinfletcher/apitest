@@ -322,6 +322,12 @@ func (r *Request) Body(b string) *Request {
 	return r
 }
 
+// Bodyf sets the request body and supports a formatter
+func (r *Request) Bodyf(format string, args ...interface{}) *Request {
+	r.body = fmt.Sprintf(format, args...)
+	return r
+}
+
 // BodyFromFile is a builder method to set the request body
 func (r *Request) BodyFromFile(f string) *Request {
 	b, err := ioutil.ReadFile(f)

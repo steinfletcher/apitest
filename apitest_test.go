@@ -55,6 +55,31 @@ func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 		End()
 }
 
+func TestApiTest_AddsJSONBodyToRequest_SupportsFormatter(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		data, _ := ioutil.ReadAll(r.Body)
+		if string(data) != `{"a": 12345}` {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if r.Header.Get("Content-Type") != "application/json" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	apitest.New().
+		Handler(handler).
+		Post("/hello").
+		Bodyf(`{"a": %d}`, 12345).
+		Header("Content-Type", "application/json").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
 func TestApiTest_RequestURLFormat(t *testing.T) {
 	apitest.New().
 		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
