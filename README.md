@@ -89,8 +89,7 @@ Given the response is `{"a": 12345, "b": [{"key": "c", "value": "result"}]}`
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New().
-		Handler(handler).
+	apitest.Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Assert(jsonpath.Contains(`$.b[? @.key=="c"].value`, "result")).
@@ -102,7 +101,7 @@ and `jsonpath.Equals` checks for value equality
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New(handler).
+	apitest.Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Assert(jsonpath.Equal(`$.a`, float64(12345))).
@@ -114,8 +113,7 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New().
-		Handler(handler).
+	apitest.Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Assert(func(res *http.Response, req *http.Request) error {
@@ -130,8 +128,7 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New().
-		Handler(handler).
+	apitest.Handler(handler).
 		Patch("/hello").
 		Expect(t).
 		Status(http.StatusOK).
@@ -150,8 +147,7 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New().
-		Handler(handler).
+	apitest.Handler(handler).
 		Get("/hello").
 		Expect(t).
 		Status(http.StatusOK).
@@ -227,8 +223,7 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New().
-		Handler(handler).
+	apitest.Handler(handler).
 		Get("/hello").
 		BasicAuth("username", "password").
 		Expect(t).
@@ -241,8 +236,7 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New().
-		Handler(handler).
+	apitest.Handler(handler).
 		Get("/hello").
 		Cookies(apitest.Cookie("ABC").Value("12345")).
 		Expect(t).
@@ -255,8 +249,7 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New().
-		Handler(handler).
+	apitest.Handler(handler).
 		Delete("/hello").
 		Headers(map[string]string{"My-Header": "12345"}).
 		Expect(t).
@@ -271,8 +264,7 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New().
-		Handler(handler).
+	apitest.Handler(handler).
 		Get("/hello").
 		QueryParams(map[string]string{"a": "1", "b": "2"}).
 		Query("c", "d").
@@ -287,8 +279,7 @@ Providing `{"a": {"b", "c", "d"}` results in parameters encoded as `a=b&a=c&a=d`
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New().
-		Handler(handler).
+	apitest.Handler(handler).
 		Get("/hello").
 		QueryCollection(map[string][]string{"a": {"b", "c", "d"}}).
 		Expect(t).
@@ -301,8 +292,7 @@ func TestApi(t *testing.T) {
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New().
-		Handler(handler).
+	apitest.Handler(handler).
 		Post("/hello").
 		FormData("a", "1").
 		FormData("b", "2").
@@ -336,8 +326,7 @@ This is useful for mutating the request before it is sent to the system under te
 
 ```go
 func TestApi(t *testing.T) {
-	apitest.New().
-		Handler(handler).
+	apitest.Handler(handler).
 		Intercept(func(req *http.Request) {
 			req.URL.RawQuery = "a[]=xxx&a[]=yyy"
 		}).
