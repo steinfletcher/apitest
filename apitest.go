@@ -96,6 +96,16 @@ func New(name ...string) *APITest {
 	return apiTest
 }
 
+// Handler is a convenience method for creating a new apitest with a handler
+func Handler(handler http.Handler) *APITest {
+	return New().Handler(handler)
+}
+
+// HandlerFunc is a convenience method for creating a new apitest with a handler func
+func HandlerFunc(handlerFunc http.HandlerFunc) *APITest {
+	return New().HandlerFunc(handlerFunc)
+}
+
 // EnableNetworking will enable networking for provided clients
 func (a *APITest) EnableNetworking(cli ...*http.Client) *APITest {
 	a.networkingEnabled = true

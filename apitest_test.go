@@ -17,12 +17,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test(t *testing.T) {
-	apitest.New().
-		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_, _ = w.Write([]byte(`{"id": "1234", "name": "Andy"}`))
-			w.WriteHeader(http.StatusOK)
-		}).
+func TestApiTest_ResponseBody(t *testing.T) {
+	apitest.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"id": "1234", "name": "Andy"}`))
+		w.WriteHeader(http.StatusOK)
+	}).
 		Get("/user/1234").
 		Expect(t).
 		Body(`{"id": "1234", "name": "Andy"}`).
@@ -45,8 +44,7 @@ func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	apitest.New().
-		Handler(handler).
+	apitest.Handler(handler).
 		Post("/hello").
 		Body(`{"a": 12345}`).
 		Header("Content-Type", "application/json").
