@@ -40,29 +40,8 @@ jobs:
           command: |
             goveralls -coverprofile=coverage.out -service=circle-ci -repotoken $COVERALLS_TOKEN
 
-  deploy-docs:
-    <<: *defaults
-    docker:
-      - image: musitude/go-build:latest
-    steps:
-      - attach_workspace:
-          at: /tmp/persist_to_workspace
-      - run:
-          name: build docs
-          command: cd docs && hugo && cd ..
-      - aws-s3/sync:
-          from: docs/public/
-          overwrite: true
-          to: $S3_BUCKET
-      - run:
-          name: invalidate cloudfront cache
-          command: |
-            aws configure set preview.cloudfront true
-            aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
-
 workflows:
   version: 2
-
   pipeline:
     jobs:
       - test
@@ -74,6 +53,3 @@ workflows:
               ignore: /.*/
           requires:
             - test
-      - deploy-docs:
-          requires:
-            - upload-coverage

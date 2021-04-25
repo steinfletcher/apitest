@@ -1,4 +1,4 @@
-.PHONY: test test-examples docs fmt vet
+.PHONY: test test-examples fmt vet
 
 test:
 	bash -c 'diff -u <(echo -n) <(go fmt $(go list ./...))'
@@ -8,6 +8,3 @@ test:
 test-examples:
 	cd examples && go test -v ./... && \
 	cd sequence-diagrams-with-sqlite-database && make test && cd ..
-
-docs:
-	cd docs && hugo server -w && cd -
