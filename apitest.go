@@ -20,8 +20,8 @@ import (
 // SystemUnderTestDefaultName default name for system under test
 const SystemUnderTestDefaultName = "sut"
 
-// ConsumerName default consumer name
-const ConsumerName = "cli"
+// ConsumerDefaultName default consumer name
+const ConsumerDefaultName = "cli"
 
 var divider = strings.Repeat("-", 10)
 var requestDebugPrefix = fmt.Sprintf("%s>", divider)
@@ -703,23 +703,23 @@ func (a *APITest) report() *http.Response {
 		AddTitle(fmt.Sprintf("%s %s", capturedInboundReq.Method, capturedInboundReq.URL.String())).
 		AddSubTitle(a.name).
 		AddHttpRequest(HttpRequest{
-			Source:    quoted(ConsumerName),
-			Target:    quoted(SystemUnderTestDefaultName),
+			Source:    ConsumerDefaultName,
+			Target:    SystemUnderTestDefaultName,
 			Value:     capturedInboundReq,
 			Timestamp: a.started,
 		})
 
 	for _, interaction := range capturedMockInteractions {
 		a.recorder.AddHttpRequest(HttpRequest{
-			Source:    quoted(SystemUnderTestDefaultName),
-			Target:    quoted(interaction.GetRequestHost()),
+			Source:    SystemUnderTestDefaultName,
+			Target:    interaction.GetRequestHost(),
 			Value:     interaction.request,
 			Timestamp: interaction.timestamp,
 		})
 		if interaction.response != nil {
 			a.recorder.AddHttpResponse(HttpResponse{
-				Source:    quoted(interaction.GetRequestHost()),
-				Target:    quoted(SystemUnderTestDefaultName),
+				Source:    interaction.GetRequestHost(),
+				Target:    SystemUnderTestDefaultName,
 				Value:     interaction.response,
 				Timestamp: interaction.timestamp,
 			})
@@ -727,8 +727,8 @@ func (a *APITest) report() *http.Response {
 	}
 
 	a.recorder.AddHttpResponse(HttpResponse{
-		Source:    quoted(SystemUnderTestDefaultName),
-		Target:    quoted(ConsumerName),
+		Source:    SystemUnderTestDefaultName,
+		Target:    ConsumerDefaultName,
 		Value:     capturedFinalRes,
 		Timestamp: a.finished,
 	})
@@ -1115,8 +1115,4 @@ func copyHttpRequest(request *http.Request) *http.Request {
 	resCopy.Header = headers
 
 	return resCopy
-}
-
-func quoted(in string) string {
-	return fmt.Sprintf("%q", in)
 }

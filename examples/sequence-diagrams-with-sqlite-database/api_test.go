@@ -25,20 +25,21 @@ func init() {
 }
 
 func TestGetUser_With_Default_Report_Formatter(t *testing.T) {
-	dsn := os.Getenv("SQLITE_DSN")
-	if dsn == "" {
-		t.SkipNow()
-	}
+	_ = os.Setenv("SQLITE_DSN", "./foo.db")
 
 	username := uuid.NewV4().String()[0:7]
 
-	DBSetup(dsn, func(db *sqlx.DB) {
+	DBSetup("./foo.db", func(db *sqlx.DB) {
 		q := "INSERT INTO users (username, is_contactable) VALUES (?, ?)"
 		db.MustExec(q, username, true)
 	})
 
 	apiTest("gets the user").
 		Mocks(getUserMock(username)).
+		Meta(map[string]interface{}{
+			"consumerName":        "my-ui",
+			"systemUnderTestName": "my-api",
+		}).
 		Get("/some-really-long-path-so-we-can-observe-truncation-here-whey").
 		Query("name", username).
 		Expect(t).

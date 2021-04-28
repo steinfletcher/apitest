@@ -112,7 +112,7 @@ Content-Type: application/json
 </div>
 <button onclick="topFunction()" id="scroll-to-top-button" title="Go to top">Back to top</button>
 <script>
-    Diagram.parse("reqSource-\x3ereqTarget: (1) GET \/abcdef?name=abc\nmesReqSource-\x3e: (2) A\nmesResSource-\x3e\x3e: (3) C\nresSource-\x3e\x3eresTarget: (4) 204\n").drawSVG("d", {theme: 'simple', 'font-size': 14});
+    Diagram.parse("\x22reqSource\x22-\x3e\x22reqTarget\x22: (1) GET \/abcdef?name=abc\n\x22mesReqSource\x22-\x3e\x22\x22: (2) A\n\x22mesResSource\x22-\x3e\x3e\x22\x22: (3) C\n\x22resSource\x22-\x3e\x3e\x22resTarget\x22: (4) 204\n").drawSVG("d", {theme: 'simple', 'font-size': 14});
 </script>
 <style>
     
