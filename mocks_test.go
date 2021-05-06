@@ -617,10 +617,6 @@ func TestMocks_BodyMatcher(t *testing.T) {
 	}{
 		{`{"a": 1}`, "", nil},
 		{``, `{"a":1}`, errors.New("expected a body but received none")},
-		{"golang\n", "go[lang]?", nil},
-		{"golang\n", "go[lang]?", nil},
-		{"go\n", "go[lang]?", nil},
-		{`{"a":"12345"}\n`, `{"a":"12345"}`, nil},
 		{`{"x":"12345"}`, `{"x":"12345"}`, nil},
 		{`{"a": 12345, "b": [{"key": "c", "value": "result"}]}`,
 			`{"b":[{"key":"c","value":"result"}],"a":12345}`, nil},
@@ -633,6 +629,33 @@ func TestMocks_BodyMatcher(t *testing.T) {
 			assert.Equal(t, test.expectedError, matchError)
 		})
 	}
+}
+
+func TestMocks_BodyMatcher_Regexp(t *testing.T) {
+	tests := []struct {
+		requestBody   string
+		matchBody     string
+		expectedError error
+	}{
+		{"golang\n", "go[lang]?", nil},
+		{"golang\n", "go[lang]?", nil},
+		{"go\n", "go[lang]?", nil},
+		{`{"a":"12345"}\n`, `{"a":"12345"}`, nil},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("body=%v", test.matchBody), func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/path", strings.NewReader(test.requestBody))
+			matchError := bodyRegexpMatcher(req, NewMock().Get("/path").Body(test.matchBody))
+			assert.Equal(t, test.expectedError, matchError)
+		})
+	}
+}
+
+func TestMocks_BodyMatcher_SupportsRawArrays(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/path", strings.NewReader(`[{"a":1, "b": 2, "c": "something"}]`))
+	matchError := bodyMatcher(req, NewMock().Get("/path").JSON(`[{"b": 2, "c": "something", "a": 1}]`))
+	assert.NoError(t, matchError)
 }
 
 func TestMocks_RequestBody(t *testing.T) {

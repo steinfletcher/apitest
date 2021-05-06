@@ -269,6 +269,7 @@ type MockRequest struct {
 	cookiePresent      []string
 	cookieNotPresent   []string
 	body               string
+	bodyRegexp         string
 	matchers           []Matcher
 }
 
@@ -468,6 +469,12 @@ func matches(req *http.Request, mocks []*Mock) (*MockResponse, error) {
 
 // Body configures the mock request to match the given body
 func (r *MockRequest) Body(b string) *MockRequest {
+	r.body = b
+	return r
+}
+
+// BodyRegexp configures the mock request to match the given body using the regexp matcher
+func (r *MockRequest) BodyRegexp(b string) *MockRequest {
 	r.body = b
 	return r
 }
@@ -1039,17 +1046,11 @@ var bodyMatcher = func(req *http.Request, spec *MockRequest) error {
 		return nil
 	}
 
-	// Perform regexp match
-	match, _ := regexp.MatchString(mockBody, bodyStr)
-	if match {
-		return nil
-	}
-
 	// Perform JSON match
-	var reqJSON map[string]interface{}
+	var reqJSON interface{}
 	reqJSONErr := json.Unmarshal(body, &reqJSON)
 
-	var matchJSON map[string]interface{}
+	var matchJSON interface{}
 	specJSONErr := json.Unmarshal([]byte(mockBody), &matchJSON)
 
 	isJSON := reqJSONErr == nil && specJSONErr == nil
@@ -1062,6 +1063,38 @@ var bodyMatcher = func(req *http.Request, spec *MockRequest) error {
 	}
 
 	return fmt.Errorf("received body did not match expected mock body\n%s", diff(mockBody, bodyStr))
+}
+
+var bodyRegexpMatcher = func(req *http.Request, spec *MockRequest) error {
+	expression := spec.bodyRegexp
+
+	if len(expression) == 0 {
+		return nil
+	}
+
+	if req.Body == nil {
+		return errors.New("expected a body but received none")
+	}
+
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+	if len(body) == 0 {
+		return errors.New("expected a body but received none")
+	}
+
+	// replace body so it can be read again
+	req.Body = ioutil.NopCloser(bytes.NewReader(body))
+
+	// Perform regexp match
+	bodyStr := string(body)
+	match, _ := regexp.MatchString(expression, bodyStr)
+	if match {
+		return nil
+	}
+
+	return fmt.Errorf("received body did not match expected mock body\n%s", diff(expression, bodyStr))
 }
 
 func errorOrNil(statement bool, errorMessage func() string) error {
@@ -1087,6 +1120,7 @@ var defaultMatchers = []Matcher{
 	formDataPresentMatcher,
 	formDataNotPresentMatcher,
 	bodyMatcher,
+	bodyRegexpMatcher,
 	cookieMatcher,
 	cookiePresentMatcher,
 	cookieNotPresentMatcher,
