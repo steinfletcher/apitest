@@ -34,7 +34,9 @@ type Verifier interface {
 }
 
 // DefaultVerifier is a verifier that uses some code from https://github.com/stretchr/testify to perform assertions
-type DefaultVerifier struct{}
+type DefaultVerifier struct {
+	ColorizeErrors bool
+}
 
 var _ Verifier = DefaultVerifier{}
 
@@ -77,6 +79,13 @@ func (a DefaultVerifier) Equal(t TestingT, expected, actual interface{}, msgAndA
 	return true
 }
 
+func (a DefaultVerifier) colorize(message string) string {
+	if runtime.GOOS == "windows" || !a.ColorizeErrors {
+		return message
+	}
+	return "\033[0m" + message + "\033[31m"
+}
+
 // Fail reports a failure
 func (a DefaultVerifier) Fail(t TestingT, failureMessage string, msgAndArgs ...interface{}) bool {
 	content := []labeledContent{
@@ -96,7 +105,7 @@ func (a DefaultVerifier) Fail(t TestingT, failureMessage string, msgAndArgs ...i
 		content = append(content, labeledContent{"Messages", message})
 	}
 
-	t.Errorf("\n%s", ""+labeledOutput(content...))
+	t.Errorf("\n%s", ""+a.colorize(labeledOutput(content...)))
 
 	return false
 }
