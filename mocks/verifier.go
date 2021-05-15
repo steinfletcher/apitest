@@ -11,6 +11,9 @@ type MockVerifier struct {
 	EqualFn      func(t apitest.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool
 	EqualInvoked bool
 
+	TrueFn      func(t apitest.TestingT, val bool, msgAndArgs ...interface{}) bool
+	TrueInvoked bool
+
 	JSONEqFn      func(t apitest.TestingT, expected string, actual string, msgAndArgs ...interface{}) bool
 	JSONEqInvoked bool
 
@@ -35,6 +38,9 @@ func NewVerifier() MockVerifier {
 		NoErrorFn: func(t apitest.TestingT, err error, msgAndArgs ...interface{}) bool {
 			return true
 		},
+		TrueFn: func(t apitest.TestingT, val bool, msgAndArgs ...interface{}) bool {
+			return true
+		},
 	}
 }
 
@@ -42,6 +48,12 @@ func NewVerifier() MockVerifier {
 func (m MockVerifier) Equal(t apitest.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
 	m.EqualInvoked = true
 	return m.EqualFn(t, expected, actual, msgAndArgs)
+}
+
+// True mocks the Equal method of the Verifier
+func (m MockVerifier) True(t apitest.TestingT, val bool, msgAndArgs ...interface{}) bool {
+	m.TrueInvoked = true
+	return m.TrueFn(t, val, msgAndArgs)
 }
 
 // JSONEq mocks the JSONEq method of the Verifier

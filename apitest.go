@@ -240,7 +240,6 @@ func (a *APITest) Intercept(interceptor Intercept) *APITest {
 }
 
 // Verifier allows consumers to override the verification implementation.
-// By default testify is used to perform assertions
 func (a *APITest) Verifier(v Verifier) *APITest {
 	a.verifier = v
 	return a
@@ -801,7 +800,7 @@ func (r *Response) runTest() *http.Response {
 	}()
 
 	if a.verifier == nil {
-		a.verifier = newTestifyVerifier()
+		a.verifier = DefaultVerifier{}
 	}
 
 	a.assertMocks()
