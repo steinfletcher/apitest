@@ -83,7 +83,7 @@ func (a DefaultVerifier) colorize(message string) string {
 	if runtime.GOOS == "windows" || !a.ColorizeErrors {
 		return message
 	}
-	return "\033[0m" + message + "\033[31m"
+	return "\033[31m" + message + "\033[0m"
 }
 
 // Fail reports a failure
