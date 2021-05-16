@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/pmezard/go-difflib/difflib"
+	"github.com/steinfletcher/apitest/difflib"
 )
 
 // Transport wraps components used to observe and manipulate the real request and response objects
@@ -1172,7 +1172,7 @@ func diff(expected interface{}, actual interface{}) string {
 		FromDate: "",
 		ToFile:   "Actual",
 		ToDate:   "",
-		Context:  1,
+		Context:  2,
 	})
 
 	return "\n\nDiff:\n" + diff

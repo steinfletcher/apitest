@@ -19,7 +19,7 @@ func TestApiTest_ResponseBody(t *testing.T) {
 	apitest.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`{"id": "1234", "name": "Andy"}`))
 		w.WriteHeader(http.StatusOK)
-	}).ColorizeErrors().
+	}).
 		Get("/user/1234").
 		Expect(t).
 		Body(`{"id": "1234", "name": "Andy"}`).

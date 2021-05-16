@@ -32,7 +32,6 @@ type APITest struct {
 	debugEnabled             bool
 	mockResponseDelayEnabled bool
 	networkingEnabled        bool
-	colorizeErrors           bool
 	networkingHTTPClient     *http.Client
 	reporter                 ReportFormatter
 	verifier                 Verifier
@@ -127,12 +126,6 @@ func (a *APITest) EnableMockResponseDelay() *APITest {
 // Debug logs to the console the http wire representation of all http interactions that are intercepted by apitest. This includes the inbound request to the application under test, the response returned by the application and any interactions that are intercepted by the mock server.
 func (a *APITest) Debug() *APITest {
 	a.debugEnabled = true
-	return a
-}
-
-// ColorizeErrors configures the error reporter to show messages in red. Disabled on windows
-func (a *APITest) ColorizeErrors() *APITest {
-	a.colorizeErrors = true
 	return a
 }
 
@@ -807,7 +800,7 @@ func (r *Response) runTest() *http.Response {
 	}()
 
 	if a.verifier == nil {
-		a.verifier = DefaultVerifier{ColorizeErrors: a.colorizeErrors}
+		a.verifier = DefaultVerifier{}
 	}
 
 	a.assertMocks()
