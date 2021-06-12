@@ -46,6 +46,7 @@ type APITest struct {
 	mocks                    []*Mock
 	t                        TestingT
 	httpClient               *http.Client
+	httpRequest              *http.Request
 	transport                *Transport
 	meta                     map[string]interface{}
 	started                  time.Time
@@ -248,6 +249,12 @@ func (a *APITest) Verifier(v Verifier) *APITest {
 // Method is a builder method for setting the http method of the request
 func (a *APITest) Method(method string) *Request {
 	a.request.method = method
+	return a.request
+}
+
+// HttpRequest defines the native `http.Request`
+func (a *APITest) HttpRequest(req *http.Request) *Request {
+	a.httpRequest = req
 	return a.request
 }
 
@@ -878,6 +885,10 @@ func (a *APITest) serveHttp(res *httptest.ResponseRecorder, req *http.Request) {
 }
 
 func (a *APITest) buildRequest() *http.Request {
+	if a.httpRequest != nil {
+		return a.httpRequest
+	}
+
 	if len(a.request.formData) > 0 {
 		form := url.Values{}
 		for k := range a.request.formData {

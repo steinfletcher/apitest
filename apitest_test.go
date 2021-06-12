@@ -7,7 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
+	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -23,6 +25,30 @@ func TestApiTest_ResponseBody(t *testing.T) {
 		Get("/user/1234").
 		Expect(t).
 		Body(`{"id": "1234", "name": "Andy"}`).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestApiTest_HttpRequest(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		data, _ := ioutil.ReadAll(r.Body)
+		if string(data) != `hello` {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		if r.Header.Get("key") != "val" {
+			t.Fatal("expected header key=val")
+		}
+	})
+
+	request := httptest.NewRequest(http.MethodGet, "/hello", strings.NewReader("hello"))
+	request.Header.Set("key", "val")
+
+	apitest.Handler(handler).
+		HttpRequest(request).
+		Expect(t).
 		Status(http.StatusOK).
 		End()
 }
