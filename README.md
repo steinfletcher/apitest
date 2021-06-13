@@ -26,9 +26,13 @@ Please visit [https://apitest.dev](https://apitest.dev) for the latest documenta
 
 ## Installation
 
+## Demo 
+
 ```bash
 go get -u github.com/steinfletcher/apitest
 ```
+
+![animated gif](./apitest.gif)
 
 ## Examples
 
