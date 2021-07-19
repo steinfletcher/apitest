@@ -80,7 +80,7 @@ func TestApi(t *testing.T) {
 		Get("/user/1234").
 		Expect(t).
 		Body(`{"id": "1234", "name": "Tate"}`).
-		Status(http.StatusCreated).
+		Status(http.StatusOK).
 		End()
 }
 ```
