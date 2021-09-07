@@ -136,7 +136,7 @@ func TestApi(t *testing.T) {
 		Patch("/hello").
 		Expect(t).
 		Status(http.StatusOK).
-		Cookies(apitest.Cookie"ABC").Value("12345")).
+		Cookies(apitest.Cookie("ABC").Value("12345")).
 		CookiePresent("Session-Token").
 		CookieNotPresent("XXX").
 		Cookies(
