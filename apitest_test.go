@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"os"
+	"os/exec"
 	"reflect"
 	"strings"
 	"testing"
@@ -1137,6 +1139,115 @@ func TestApiTest_AddsUrlEncodedFormBody(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		End()
+}
+
+func TestApiTest_AddsMultipartFormData(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header["Content-Type"][0], "multipart/form-data") {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		err := r.ParseMultipartForm(2 << 32)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		expectedPostFormData := map[string][]string{
+			"name":     {"John"},
+			"age":      {"99"},
+			"children": {"Jack", "Ann"},
+			"pets":     {"Toby", "Henry", "Alice"},
+		}
+
+		for key := range expectedPostFormData {
+			if !reflect.DeepEqual(expectedPostFormData[key], r.MultipartForm.Value[key]) {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+
+		for _, exp := range []struct {
+			filename string
+			data     string
+		}{
+			{
+				filename: "response_body",
+				data:     `{"a": 12345}`,
+			},
+			{
+				filename: "mock_request_body",
+				data:     `{"bodyKey": "bodyVal"}`,
+			},
+		} {
+			for _, file := range r.MultipartForm.File[exp.filename] {
+				assert.Equal(t, exp.filename+".json", file.Filename)
+
+				f, err := file.Open()
+				if err != nil {
+					t.Fatal(err)
+				}
+				data, err := ioutil.ReadAll(f)
+				if err != nil {
+					t.Fatal(err)
+				}
+				assert.JSONEq(t, exp.data, string(data))
+			}
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
+
+	apitest.New().
+		Handler(handler).
+		Post("/hello").
+		MultipartFormData("name", "John").
+		MultipartFormData("age", "99").
+		MultipartFormData("children", "Jack").
+		MultipartFormData("children", "Ann").
+		MultipartFormData("pets", "Toby", "Henry", "Alice").
+		MultipartFile("request_body", "testdata/request_body.json", "testdata/request_body.json").
+		MultipartFile("mock_request_body", "testdata/mock_request_body.json").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestApiTest_CombineFormDataWithMultipart(t *testing.T) {
+	if os.Getenv("RUN_FATAL_TEST") == "FormData" {
+		apitest.New().
+			Post("/hello").
+			MultipartFormData("name", "John").
+			FormData("name", "John")
+		return
+	}
+	if os.Getenv("RUN_FATAL_TEST") == "File" {
+		apitest.New().
+			Post("/hello").
+			MultipartFile("file", "testdata/request_body.json").
+			FormData("name", "John")
+		return
+	}
+
+	tests := map[string]string{
+		"formdata_with_multiple_formdata": "FormData",
+		"formdata_with_multiple_file":     "File",
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			cmd := exec.Command(os.Args[0], "-test.run=TestApiTest_CombineFormDataWithMultipart")
+			cmd.Env = append(os.Environ(), "RUN_FATAL_TEST="+tt)
+			err := cmd.Run()
+			if e, ok := err.(*exec.ExitError); ok && !e.Success() {
+				return
+			}
+			t.Fatalf("process ran with err %v, want exit status 1", err)
+		})
+	}
 }
 
 func TestApiTest_ErrorIfMockInvocationsDoNotMatchTimes(t *testing.T) {
