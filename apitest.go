@@ -5,12 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/textproto"
 	"net/url"
+	"os"
+	"path/filepath"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -221,6 +225,8 @@ type Request struct {
 	queryCollection map[string][]string
 	headers         map[string][]string
 	formData        map[string][]string
+	multipartBody   *bytes.Buffer
+	multipart       *multipart.Writer
 	cookies         []*Cookie
 	basicAuth       string
 	apiTest         *APITest
@@ -481,9 +487,69 @@ func (r *Request) BasicAuth(username, password string) *Request {
 // FormData is a builder method to set the body form data
 // Also sets the content type of the request to application/x-www-form-urlencoded
 func (r *Request) FormData(name string, values ...string) *Request {
+	defer r.checkCombineFormDataWithMultipart()
+
 	r.ContentType("application/x-www-form-urlencoded")
 	r.formData[name] = append(r.formData[name], values...)
 	return r
+}
+
+// MultipartFormData is a builder method to set the field in multipart form data
+// Also sets the content type of the request to multipart/form-data
+func (r *Request) MultipartFormData(name string, values ...string) *Request {
+	defer r.checkCombineFormDataWithMultipart()
+
+	r.setMultipartWriter()
+
+	for _, value := range values {
+		if err := r.multipart.WriteField(name, value); err != nil {
+			r.apiTest.t.Fatal(err)
+		}
+	}
+
+	return r
+}
+
+// MultipartFile is a builder method to set the file in multipart form data
+// Also sets the content type of the request to multipart/form-data
+func (r *Request) MultipartFile(name string, ff ...string) *Request {
+	defer r.checkCombineFormDataWithMultipart()
+
+	r.setMultipartWriter()
+
+	for _, f := range ff {
+		func() {
+			file, err := os.Open(f)
+			if err != nil {
+				r.apiTest.t.Fatal(err)
+			}
+			defer file.Close()
+
+			part, err := r.multipart.CreateFormFile(name, filepath.Base(file.Name()))
+			if err != nil {
+				r.apiTest.t.Fatal(err)
+			}
+
+			if _, err = io.Copy(part, file); err != nil {
+				r.apiTest.t.Fatal(err)
+			}
+		}()
+	}
+
+	return r
+}
+
+func (r *Request) setMultipartWriter() {
+	if r.multipart == nil {
+		r.multipartBody = &bytes.Buffer{}
+		r.multipart = multipart.NewWriter(r.multipartBody)
+	}
+}
+
+func (r *Request) checkCombineFormDataWithMultipart() {
+	if r.multipart != nil && len(r.formData) > 0 {
+		r.apiTest.t.Fatal("FormData (application/x-www-form-urlencoded) and MultiPartFormData(multipart/form-data) cannot be combined")
+	}
 }
 
 // Expect marks the request spec as complete and following code will define the expected response
@@ -896,7 +962,17 @@ func (a *APITest) buildRequest() *http.Request {
 				form.Add(k, value)
 			}
 		}
-		a.request.body = form.Encode()
+		a.request.Body(form.Encode())
+	}
+
+	if a.request.multipart != nil {
+		err := a.request.multipart.Close()
+		if err != nil {
+			a.request.apiTest.t.Fatal(err)
+		}
+
+		a.request.Header("Content-Type", a.request.multipart.FormDataContentType())
+		a.request.Body(a.request.multipartBody.String())
 	}
 
 	req, _ := http.NewRequest(a.request.method, a.request.url, bytes.NewBufferString(a.request.body))

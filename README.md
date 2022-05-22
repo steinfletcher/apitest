@@ -308,6 +308,20 @@ func TestApi(t *testing.T) {
 }
 ```
 
+#### Provide a multipart/form-data
+
+```go
+func TestApi(t *testing.T) {
+	apitest.Handler(handler).
+		Post("/hello").
+		MultipartFormData("a", "1", "2").
+		MultipartFile("file", "path/to/some.file1", "path/to/some.file2").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+```
+
 #### Capture the request and response data
 
 ```go
