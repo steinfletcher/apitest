@@ -20,6 +20,8 @@ Join the conversation at #apitest on [https://gophers.slack.com](https://gophers
 
 <span>Logo by <a target="_blank" href="https://twitter.com/egonelbre">@egonelbre</a><span>
 
+Note: The API for apitest is stable and complete - despite the lack of activity this repository is still actively maintained. Any new issues will be addressed. Feature requests will be considered.
+
 ## Documentation
 
 Please visit [https://apitest.dev](https://apitest.dev) for the latest documentation.
