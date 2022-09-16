@@ -11,7 +11,7 @@ jobs:
   test:
     <<: *defaults
     docker:
-      - image: circleci/golang:1.14
+      - image: cimg/go:1.18
 
     steps:
       - checkout
@@ -26,7 +26,7 @@ jobs:
   upload-coverage:
     <<: *defaults
     docker:
-      - image: circleci/golang:1.14
+      - image: cimg/go:1.18
     steps:
       - attach_workspace:
          at: /tmp/persist_to_workspace

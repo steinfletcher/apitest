@@ -11,21 +11,6 @@ import (
 	"testing"
 )
 
-func TestSequenceDiagramFormatter_Format(t *testing.T) {
-	mockFS := &FS{}
-	formatter := SequenceDiagramFormatter{storagePath: ".sequence", fs: mockFS}
-
-	formatter.Format(aRecorder())
-
-	assert.Equal(t, ".sequence", mockFS.CapturedMkdirAllPath)
-	assert.True(t, strings.HasSuffix(mockFS.CapturedCreateName, "html"))
-
-	expected, _ := ioutil.ReadFile("testdata/sequence_diagram_snapshot.html")
-	actual, _ := ioutil.ReadFile(mockFS.CapturedCreateFile)
-
-	assert.Equal(t, string(expected), string(actual))
-}
-
 func TestDiagram_BadgeCSSClass(t *testing.T) {
 	tests := []struct {
 		status int
