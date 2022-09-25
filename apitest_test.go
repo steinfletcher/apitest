@@ -799,6 +799,31 @@ func TestApiTest_CustomAssert(t *testing.T) {
 		End()
 }
 
+func TestApiTest_VerifierCapturesTheTestMessage(t *testing.T) {
+	verifier := mocks.NewVerifier()
+	verifier.EqualFn = func(t apitest.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+		if expected == http.StatusOK {
+			return true
+		}
+		args := msgAndArgs[0].(interface{}).([]interface{})
+		assert.Equal(t, 2, len(args))
+		assert.Equal(t, "expected header 'Abc' not present in response", args[0].(string))
+		return true
+	}
+
+	apitest.New("the test case name").
+		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte(`{"id": "1234", "name": "Andy"}`))
+			w.WriteHeader(http.StatusOK)
+		}).
+		Verifier(verifier).
+		Get("/user/1234").
+		Expect(t).
+		Status(http.StatusOK).
+		Header("Abc", "1234").
+		End()
+}
+
 func TestApiTest_Report(t *testing.T) {
 	getUser := apitest.NewMock().
 		Get("http://localhost:8080").
