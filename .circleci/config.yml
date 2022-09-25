@@ -23,34 +23,9 @@ jobs:
           paths:
             - .
 
-  upload-coverage:
-    <<: *defaults
-    docker:
-      - image: cimg/go:1.18
-    steps:
-      - attach_workspace:
-         at: /tmp/persist_to_workspace
-      - run:
-          name: install tools
-          command: |
-            go get -u -v github.com/axw/gocov/gocov
-            go get -u -v github.com/mattn/goveralls
-      - run:
-          name: generate coverage report
-          command: |
-            goveralls -coverprofile=coverage.out -service=circle-ci -repotoken $COVERALLS_TOKEN
-
 workflows:
   version: 2
 
   pipeline:
     jobs:
       - test
-      - upload-coverage:
-          filters:
-            branches:
-              only: master
-            tags:
-              ignore: /.*/
-          requires:
-            - test

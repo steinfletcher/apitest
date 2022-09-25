@@ -4,7 +4,6 @@
 
 <p align="center">
 <a href="https://godoc.org/github.com/steinfletcher/apitest"><img src="https://godoc.org/github.com/steinfletcher/apitest?status.svg" alt="Godoc" /></a>
-<a href="https://coveralls.io/github/steinfletcher/apitest?branch=master&service=github"><img src="https://coveralls.io/repos/github/steinfletcher/apitest/badge.svg?branch=master" alt="Coverage Status"/></a>
 <a href="https://circleci.com/gh/steinfletcher/apitest"><img src="https://circleci.com/gh/steinfletcher/apitest.svg?style=shield" alt="Build Status" /></a>
 <a href="https://goreportcard.com/report/github.com/steinfletcher/apitest"><img src="https://goreportcard.com/badge/github.com/steinfletcher/apitest" alt="Go Report Card" /></a>
 <a href="https://github.com/avelino/awesome-go/#testing"><img src="https://awesome.re/mentioned-badge.svg" alt="Mentioned in Awesome Go" /></a>
