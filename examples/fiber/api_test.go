@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/gofiber/fiber"
+	"github.com/gofiber/fiber/v2"
 	"github.com/steinfletcher/apitest"
 	jsonpath "github.com/steinfletcher/apitest-jsonpath"
 )
@@ -55,6 +55,7 @@ func FiberToHandlerFunc(app *fiber.App) http.HandlerFunc {
 		if err != nil {
 			panic(err)
 		}
+		defer resp.Body.Close()
 
 		// copy headers
 		for k, vv := range resp.Header {
@@ -64,6 +65,7 @@ func FiberToHandlerFunc(app *fiber.App) http.HandlerFunc {
 		}
 		w.WriteHeader(resp.StatusCode)
 
+		// copy body
 		if _, err := io.Copy(w, resp.Body); err != nil {
 			panic(err)
 		}
