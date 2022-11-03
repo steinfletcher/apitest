@@ -486,6 +486,7 @@ func (r *Request) BasicAuth(username, password string) *Request {
 	return r
 }
 
+// WithContext is a builder method to set a context on the request
 func (r *Request) WithContext(ctx context.Context) *Request {
 	r.context = ctx
 	return r
