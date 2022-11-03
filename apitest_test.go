@@ -428,6 +428,51 @@ func TestApiTest_AddsBasicAuthToRequest(t *testing.T) {
 		End()
 }
 
+func TestApiTest_AddsTimedOutContextToRequest(t *testing.T) {
+
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(time.Nanosecond * 10)
+		if r.Context().Err() == context.DeadlineExceeded {
+			w.WriteHeader(http.StatusRequestTimeout)
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Nanosecond*1)
+	defer cancel()
+
+	apitest.New("test with timed out context").
+		Handler(handler).
+		Get("/hello").
+		WithContext(timeoutCtx).
+		Expect(t).
+		Status(http.StatusRequestTimeout).
+		End()
+}
+
+func TestApiTest_AddsCancelledContextToRequest(t *testing.T) {
+
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		if r.Context().Err() == context.Canceled {
+			w.WriteHeader(http.StatusNoContent)
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	cancelCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	apitest.New("test with canceled context").
+		Handler(handler).
+		Get("/hello").
+		WithContext(cancelCtx).
+		Expect(t).
+		Status(http.StatusNoContent).
+		End()
+}
+
 func TestApiTest_GraphQLQuery(t *testing.T) {
 	apitest.New().
 		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
