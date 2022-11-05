@@ -2,6 +2,7 @@ package apitest
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
@@ -229,6 +230,7 @@ type Request struct {
 	multipart       *multipart.Writer
 	cookies         []*Cookie
 	basicAuth       string
+	context         context.Context
 	apiTest         *APITest
 }
 
@@ -481,6 +483,12 @@ func (r *Request) Cookies(c ...*Cookie) *Request {
 // BasicAuth is a builder method to sets basic auth on the request.
 func (r *Request) BasicAuth(username, password string) *Request {
 	r.basicAuth = fmt.Sprintf("%s:%s", username, password)
+	return r
+}
+
+// WithContext is a builder method to set a context on the request
+func (r *Request) WithContext(ctx context.Context) *Request {
+	r.context = ctx
 	return r
 }
 
@@ -976,6 +984,10 @@ func (a *APITest) buildRequest() *http.Request {
 	}
 
 	req, _ := http.NewRequest(a.request.method, a.request.url, bytes.NewBufferString(a.request.body))
+	if a.request.context != nil {
+		req = req.WithContext(a.request.context)
+	}
+
 	req.URL.RawQuery = formatQuery(a.request)
 	req.Host = SystemUnderTestDefaultName
 	if a.networkingEnabled {

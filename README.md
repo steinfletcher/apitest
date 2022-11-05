@@ -237,6 +237,19 @@ func TestApi(t *testing.T) {
 }
 ```
 
+#### Pass a custom context to the request
+
+```go
+func TestApi(t *testing.T) {
+	apitest.Handler(handler).
+		Get("/hello").
+		WithContext(context.TODO()).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+```
+
 #### Provide cookies in the request
 
 ```go
