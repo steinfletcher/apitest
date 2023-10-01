@@ -3,7 +3,6 @@ package apitest
 import (
 	"html/template"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -30,7 +29,7 @@ func TestDiagram_BadgeCSSClass(t *testing.T) {
 }
 
 func TestFormatBodyContent_ShouldReplaceBody(t *testing.T) {
-	stream := ioutil.NopCloser(strings.NewReader("lol"))
+	stream := io.NopCloser(strings.NewReader("lol"))
 
 	val, err := formatBodyContent(stream, func(replacementBody io.ReadCloser) {
 		stream = replacementBody
@@ -150,7 +149,7 @@ func TestNewHttpResponseLogEntry_JSON(t *testing.T) {
 		ProtoMinor:    1,
 		StatusCode:    http.StatusOK,
 		ContentLength: 21,
-		Body:          ioutil.NopCloser(strings.NewReader(`{"a": 12345}`)),
+		Body:          io.NopCloser(strings.NewReader(`{"a": 12345}`)),
 	}
 
 	logEntry, err := newHTTPResponseLogEntry(response)
@@ -167,7 +166,7 @@ func TestNewHttpResponseLogEntry_PlainText(t *testing.T) {
 		ProtoMinor:    1,
 		StatusCode:    http.StatusOK,
 		ContentLength: 21,
-		Body:          ioutil.NopCloser(strings.NewReader(`abcdef`)),
+		Body:          io.NopCloser(strings.NewReader(`abcdef`)),
 	}
 
 	logEntry, err := newHTTPResponseLogEntry(response)
@@ -205,7 +204,7 @@ type FS struct {
 
 func (m *FS) create(name string) (*os.File, error) {
 	m.CapturedCreateName = name
-	file, err := ioutil.TempFile("/tmp", "apitest")
+	file, err := os.CreateTemp("/tmp", "apitest")
 	if err != nil {
 		panic(err)
 	}

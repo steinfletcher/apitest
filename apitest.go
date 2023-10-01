@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -354,7 +353,7 @@ func (r *Request) Bodyf(format string, args ...interface{}) *Request {
 
 // BodyFromFile is a builder method to set the request body
 func (r *Request) BodyFromFile(f string) *Request {
-	b, err := ioutil.ReadFile(f)
+	b, err := os.ReadFile(f)
 	if err != nil {
 		r.apiTest.t.Fatal(err)
 	}
@@ -597,7 +596,7 @@ func (r *Response) Bodyf(format string, args ...interface{}) *Response {
 
 // BodyFromFile reads the given file and uses the content as the expected response body
 func (r *Response) BodyFromFile(f string) *Response {
-	b, err := ioutil.ReadFile(f)
+	b, err := os.ReadFile(f)
 	if err != nil {
 		r.apiTest.t.Fatal(err)
 	}
@@ -724,7 +723,7 @@ func (r Result) UnmatchedMocks() []UnmatchedMock {
 
 // JSON unmarshal the result response body to a valid struct
 func (r Result) JSON(t interface{}) {
-	data, err := ioutil.ReadAll(r.Response.Body)
+	data, err := io.ReadAll(r.Response.Body)
 	if err != nil {
 		panic(err)
 	}
@@ -1058,8 +1057,8 @@ func (a *APITest) assertResponse(res *http.Response) {
 	if a.response.body != "" {
 		var resBodyBytes []byte
 		if res.Body != nil {
-			resBodyBytes, _ = ioutil.ReadAll(res.Body)
-			res.Body = ioutil.NopCloser(bytes.NewBuffer(resBodyBytes))
+			resBodyBytes, _ = io.ReadAll(res.Body)
+			res.Body = io.NopCloser(bytes.NewBuffer(resBodyBytes))
 		}
 		if json.Valid([]byte(a.response.body)) {
 			a.verifier.JSONEq(a.t, a.response.body, string(resBodyBytes), failureMessageArgs{Name: a.name})
@@ -1158,15 +1157,15 @@ func copyHttpResponse(response *http.Response) *http.Response {
 
 	var resBodyBytes []byte
 	if response.Body != nil {
-		resBodyBytes, _ = ioutil.ReadAll(response.Body)
-		response.Body = ioutil.NopCloser(bytes.NewBuffer(resBodyBytes))
+		resBodyBytes, _ = io.ReadAll(response.Body)
+		response.Body = io.NopCloser(bytes.NewBuffer(resBodyBytes))
 	}
 
 	resCopy := &http.Response{
 		Header:        map[string][]string{},
 		StatusCode:    response.StatusCode,
 		Status:        response.Status,
-		Body:          ioutil.NopCloser(bytes.NewBuffer(resBodyBytes)),
+		Body:          io.NopCloser(bytes.NewBuffer(resBodyBytes)),
 		Proto:         response.Proto,
 		ProtoMinor:    response.ProtoMinor,
 		ProtoMajor:    response.ProtoMajor,
@@ -1193,9 +1192,9 @@ func copyHttpRequest(request *http.Request) *http.Request {
 	resCopy = resCopy.WithContext(request.Context())
 
 	if request.Body != nil {
-		bodyBytes, _ := ioutil.ReadAll(request.Body)
-		resCopy.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
-		request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+		bodyBytes, _ := io.ReadAll(request.Body)
+		resCopy.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	}
 
 	if request.URL != nil {

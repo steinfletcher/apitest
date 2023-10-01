@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -972,7 +972,7 @@ func TestMocks_Response_SetsTextPlainIfNoContentTypeSet(t *testing.T) {
 
 	response := buildResponseFromMock(mockResponse)
 
-	bytes, _ := ioutil.ReadAll(response.Body)
+	bytes, _ := io.ReadAll(response.Body)
 	assert.Equal(t, string(bytes), "abcdef")
 	assert.Equal(t, "text/plain", response.Header.Get("Content-Type"))
 }
@@ -985,7 +985,7 @@ func TestMocks_Response_SetsTheBodyAsJSON(t *testing.T) {
 
 	response := buildResponseFromMock(mockResponse)
 
-	bytes, _ := ioutil.ReadAll(response.Body)
+	bytes, _ := io.ReadAll(response.Body)
 	assert.Equal(t, string(bytes), `{"a": 123}`)
 	assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
 }
@@ -998,7 +998,7 @@ func TestMocks_ResponseJSON(t *testing.T) {
 
 	response := buildResponseFromMock(mockResponse)
 
-	bytes, _ := ioutil.ReadAll(response.Body)
+	bytes, _ := io.ReadAll(response.Body)
 	assert.Equal(t, string(bytes), `{"a":123}`)
 	assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
 }
@@ -1012,7 +1012,7 @@ func TestMocks_Response_SetsTheBodyAsOther(t *testing.T) {
 
 	response := buildResponseFromMock(mockResponse)
 
-	bytes, _ := ioutil.ReadAll(response.Body)
+	bytes, _ := io.ReadAll(response.Body)
 	assert.Equal(t, string(bytes), `<html>123</html>`)
 	assert.Equal(t, "text/html", response.Header.Get("Content-Type"))
 }
@@ -1093,7 +1093,7 @@ func TestMocks_Standalone_WithContainer(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
-	data, err := ioutil.ReadAll(getRes.Body)
+	data, err := io.ReadAll(getRes.Body)
 
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"a": 12345}`, string(data))
@@ -1327,7 +1327,7 @@ func getUserData() []byte {
 	if err != nil {
 		panic(err)
 	}
-	bytes, err := ioutil.ReadAll(res.Body)
+	bytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		panic(err)
 	}
@@ -1384,7 +1384,7 @@ func NewHttpGet(cli *http.Client) HttpGet {
 			panic(err)
 		}
 
-		bytes, err := ioutil.ReadAll(res.Body)
+		bytes, err := io.ReadAll(res.Body)
 		if err != nil {
 			panic(err)
 		}

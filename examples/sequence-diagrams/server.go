@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 
@@ -73,7 +73,7 @@ func get(path string, response interface{}) {
 		panic(fmt.Sprintf("unexpected status code=%d", res.StatusCode))
 	}
 
-	bytes, err := ioutil.ReadAll(res.Body)
+	bytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		panic(err)
 	}

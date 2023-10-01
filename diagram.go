@@ -7,7 +7,6 @@ import (
 	"fmt"
 	htmlTemplate "html/template"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"os"
@@ -266,12 +265,12 @@ func formatBodyContent(bodyReadCloser io.ReadCloser, replaceBody func(replacemen
 		return "", nil
 	}
 
-	body, err := ioutil.ReadAll(bodyReadCloser)
+	body, err := io.ReadAll(bodyReadCloser)
 	if err != nil {
 		return "", err
 	}
 
-	replaceBody(ioutil.NopCloser(bytes.NewReader(body)))
+	replaceBody(io.NopCloser(bytes.NewReader(body)))
 
 	buf := new(bytes.Buffer)
 	if json.Valid(body) {
