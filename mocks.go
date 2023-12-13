@@ -475,7 +475,7 @@ func (r *MockRequest) Body(b string) *MockRequest {
 
 // BodyRegexp configures the mock request to match the given body using the regexp matcher
 func (r *MockRequest) BodyRegexp(b string) *MockRequest {
-	r.body = b
+	r.bodyRegexp = b
 	return r
 }
 
