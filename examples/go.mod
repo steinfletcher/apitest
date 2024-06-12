@@ -21,7 +21,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/steinfletcher/apitest v1.4.8
 	github.com/steinfletcher/apitest-jsonpath v1.5.1
-	github.com/vektah/gqlparser/v2 v2.0.1
+	github.com/vektah/gqlparser/v2 v2.5.14
 )
 
 require (
@@ -30,7 +30,7 @@ require (
 	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
 	github.com/Shopify/goreferrer v0.0.0-20181106222321-ec9c9a553398 // indirect
-	github.com/agnivade/levenshtein v1.0.3 // indirect
+	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/aymerick/raymond v2.0.2+incompatible // indirect
@@ -94,7 +94,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/protobuf v1.23.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
 go 1.18
