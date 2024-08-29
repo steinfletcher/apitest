@@ -895,7 +895,7 @@ func (r *Response) runTest() *http.Response {
 
 func (a *APITest) assertMocks() {
 	for _, mock := range a.mocks {
-		if mock.isUsed == false && mock.timesSet {
+		if mock.anyTimesSet == false && mock.isUsed == false && mock.timesSet {
 			a.verifier.Fail(a.t, "mock was not invoked expected times", failureMessageArgs{Name: a.name})
 		}
 	}

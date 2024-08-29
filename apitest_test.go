@@ -1373,6 +1373,31 @@ func TestApiTest_MatchesTimes(t *testing.T) {
 	assert.Equal(t, 0, len(res.UnmatchedMocks()))
 }
 
+func TestApiTest_MatchesAnyTimes(t *testing.T) {
+	getUser := apitest.NewMock().
+		Get("http://localhost:8080").
+		RespondWith().
+		Status(http.StatusOK).
+		AnyTimes().
+		End()
+
+	res := apitest.New().
+		Mocks(getUser).
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Call getUserData() many times
+			_ = getUserData()
+			_ = getUserData()
+			_ = getUserData()
+			w.WriteHeader(http.StatusOK)
+		})).
+		Get("/").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	assert.Equal(t, 0, len(res.UnmatchedMocks()))
+}
+
 type RecorderCaptor struct {
 	capturedRecorder apitest.Recorder
 }
