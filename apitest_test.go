@@ -1378,6 +1378,7 @@ func TestApiTest_MatchesAnyTimes(t *testing.T) {
 		Get("http://localhost:8080").
 		RespondWith().
 		Status(http.StatusOK).
+		Times(2).
 		AnyTimes().
 		End()
 

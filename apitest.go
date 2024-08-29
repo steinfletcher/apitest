@@ -169,6 +169,11 @@ func (a *APITest) HandlerFunc(handlerFunc http.HandlerFunc) *APITest {
 func (a *APITest) Mocks(mocks ...*Mock) *APITest {
 	var m []*Mock
 	for i := range mocks {
+		if mocks[i].anyTimesSet {
+			m = append(m, mocks[i])
+			continue
+		}
+
 		times := mocks[i].response.mock.times
 		for j := 1; j <= times; j++ {
 			mockCpy := mocks[i].copy()

@@ -189,6 +189,20 @@ func TestApi(t *testing.T) {
 		End()
 }
 ```
+It is possible to configure the mock for using `AnyTimes` feature,  it allows a mock to be invoked any number of times 
+without failing the asserts if it is not used the expected number of times. 
+
+This is very useful in scenarios where the exact number of invocations is not known or not important.
+
+```go
+var getUser := apitest.NewMock().
+    Get("http://localhost:8080").
+    RespondWith().
+    Status(http.StatusOK).
+    AnyTimes().
+    End()
+```
+Note: The `AnyTimes` method can be combined with other methods such as `Times`, but if `AnyTimes` is set, the `Times` setting will have no effect.
 
 #### Generating sequence diagrams from tests
 

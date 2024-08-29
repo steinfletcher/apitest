@@ -710,7 +710,7 @@ func (r *MockResponse) FixedDelay(delay int64) *MockResponse {
 	return r
 }
 
-// Times respond the given number of times
+// Times respond the given number of times, if AnyTimes is set this has no effect
 func (r *MockResponse) Times(times int) *MockResponse {
 	r.mock.times = times
 	r.mock.timesSet = true
