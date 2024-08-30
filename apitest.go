@@ -169,6 +169,11 @@ func (a *APITest) HandlerFunc(handlerFunc http.HandlerFunc) *APITest {
 func (a *APITest) Mocks(mocks ...*Mock) *APITest {
 	var m []*Mock
 	for i := range mocks {
+		if mocks[i].anyTimesSet {
+			m = append(m, mocks[i])
+			continue
+		}
+
 		times := mocks[i].response.mock.times
 		for j := 1; j <= times; j++ {
 			mockCpy := mocks[i].copy()
@@ -895,7 +900,7 @@ func (r *Response) runTest() *http.Response {
 
 func (a *APITest) assertMocks() {
 	for _, mock := range a.mocks {
-		if mock.isUsed == false && mock.timesSet {
+		if mock.anyTimesSet == false && mock.isUsed == false && mock.timesSet {
 			a.verifier.Fail(a.t, "mock was not invoked expected times", failureMessageArgs{Name: a.name})
 		}
 	}

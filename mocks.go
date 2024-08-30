@@ -227,6 +227,7 @@ type Mock struct {
 	debugStandalone bool
 	times           int
 	timesSet        bool
+	anyTimesSet     bool
 }
 
 // Matches checks whether the given request matches the mock
@@ -454,7 +455,7 @@ func matches(req *http.Request, mocks []*Mock) (*MockResponse, error) {
 	mockError := newUnmatchedMockError()
 	for mockNumber, mock := range mocks {
 		mock.m.Lock() // lock is for isUsed when matches is called concurrently by RoundTripper
-		if mock.isUsed {
+		if mock.isUsed && mock.anyTimesSet == false {
 			mock.m.Unlock()
 			continue
 		}
@@ -736,13 +737,19 @@ func (r *MockResponse) FixedDelay(delay int64) *MockResponse {
 	return r
 }
 
-// Times respond the given number of times
+// Times respond the given number of times, if AnyTimes is set this has no effect
 func (r *MockResponse) Times(times int) *MockResponse {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	r.mock.times = times
 	r.mock.timesSet = true
+	return r
+}
+
+// AnyTimes respond any number of times
+func (r *MockResponse) AnyTimes() *MockResponse {
+	r.mock.anyTimesSet = true
 	return r
 }
 
