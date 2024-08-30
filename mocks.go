@@ -249,8 +249,7 @@ func (m *Mock) copy() *Mock {
 	req := *m.request
 	newMock.request = &req
 
-	res := *m.response
-	newMock.response = &res
+	newMock.response = m.response.deepCopy()
 
 	return &newMock
 }
@@ -294,6 +293,31 @@ type MockResponse struct {
 	statusCode       int
 	fixedDelayMillis int64
 	mu               sync.RWMutex // Add a mutex for thread-safe access
+}
+
+func (r *MockResponse) deepCopy() *MockResponse {
+	newResponse := &MockResponse{
+		timeout:          r.timeout,
+		headers:          make(map[string][]string),
+		cookies:          make([]*Cookie, len(r.cookies)),
+		body:             r.body,
+		statusCode:       r.statusCode,
+		fixedDelayMillis: r.fixedDelayMillis,
+		mu:               sync.RWMutex{},
+	}
+
+	for k, v := range r.headers {
+		newHeader := make([]string, len(v))
+		copy(newHeader, v)
+		newResponse.headers[k] = newHeader
+	}
+
+	for i, cookie := range r.cookies {
+		newCookie := *cookie
+		newResponse.cookies[i] = &newCookie
+	}
+
+	return newResponse
 }
 
 // StandaloneMocks for using mocks outside of API tests context
