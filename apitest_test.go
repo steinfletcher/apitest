@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
@@ -13,6 +14,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"github.com/steinfletcher/apitest"
@@ -1280,6 +1282,99 @@ func TestApiTest_AddsMultipartFormData(t *testing.T) {
 		MultipartFormData("pets", "Toby", "Henry", "Alice").
 		MultipartFile("request_body", "testdata/request_body.json", "testdata/request_body.json").
 		MultipartFile("mock_request_body", "testdata/mock_request_body.json").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestApiTest_AddsMultipartFormDataWithCustomFS(t *testing.T) {
+	handler := http.NewServeMux()
+
+	inMemFS := fstest.MapFS{
+		"audio.wav": &fstest.MapFile{
+			Data:    []byte{19, 2, 123, 12, 35, 1},
+			Mode:    fs.FileMode(0644),
+			ModTime: time.Now(),
+		},
+		"audio.mp3": &fstest.MapFile{
+			Data:    []byte{21, 13, 88, 123, 9, 8},
+			Mode:    fs.FileMode(0644),
+			ModTime: time.Now(),
+		},
+	}
+
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header["Content-Type"][0], "multipart/form-data") {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		err := r.ParseMultipartForm(2 << 32)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		expectedPostFormData := map[string][]string{
+			"name":     {"John"},
+			"age":      {"99"},
+			"children": {"Jack", "Ann"},
+			"pets":     {"Toby", "Henry", "Alice"},
+		}
+
+		for key := range expectedPostFormData {
+			if !reflect.DeepEqual(expectedPostFormData[key], r.MultipartForm.Value[key]) {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+
+		for _, exp := range []struct {
+			formName  string
+			fileNames []string
+		}{
+			{
+				formName:  "audio1",
+				fileNames: []string{"audio.wav", "audio.mp3"},
+			},
+			{
+				formName:  "audio2",
+				fileNames: []string{"audio.mp3"},
+			},
+		} {
+			formFiles := r.MultipartForm.File[exp.formName]
+			assert.Equal(t, len(exp.fileNames), len(formFiles), "Number of files do not match")
+			for i, fileName := range exp.fileNames {
+				expFile := inMemFS[fileName]
+				formFile := formFiles[i]
+
+				assert.Equal(t, fileName, formFile.Filename, "File names do not match")
+				f, err := formFile.Open()
+				if err != nil {
+					t.Fatal(err)
+				}
+				data, err := ioutil.ReadAll(f)
+				if err != nil {
+					t.Fatal(err)
+				}
+				assert.Equal(t, expFile.Data, data)
+			}
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
+
+	apitest.New().
+		UseFS(inMemFS).
+		Handler(handler).
+		Post("/hello").
+		MultipartFormData("name", "John").
+		MultipartFormData("age", "99").
+		MultipartFormData("children", "Jack").
+		MultipartFormData("children", "Ann").
+		MultipartFormData("pets", "Toby", "Henry", "Alice").
+		MultipartFile("audio1", "audio.wav", "audio.mp3").
+		MultipartFile("audio2", "audio.mp3").
 		Expect(t).
 		Status(http.StatusOK).
 		End()

@@ -350,6 +350,35 @@ func TestApi(t *testing.T) {
 }
 ```
 
+#### Provide a multipart/form-data with custom filesystem
+
+```go
+inMemFS := fstest.MapFS{
+	"audio.wav": &fstest.MapFile{
+		Data:    []byte{19,2,123,12,35,1},
+		Mode:    fs.FileMode(0644),
+		ModTime: time.Now(),
+	},
+	"audio.mp3": &fstest.MapFile{
+		Data:    []byte{21,13,88,123,9,8},
+		Mode:    fs.FileMode(0644),
+		ModTime: time.Now(),
+	},
+}
+
+func TestApi(t *testing.T) {
+	apitest.Handler(handler).
+		UseFS(inMemFS).
+		Post("/hello").
+		MultipartFormData("a", "1", "2").
+		MultipartFile("file", "audio.wav", "audio.mp3").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+```
+
+
 #### Capture the request and response data
 
 ```go
