@@ -43,6 +43,7 @@ type APITest struct {
 	recorder                 *Recorder
 	handler                  http.Handler
 	name                     string
+	host                     string
 	request                  *Request
 	response                 *Response
 	observers                []Observe
@@ -245,6 +246,12 @@ type Intercept func(*http.Request)
 type pair struct {
 	l string
 	r string
+}
+
+// Host is a builder method for explicitly setting the host
+func (a *APITest) Host(host string) *APITest {
+	a.host = host
+	return a
 }
 
 // Intercept is a builder method for setting the request interceptor
@@ -684,7 +691,7 @@ func (r *Response) End() Result {
 	defer func() {
 		if apiTest.debugEnabled {
 			apiTest.finished = time.Now()
-			fmt.Println(fmt.Sprintf("Duration: %s\n", apiTest.finished.Sub(apiTest.started)))
+			fmt.Printf("Duration: %s\n", apiTest.finished.Sub(apiTest.started))
 		}
 	}()
 
@@ -702,7 +709,7 @@ func (r *Response) End() Result {
 
 	var unmatchedMocks []UnmatchedMock
 	for _, m := range r.apiTest.mocks {
-		if m.isUsed == false {
+		if !m.isUsed {
 			unmatchedMocks = append(unmatchedMocks, UnmatchedMock{
 				URL: *m.request.url,
 			})
@@ -995,6 +1002,10 @@ func (a *APITest) buildRequest() *http.Request {
 
 	req.URL.RawQuery = formatQuery(a.request)
 	req.Host = SystemUnderTestDefaultName
+	if len(a.host) > 0 {
+		req.Host = a.host
+	}
+
 	if a.networkingEnabled {
 		req.Host = req.URL.Host
 	}
