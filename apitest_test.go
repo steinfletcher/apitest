@@ -19,6 +19,39 @@ import (
 	"github.com/steinfletcher/apitest/mocks"
 )
 
+type subdomainContextType struct{}
+
+var subdomainContextKey = &subdomainContextType{}
+
+func ContextSubdomainInjector(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		host := strings.Split(r.Host, ".")
+		subdomain := host[0]
+		ctx := context.WithValue(r.Context(), subdomainContextKey, subdomain)
+		h.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func TestApiTest_CustomHost(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.Handle("/hello", ContextSubdomainInjector(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		subdomain := r.Context().Value(subdomainContextKey)
+		if subdomain != "demo" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})))
+
+	apitest.New().
+		Handler(handler).
+		Host("demo.example.com").
+		Get("/hello").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
 func TestApiTest_ResponseBody(t *testing.T) {
 	apitest.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`{"id": "1234", "name": "Andy"}`))
