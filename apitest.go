@@ -292,10 +292,9 @@ func (a *APITest) Getf(format string, args ...interface{}) *Request {
 
 // Post is a convenience method for setting the request as http.MethodPost
 func (a *APITest) Post(url string) *Request {
-	r := a.request
-	r.method = http.MethodPost
-	r.url = url
-	return r
+	a.request.method = http.MethodPost
+	a.request.url = url
+	return a.request
 }
 
 // Postf is a convenience method that adds formatting support to Post
@@ -305,10 +304,9 @@ func (a *APITest) Postf(format string, args ...interface{}) *Request {
 
 // Put is a convenience method for setting the request as http.MethodPut
 func (a *APITest) Put(url string) *Request {
-	r := a.request
-	r.method = http.MethodPut
-	r.url = url
-	return r
+	a.request.method = http.MethodPut
+	a.request.url = url
+	return a.request
 }
 
 // Putf is a convenience method that adds formatting support to Put
