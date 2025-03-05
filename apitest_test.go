@@ -19,6 +19,29 @@ import (
 	"github.com/steinfletcher/apitest/mocks"
 )
 
+func TestApiTest_CustomHost(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.Handle("/hello", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		host := strings.Split(r.Host, ".")
+		subdomain := host[0]
+
+		if subdomain != "demo" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	apitest.New().
+		Handler(handler).
+		Host("demo.example.com").
+		Get("/hello").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
 func TestApiTest_ResponseBody(t *testing.T) {
 	apitest.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`{"id": "1234", "name": "Andy"}`))

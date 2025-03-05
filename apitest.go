@@ -43,6 +43,7 @@ type APITest struct {
 	recorder                 *Recorder
 	handler                  http.Handler
 	name                     string
+	host                     string
 	request                  *Request
 	response                 *Response
 	observers                []Observe
@@ -247,6 +248,12 @@ type pair struct {
 	r string
 }
 
+// Host is a builder method for explicitly setting the host
+func (a *APITest) Host(host string) *APITest {
+	a.host = host
+	return a
+}
+
 // Intercept is a builder method for setting the request interceptor
 func (a *APITest) Intercept(interceptor Intercept) *APITest {
 	a.request.interceptor = interceptor
@@ -285,10 +292,9 @@ func (a *APITest) Getf(format string, args ...interface{}) *Request {
 
 // Post is a convenience method for setting the request as http.MethodPost
 func (a *APITest) Post(url string) *Request {
-	r := a.request
-	r.method = http.MethodPost
-	r.url = url
-	return r
+	a.request.method = http.MethodPost
+	a.request.url = url
+	return a.request
 }
 
 // Postf is a convenience method that adds formatting support to Post
@@ -298,10 +304,9 @@ func (a *APITest) Postf(format string, args ...interface{}) *Request {
 
 // Put is a convenience method for setting the request as http.MethodPut
 func (a *APITest) Put(url string) *Request {
-	r := a.request
-	r.method = http.MethodPut
-	r.url = url
-	return r
+	a.request.method = http.MethodPut
+	a.request.url = url
+	return a.request
 }
 
 // Putf is a convenience method that adds formatting support to Put
@@ -684,7 +689,7 @@ func (r *Response) End() Result {
 	defer func() {
 		if apiTest.debugEnabled {
 			apiTest.finished = time.Now()
-			fmt.Println(fmt.Sprintf("Duration: %s\n", apiTest.finished.Sub(apiTest.started)))
+			fmt.Printf("Duration: %s\n", apiTest.finished.Sub(apiTest.started))
 		}
 	}()
 
@@ -702,7 +707,7 @@ func (r *Response) End() Result {
 
 	var unmatchedMocks []UnmatchedMock
 	for _, m := range r.apiTest.mocks {
-		if m.isUsed == false {
+		if !m.isUsed {
 			unmatchedMocks = append(unmatchedMocks, UnmatchedMock{
 				URL: *m.request.url,
 			})
@@ -995,6 +1000,10 @@ func (a *APITest) buildRequest() *http.Request {
 
 	req.URL.RawQuery = formatQuery(a.request)
 	req.Host = SystemUnderTestDefaultName
+	if len(a.host) > 0 {
+		req.Host = a.host
+	}
+
 	if a.networkingEnabled {
 		req.Host = req.URL.Host
 	}
