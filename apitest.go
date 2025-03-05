@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 	"net/http/httputil"
 	"net/textproto"
 	"net/url"
-	"os"
 	"path/filepath"
 	"runtime/debug"
 	"sort"
@@ -57,6 +57,7 @@ type APITest struct {
 	meta                     map[string]interface{}
 	started                  time.Time
 	finished                 time.Time
+	fileSystem               fs.FS
 }
 
 // InboundRequest used to wrap the incoming request with a timestamp
@@ -99,6 +100,7 @@ func New(name ...string) *APITest {
 	if len(name) > 0 {
 		apiTest.name = name[0]
 	}
+	apiTest.fileSystem = OSFS{}
 
 	return apiTest
 }
@@ -220,6 +222,14 @@ func (a *APITest) Request() *Request {
 // Response returns the expected response
 func (a *APITest) Response() *Response {
 	return a.response
+}
+
+// Use filesystem allows you to change to a custom fs.FS filesystem that you can define (Used by Request.MultipartFile).
+// e.g: fstest.MapFS
+// Your os filesystem is used by default
+func (a *APITest) UseFS(fs fs.FS) *APITest {
+	a.fileSystem = fs
+	return a
 }
 
 // Request is the user defined request that will be invoked on the handler under test
@@ -537,13 +547,13 @@ func (r *Request) MultipartFile(name string, ff ...string) *Request {
 
 	for _, f := range ff {
 		func() {
-			file, err := os.Open(f)
+			file, err := r.apiTest.fileSystem.Open(f)
 			if err != nil {
 				r.apiTest.t.Fatal(err)
 			}
 			defer file.Close()
 
-			part, err := r.multipart.CreateFormFile(name, filepath.Base(file.Name()))
+			part, err := r.multipart.CreateFormFile(name, filepath.Base(f))
 			if err != nil {
 				r.apiTest.t.Fatal(err)
 			}
