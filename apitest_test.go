@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -60,7 +60,7 @@ func TestApiTest_ResponseBody(t *testing.T) {
 func TestApiTest_HttpRequest(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		data, _ := ioutil.ReadAll(r.Body)
+		data, _ := io.ReadAll(r.Body)
 		if string(data) != `hello` {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -84,7 +84,7 @@ func TestApiTest_HttpRequest(t *testing.T) {
 func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		data, _ := ioutil.ReadAll(r.Body)
+		data, _ := io.ReadAll(r.Body)
 		if string(data) != `{"a": 12345}` {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -108,7 +108,7 @@ func TestApiTest_AddsJSONBodyToRequest(t *testing.T) {
 func TestApiTest_AddsJSONBodyToRequest_SupportsFormatter(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		data, _ := ioutil.ReadAll(r.Body)
+		data, _ := io.ReadAll(r.Body)
 		if string(data) != `{"a": 12345}` {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -218,7 +218,7 @@ func TestApiTest_JSONBody(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			handler := http.NewServeMux()
 			handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-				data, _ := ioutil.ReadAll(r.Body)
+				data, _ := io.ReadAll(r.Body)
 				assert.JSONEq(t, `{"a": 12345}`, string(data))
 				if r.Header.Get("Content-Type") != "application/json" {
 					w.WriteHeader(http.StatusBadRequest)
@@ -241,7 +241,7 @@ func TestApiTest_JSONBody(t *testing.T) {
 func TestApiTest_AddsJSONBodyToRequestUsingJSON(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		data, _ := ioutil.ReadAll(r.Body)
+		data, _ := io.ReadAll(r.Body)
 		if string(data) != `{"a": 12345}` {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -265,7 +265,7 @@ func TestApiTest_AddsJSONBodyToRequestUsingJSON(t *testing.T) {
 func TestApiTest_AddsTextBodyToRequest(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		data, _ := ioutil.ReadAll(r.Body)
+		data, _ := io.ReadAll(r.Body)
 		if string(data) != `hello` {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -502,7 +502,7 @@ func TestApiTest_AddsCancelledContextToRequest(t *testing.T) {
 func TestApiTest_GraphQLQuery(t *testing.T) {
 	apitest.New().
 		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			bodyBytes, err := ioutil.ReadAll(r.Body)
+			bodyBytes, err := io.ReadAll(r.Body)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -528,7 +528,7 @@ func TestApiTest_GraphQLQuery(t *testing.T) {
 func TestApiTest_GraphQLRequest(t *testing.T) {
 	apitest.New().
 		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			bodyBytes, err := ioutil.ReadAll(r.Body)
+			bodyBytes, err := io.ReadAll(r.Body)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -608,7 +608,7 @@ func TestApiTest_MatchesJSONResponseBodyWithFormatter(t *testing.T) {
 func TestApiTest_MatchesJSONBodyFromFile(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		data, _ := ioutil.ReadAll(r.Body)
+		data, _ := io.ReadAll(r.Body)
 		assert.JSONEq(t, `{"a": 12345}`, string(data))
 
 		w.WriteHeader(http.StatusCreated)
@@ -632,7 +632,7 @@ func TestApiTest_MatchesJSONBodyFromFile(t *testing.T) {
 func TestApiTest_MatchesBodyFromFile(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		data, _ := ioutil.ReadAll(r.Body)
+		data, _ := io.ReadAll(r.Body)
 		assert.JSONEq(t, `{"a": 12345}`, string(data))
 
 		w.WriteHeader(http.StatusCreated)
@@ -1285,7 +1285,7 @@ func TestApiTest_AddsMultipartFormData(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				data, err := ioutil.ReadAll(f)
+				data, err := io.ReadAll(f)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -1377,7 +1377,7 @@ func TestApiTest_AddsMultipartFormDataWithCustomFS(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				data, err := ioutil.ReadAll(f)
+				data, err := io.ReadAll(f)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -1533,7 +1533,7 @@ func getUserData() []byte {
 	if err != nil {
 		panic(err)
 	}
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		panic(err)
 	}
@@ -1628,7 +1628,9 @@ func TestApiTest_RequestBuilderErrorsAreReportedByExpect(t *testing.T) {
 			expectedMessage: "unsupported type",
 		},
 		"multipart file that does not exist": {
-			build:           func(r *apitest.Request) *apitest.Request { return r.MultipartFile("file", "testdata/does-not-exist.json") },
+			build: func(r *apitest.Request) *apitest.Request {
+				return r.MultipartFile("file", "testdata/does-not-exist.json")
+			},
 			expectedMessage: "does-not-exist.json",
 		},
 		"form data combined with multipart": {

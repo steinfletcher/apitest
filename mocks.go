@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/textproto"
 	"net/url"
+	"os"
 	"reflect"
 	"regexp"
 	"sort"
@@ -203,7 +204,7 @@ func buildResponseFromMock(mockResponse *MockResponse) *http.Response {
 	}
 
 	return &http.Response{
-		Body:          ioutil.NopCloser(strings.NewReader(mockResponse.body)),
+		Body:          io.NopCloser(strings.NewReader(mockResponse.body)),
 		Header:        headers,
 		StatusCode:    mockResponse.statusCode,
 		ProtoMajor:    1,
@@ -514,7 +515,7 @@ func (r *MockRequest) Bodyf(format string, args ...interface{}) *MockRequest {
 
 // BodyFromFile configures the mock request to match the given body from a file
 func (r *MockRequest) BodyFromFile(f string) *MockRequest {
-	b, err := ioutil.ReadFile(f)
+	b, err := os.ReadFile(f)
 	if err != nil {
 		panic(err)
 	}
@@ -719,7 +720,7 @@ func (r *MockResponse) BodyFromFile(f string) *MockResponse {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	b, err := ioutil.ReadFile(f)
+	b, err := os.ReadFile(f)
 	if err != nil {
 		panic(err)
 	}
@@ -1087,7 +1088,7 @@ var bodyMatcher = func(req *http.Request, spec *MockRequest) error {
 		return errors.New("expected a body but received none")
 	}
 
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return err
 	}
@@ -1096,7 +1097,7 @@ var bodyMatcher = func(req *http.Request, spec *MockRequest) error {
 	}
 
 	// replace body so it can be read again
-	req.Body = ioutil.NopCloser(bytes.NewReader(body))
+	req.Body = io.NopCloser(bytes.NewReader(body))
 
 	// Perform exact string match
 	bodyStr := string(body)
@@ -1134,7 +1135,7 @@ var bodyRegexpMatcher = func(req *http.Request, spec *MockRequest) error {
 		return errors.New("expected a body but received none")
 	}
 
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return err
 	}
@@ -1143,7 +1144,7 @@ var bodyRegexpMatcher = func(req *http.Request, spec *MockRequest) error {
 	}
 
 	// replace body so it can be read again
-	req.Body = ioutil.NopCloser(bytes.NewReader(body))
+	req.Body = io.NopCloser(bytes.NewReader(body))
 
 	// Perform regexp match
 	bodyStr := string(body)
