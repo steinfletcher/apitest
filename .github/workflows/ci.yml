@@ -38,10 +38,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # The linter is built against a specific Go release and cannot type-check a newer
+      # standard library, so pin its toolchain to the module's Go version rather than "stable".
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: stable
+          go-version-file: go.mod
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v8
