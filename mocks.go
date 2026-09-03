@@ -242,9 +242,11 @@ func (m *Mock) copy() *Mock {
 	newMock.m = &sync.Mutex{}
 
 	req := *m.request
+	req.mock = &newMock
 	newMock.request = &req
 
 	newMock.response = m.response.deepCopy()
+	newMock.response.mock = &newMock
 
 	return &newMock
 }

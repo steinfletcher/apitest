@@ -1439,3 +1439,26 @@ func TestMocks_Response_HeaderChangesDoNotLeakBackToMock(t *testing.T) {
 
 	assert.Equal(t, map[string][]string{"X-Custom": {"one"}}, mock.response.headers)
 }
+
+func TestMocks_Copy_PointsRequestAndResponseAtTheCopy(t *testing.T) {
+	original := NewMock().
+		Get("/path").
+		RespondWith().
+		Status(http.StatusOK).
+		Times(2).
+		End()
+
+	copied := original.copy()
+
+	assert.Equal(t, true, copied != original)
+	assert.Equal(t, true, copied.request.mock == copied)
+	assert.Equal(t, true, copied.response.mock == copied)
+	assert.Equal(t, true, original.request.mock == original)
+	assert.Equal(t, true, original.response.mock == original)
+
+	copied.response.Status(http.StatusNotFound).Times(5)
+
+	assert.Equal(t, http.StatusOK, original.response.statusCode)
+	assert.Equal(t, 2, original.times)
+	assert.Equal(t, 5, copied.times)
+}
