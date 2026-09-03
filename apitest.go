@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"io"
@@ -250,6 +251,7 @@ type Request struct {
 	basicAuthPassword string
 	context           context.Context
 	apiTest           *APITest
+	err               error
 }
 
 // Intercept will be called before the request is made. Updates to the request will be reflected in the test
@@ -378,7 +380,8 @@ func (r *Request) Bodyf(format string, args ...interface{}) *Request {
 func (r *Request) BodyFromFile(f string) *Request {
 	b, err := ioutil.ReadFile(f)
 	if err != nil {
-		r.apiTest.t.Fatal(err)
+		r.fail(err)
+		return r
 	}
 	r.body = string(b)
 	return r
@@ -395,8 +398,8 @@ func (r *Request) JSON(v interface{}) *Request {
 	default:
 		asJSON, err := json.Marshal(x)
 		if err != nil {
-			r.apiTest.t.Fatal(err)
-			return nil
+			r.fail(err)
+			return r
 		}
 		r.body = string(asJSON)
 	}
@@ -430,7 +433,8 @@ func (r *Request) GraphQLRequest(body GraphQLRequestBody) *Request {
 
 	data, err := json.Marshal(body)
 	if err != nil {
-		r.apiTest.t.Fatal(err)
+		r.fail(err)
+		return r
 	}
 
 	r.body = string(data)
@@ -535,7 +539,8 @@ func (r *Request) MultipartFormData(name string, values ...string) *Request {
 
 	for _, value := range values {
 		if err := r.multipart.WriteField(name, value); err != nil {
-			r.apiTest.t.Fatal(err)
+			r.fail(err)
+			return r
 		}
 	}
 
@@ -553,17 +558,20 @@ func (r *Request) MultipartFile(name string, ff ...string) *Request {
 		func() {
 			file, err := r.apiTest.fileSystem.Open(f)
 			if err != nil {
-				r.apiTest.t.Fatal(err)
+				r.fail(err)
+				return
 			}
 			defer file.Close()
 
 			part, err := r.multipart.CreateFormFile(name, filepath.Base(f))
 			if err != nil {
-				r.apiTest.t.Fatal(err)
+				r.fail(err)
+				return
 			}
 
 			if _, err = io.Copy(part, file); err != nil {
-				r.apiTest.t.Fatal(err)
+				r.fail(err)
+				return
 			}
 		}()
 	}
@@ -580,14 +588,30 @@ func (r *Request) setMultipartWriter() {
 
 func (r *Request) checkCombineFormDataWithMultipart() {
 	if r.multipart != nil && len(r.formData) > 0 {
-		r.apiTest.t.Fatal("FormData (application/x-www-form-urlencoded) and MultiPartFormData(multipart/form-data) cannot be combined")
+		r.fail(errors.New("FormData (application/x-www-form-urlencoded) and MultiPartFormData(multipart/form-data) cannot be combined"))
 	}
 }
 
 // Expect marks the request spec as complete and following code will define the expected response
 func (r *Request) Expect(t TestingT) *Response {
 	r.apiTest.t = t
+	if r.err != nil {
+		t.Fatal(r.err)
+	}
 	return r.apiTest.response
+}
+
+// fail records an error raised while building the request. A TestingT is only
+// available once Expect has been called, so until then the first error is kept
+// and reported by Expect.
+func (r *Request) fail(err error) {
+	if r.apiTest.t != nil {
+		r.apiTest.t.Fatal(err)
+		return
+	}
+	if r.err == nil {
+		r.err = err
+	}
 }
 
 // Response is the user defined expected response from the application under test

@@ -1408,14 +1408,16 @@ func TestApiTest_CombineFormDataWithMultipart(t *testing.T) {
 		apitest.New().
 			Post("/hello").
 			MultipartFormData("name", "John").
-			FormData("name", "John")
+			FormData("name", "John").
+			Expect(t)
 		return
 	}
 	if os.Getenv("RUN_FATAL_TEST") == "File" {
 		apitest.New().
 			Post("/hello").
 			MultipartFile("file", "testdata/request_body.json").
-			FormData("name", "John")
+			FormData("name", "John").
+			Expect(t)
 		return
 	}
 
@@ -1585,4 +1587,73 @@ func TestApiTest_AddsBasicAuthWithColonInPasswordToRequest(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		End()
+}
+
+type recordingT struct {
+	fatals []string
+}
+
+func (r *recordingT) Errorf(format string, args ...interface{}) {}
+
+func (r *recordingT) Fatal(args ...interface{}) {
+	r.fatals = append(r.fatals, fmt.Sprint(args...))
+}
+
+func (r *recordingT) Fatalf(format string, args ...interface{}) {
+	r.fatals = append(r.fatals, fmt.Sprintf(format, args...))
+}
+
+func TestApiTest_RequestBuilderErrorsAreReportedByExpect(t *testing.T) {
+	tests := map[string]struct {
+		build           func(*apitest.Request) *apitest.Request
+		expectedMessage string
+	}{
+		"body from missing file": {
+			build:           func(r *apitest.Request) *apitest.Request { return r.BodyFromFile("testdata/does-not-exist.json") },
+			expectedMessage: "does-not-exist.json",
+		},
+		"json from missing file": {
+			build:           func(r *apitest.Request) *apitest.Request { return r.JSONFromFile("testdata/does-not-exist.json") },
+			expectedMessage: "does-not-exist.json",
+		},
+		"json that cannot be marshalled": {
+			build:           func(r *apitest.Request) *apitest.Request { return r.JSON(make(chan int)) },
+			expectedMessage: "unsupported type",
+		},
+		"graphql request that cannot be marshalled": {
+			build: func(r *apitest.Request) *apitest.Request {
+				return r.GraphQLRequest(apitest.GraphQLRequestBody{Variables: map[string]interface{}{"a": make(chan int)}})
+			},
+			expectedMessage: "unsupported type",
+		},
+		"multipart file that does not exist": {
+			build:           func(r *apitest.Request) *apitest.Request { return r.MultipartFile("file", "testdata/does-not-exist.json") },
+			expectedMessage: "does-not-exist.json",
+		},
+		"form data combined with multipart": {
+			build: func(r *apitest.Request) *apitest.Request {
+				return r.MultipartFormData("name", "John").FormData("name", "John")
+			},
+			expectedMessage: "cannot be combined",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			rec := &recordingT{}
+
+			request := apitest.New().Post("/hello")
+			if got := test.build(request); got != request {
+				t.Fatalf("expected the builder to return the request for chaining")
+			}
+			request.Expect(rec)
+
+			if len(rec.fatals) != 1 {
+				t.Fatalf("expected exactly one fatal error, got %v", rec.fatals)
+			}
+			if !strings.Contains(rec.fatals[0], test.expectedMessage) {
+				t.Fatalf("expected error to contain %q, got %q", test.expectedMessage, rec.fatals[0])
+			}
+		})
+	}
 }
