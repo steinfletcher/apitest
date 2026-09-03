@@ -201,10 +201,7 @@ func messageFromMsgAndArgs(msgAndArgs ...interface{}) []labeledContent {
 			if msgAsStr, ok := msg.(string); ok {
 				strMsgs = append(strMsgs, msgAsStr)
 			}
-			if failureMsg, ok := msg.(failureMessageArgs); ok {
-				if failureMsg.Name == "" {
-					return nil
-				}
+			if failureMsg, ok := msg.(failureMessageArgs); ok && failureMsg.Name != "" {
 				structuredMsg = &labeledContent{"Name", failureMsg.Name}
 			}
 		}
