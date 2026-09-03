@@ -50,12 +50,16 @@ type APITest struct {
 }
 
 // InboundRequest used to wrap the incoming request with a timestamp
+//
+// Deprecated: InboundRequest is not used by apitest and is retained only for API compatibility.
 type InboundRequest struct {
 	request   *http.Request
 	timestamp time.Time
 }
 
 // FinalResponse used to wrap the final response with a timestamp
+//
+// Deprecated: FinalResponse is not used by apitest and is retained only for API compatibility.
 type FinalResponse struct {
 	response  *http.Response
 	timestamp time.Time
