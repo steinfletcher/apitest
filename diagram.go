@@ -82,13 +82,12 @@ func (r *webSequenceDiagramDSL) addRow(operation, source string, target string, 
 		}
 	}
 	r.count++
-	r.data.WriteString(fmt.Sprintf("%s%s%s: (%d) %s\n",
+	fmt.Fprintf(&r.data, "%s%s%s: (%d) %s\n",
 		quoted(source),
 		operation,
 		quoted(target),
 		r.count,
-		description),
-	)
+		description)
 }
 
 func (r *webSequenceDiagramDSL) toString() string {

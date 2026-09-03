@@ -3,6 +3,7 @@ package apitest_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -285,7 +286,7 @@ func TestApiTest_AddsTextBodyToRequest(t *testing.T) {
 func TestApiTest_AddsQueryParamsToRequest(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		if "b" != r.URL.Query().Get("a") {
+		if r.URL.Query().Get("a") != "b" {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -304,7 +305,7 @@ func TestApiTest_AddsQueryParamsToRequest(t *testing.T) {
 func TestApiTest_AddsQueryParamCollectionToRequest(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		if "a=b&a=c&a=d&e=f" != r.URL.RawQuery {
+		if r.URL.RawQuery != "a=b&a=c&a=d&e=f" {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -324,7 +325,7 @@ func TestApiTest_AddsQueryParamCollectionToRequest(t *testing.T) {
 func TestApiTest_AddsQueryParamCollectionToRequest_HandlesEmpty(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		if "e=f" != r.URL.RawQuery {
+		if r.URL.RawQuery != "e=f" {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -876,7 +877,7 @@ func TestApiTest_VerifierCapturesTheTestMessage(t *testing.T) {
 		if expected == http.StatusOK {
 			return true
 		}
-		args := msgAndArgs[0].(any).([]any)
+		args := msgAndArgs[0].([]any)
 		assert.Equal(t, 2, len(args))
 		assert.Equal(t, "expected header 'Abc' not present in response", args[0].(string))
 		return true
@@ -1086,12 +1087,14 @@ func TestApiTest_ExposesRequestAndResponse(t *testing.T) {
 	assert.Equal(t, true, apiTest.Response() != nil)
 }
 
+type contextKey struct{}
+
 func TestApiTest_RequestContextIsPreserved(t *testing.T) {
-	ctxKey := struct{}{}
+	ctxKey := contextKey{}
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
 		value := r.Context().Value(ctxKey).([]byte)
-		w.Write(value)
+		_, _ = w.Write(value)
 	})
 
 	interceptor := func(r *http.Request) {
@@ -1136,23 +1139,23 @@ func TestRealNetworking(t *testing.T) {
 	tokenValue := "ABCDEF"
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{Name: "Token", Value: tokenValue})
-		w.WriteHeader(203)
+		w.WriteHeader(http.StatusNonAuthoritativeInfo)
 	})
 	http.HandleFunc("/authenticated_resource", func(w http.ResponseWriter, r *http.Request) {
 		token, err := r.Cookie("Token")
-		if err == http.ErrNoCookie {
-			w.WriteHeader(400)
+		if errors.Is(err, http.ErrNoCookie) {
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		if err != nil {
-			w.WriteHeader(500)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		if token.Value != tokenValue {
 			t.Fatalf("token did not equal %s", tokenValue)
 		}
-		w.WriteHeader(204)
+		w.WriteHeader(http.StatusNoContent)
 	})
 
 	go func() {
@@ -1433,7 +1436,8 @@ func TestApiTest_CombineFormDataWithMultipart(t *testing.T) {
 			cmd := exec.Command(os.Args[0], "-test.run=TestApiTest_CombineFormDataWithMultipart")
 			cmd.Env = append(os.Environ(), "RUN_FATAL_TEST="+tt)
 			err := cmd.Run()
-			if e, ok := err.(*exec.ExitError); ok && !e.Success() {
+			var exitErr *exec.ExitError
+			if errors.As(err, &exitErr) && !exitErr.Success() {
 				return
 			}
 			t.Fatalf("process ran with err %v, want exit status 1", err)

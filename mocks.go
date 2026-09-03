@@ -77,7 +77,7 @@ func (u *unmatchedMockError) Error() string {
 	var strBuilder strings.Builder
 	strBuilder.WriteString("received request did not match any mocks\n\n")
 	for _, mockNumber := range u.orderedMockKeys() {
-		strBuilder.WriteString(fmt.Sprintf("Mock %d mismatches:\n", mockNumber))
+		fmt.Fprintf(&strBuilder, "Mock %d mismatches:\n", mockNumber)
 		for _, err := range u.errors[mockNumber] {
 			strBuilder.WriteString("• ")
 			strBuilder.WriteString(err.Error())
@@ -477,7 +477,7 @@ func matches(req *http.Request, mocks []*Mock) (*MockResponse, error) {
 	mockError := newUnmatchedMockError()
 	for mockNumber, mock := range mocks {
 		mock.m.Lock() // lock is for isUsed when matches is called concurrently by RoundTripper
-		if mock.isUsed && mock.anyTimesSet == false {
+		if mock.isUsed && !mock.anyTimesSet {
 			mock.m.Unlock()
 			continue
 		}
@@ -607,9 +607,7 @@ func (r *MockRequest) QueryParams(queryParams map[string]string) *MockRequest {
 // QueryCollection configures the mock request to match a number of repeating query params, e.g. ?a=1&a=2&a=3
 func (r *MockRequest) QueryCollection(queryParams map[string][]string) *MockRequest {
 	for k, v := range queryParams {
-		for _, val := range v {
-			r.query[k] = append(r.query[k], val)
-		}
+		r.query[k] = append(r.query[k], v...)
 	}
 	return r
 }

@@ -611,7 +611,7 @@ func (rows *recordingRows) Close() error {
 // Next wraps the underlying rows' Next method
 func (rows *recordingRows) Next(dest []driver.Value) error {
 	err := rows.Rows.Next(dest)
-	if err != io.EOF {
+	if !errors.Is(err, io.EOF) {
 		rows.RowsFound++
 	}
 
@@ -634,7 +634,7 @@ func namedValueToValue(named []driver.NamedValue) ([]driver.Value, error) {
 func sqlDriverNameToDriver(driverName string) driver.Driver {
 	db, _ := sql.Open(driverName, "")
 	if db != nil {
-		db.Close()
+		_ = db.Close()
 		return db.Driver()
 	}
 

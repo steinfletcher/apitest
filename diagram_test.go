@@ -196,27 +196,6 @@ func aResponse() HttpResponse {
 	}
 }
 
-type FS struct {
-	CapturedCreateName   string
-	CapturedCreateFile   string
-	CapturedMkdirAllPath string
-}
-
-func (m *FS) create(name string) (*os.File, error) {
-	m.CapturedCreateName = name
-	file, err := os.CreateTemp("/tmp", "apitest")
-	if err != nil {
-		panic(err)
-	}
-	m.CapturedCreateFile = file.Name()
-	return file, nil
-}
-
-func (m *FS) mkdirAll(path string, perm os.FileMode) error {
-	m.CapturedMkdirAllPath = path
-	return nil
-}
-
 func TestWebSequenceDiagram_RenamesOnlyExactDefaultParticipantNames(t *testing.T) {
 	dsl := &webSequenceDiagramDSL{meta: map[string]any{
 		"consumerName":        "consumer",

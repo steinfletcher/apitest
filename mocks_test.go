@@ -1133,7 +1133,8 @@ func TestMocks_WithHTTPTimeout(t *testing.T) {
 
 	assert.Equal(t, true, err != nil)
 	var isTimeout bool
-	if err, ok := err.(net.Error); ok && err.Timeout() {
+	var netErr net.Error
+	if errors.As(err, &netErr) && netErr.Timeout() {
 		isTimeout = true
 	}
 	assert.Equal(t, true, isTimeout)
