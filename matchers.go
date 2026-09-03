@@ -140,25 +140,16 @@ var headerNotPresentMatcher = func(req *http.Request, spec *MockRequest) error {
 
 var queryParamMatcher = func(req *http.Request, spec *MockRequest) error {
 	mockQueryParams := spec.query
-	for key, values := range mockQueryParams {
-		receivedQueryParams := req.URL.Query()
+	receivedQueryParams := req.URL.Query()
 
+	for key, values := range mockQueryParams {
 		if _, ok := receivedQueryParams[key]; !ok {
 			return fmt.Errorf("not all of received query params %s matched expected mock query params %s", receivedQueryParams, mockQueryParams)
 		}
 
-		found := 0
-		for _, field := range receivedQueryParams[key] {
-			for _, value := range values {
-				match, err := regexp.MatchString(value, field)
-				if err != nil {
-					return fmt.Errorf("failed to parse regexp for query param %s with value %s", key, value)
-				}
-
-				if match {
-					found++
-				}
-			}
+		found, pattern, err := matchedValueCount(values, receivedQueryParams[key])
+		if err != nil {
+			return fmt.Errorf("failed to parse regexp for query param %s with value %s", key, pattern)
 		}
 
 		if found != len(values) {
@@ -188,33 +179,26 @@ var queryNotPresentMatcher = func(req *http.Request, spec *MockRequest) error {
 
 var formDataMatcher = func(req *http.Request, spec *MockRequest) error {
 	mockFormData := spec.formData
+	if len(mockFormData) == 0 {
+		return nil
+	}
+
+	r := copyHttpRequest(req)
+	if err := r.ParseForm(); err != nil {
+		return errors.New("unable to parse form data")
+	}
+
+	receivedFormData := r.PostForm
 
 	for key, values := range mockFormData {
-		r := copyHttpRequest(req)
-		err := r.ParseForm()
-		if err != nil {
-			return errors.New("unable to parse form data")
-		}
-
-		receivedFormData := r.PostForm
-
 		if _, ok := receivedFormData[key]; !ok {
 			return fmt.Errorf("not all of received form data values %s matched expected mock form data values %s",
 				receivedFormData, mockFormData)
 		}
 
-		found := 0
-		for _, field := range receivedFormData[key] {
-			for _, value := range values {
-				match, err := regexp.MatchString(value, field)
-				if err != nil {
-					return fmt.Errorf("failed to parse regexp for form data %s with value %s", key, value)
-				}
-
-				if match {
-					found++
-				}
-			}
+		found, pattern, err := matchedValueCount(values, receivedFormData[key])
+		if err != nil {
+			return fmt.Errorf("failed to parse regexp for form data %s with value %s", key, pattern)
 		}
 
 		if found != len(values) {
@@ -370,6 +354,25 @@ var bodyRegexpMatcher = func(req *http.Request, spec *MockRequest) error {
 	}
 
 	return fmt.Errorf("received body did not match expected mock body\n%s", diff(expression, bodyStr))
+}
+
+// matchedValueCount counts the (received, expected) pairs in which the expected value, treated as a
+// regexp, matches the received value. Callers compare the count with len(expected), which is the
+// matching rule the query and form data matchers have always used. If an expected value is not a
+// valid regexp it is returned along with the error.
+func matchedValueCount(expected, received []string) (found int, invalidPattern string, err error) {
+	for _, field := range received {
+		for _, value := range expected {
+			match, err := regexp.MatchString(value, field)
+			if err != nil {
+				return 0, value, err
+			}
+			if match {
+				found++
+			}
+		}
+	}
+	return found, "", nil
 }
 
 func errorOrNil(statement bool, errorMessage func() string) error {
