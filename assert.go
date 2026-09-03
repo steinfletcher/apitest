@@ -224,11 +224,11 @@ func labeledOutput(content ...labeledContent) string {
 			longestLabel = len(v.label)
 		}
 	}
-	var output string
+	var output strings.Builder
 	for _, v := range content {
-		output += "\t" + v.label + ":" + strings.Repeat(" ", longestLabel-len(v.label)) + "\t" + indentMessageLines(v.content, longestLabel) + "\n"
+		output.WriteString("\t" + v.label + ":" + strings.Repeat(" ", longestLabel-len(v.label)) + "\t" + indentMessageLines(v.content, longestLabel) + "\n")
 	}
-	return output
+	return output.String()
 }
 
 func indentMessageLines(message string, longestLabelLen int) string {

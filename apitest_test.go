@@ -1675,7 +1675,7 @@ func TestApiTest_ReportCapturesConcurrentMockInteractions(t *testing.T) {
 			End()).
 		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var wg sync.WaitGroup
-			for i := 0; i < calls; i++ {
+			for range calls {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()

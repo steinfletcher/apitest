@@ -9,6 +9,7 @@ import (
 	"hash/fnv"
 	"io"
 	"io/fs"
+	"maps"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -18,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -871,9 +873,7 @@ func (a *APITest) report() *http.Response {
 
 	meta := map[string]any{}
 
-	for k, v := range a.meta {
-		meta[k] = v
-	}
+	maps.Copy(meta, a.meta)
 
 	meta["status_code"] = capturedFinalRes.StatusCode
 	meta["path"] = capturedInboundReq.URL.String()
@@ -895,7 +895,7 @@ func createHash(meta map[string]any) string {
 	app := meta["app"]
 
 	prefix := fnv.New32a()
-	_, err := prefix.Write([]byte(fmt.Sprintf("%s%s%s", app, strings.ToUpper(method.(string)), path)))
+	_, err := prefix.Write(fmt.Appendf(nil, "%s%s%s", app, strings.ToUpper(method.(string)), path))
 	if err != nil {
 		panic(err)
 	}
@@ -1173,13 +1173,7 @@ func (a *APITest) assertHeaders(res *http.Response) {
 
 		if foundHeader {
 			for _, expectedValue := range expectedValues {
-				foundValue := false
-				for _, resValue := range resHeaderValues {
-					if expectedValue == resValue {
-						foundValue = true
-						break
-					}
-				}
+				foundValue := slices.Contains(resHeaderValues, expectedValue)
 				a.verifier.Equal(a.t, true, foundValue, fmt.Sprintf("mismatched values for header '%s'. Expected %s but received %s", expectedHeader, expectedValue, strings.Join(resHeaderValues, ",")), failureMessageArgs{Name: a.name})
 			}
 		}

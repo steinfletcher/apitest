@@ -1216,7 +1216,7 @@ func diff(expected any, actual any) string {
 	}
 
 	var e, a string
-	if et != reflect.TypeOf("") {
+	if et != reflect.TypeFor[string]() {
 		e = spewConfig.Sdump(expected)
 		a = spewConfig.Sdump(actual)
 	} else {
