@@ -1229,7 +1229,7 @@ func copyHttpResponse(response *http.Response) *http.Response {
 	}
 
 	for name, values := range response.Header {
-		resCopy.Header[name] = values
+		resCopy.Header[name] = append([]string(nil), values...)
 	}
 
 	return resCopy
