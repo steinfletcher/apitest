@@ -35,15 +35,15 @@ type (
 	// SequenceDiagramFormatter implementation of a ReportFormatter
 	SequenceDiagramFormatter struct {
 		storagePath string
-		fs          fileSystem
+		fs          diagramFileSystem
 	}
 
-	fileSystem interface {
+	diagramFileSystem interface {
 		create(name string) (io.WriteCloser, error)
 		mkdirAll(path string, perm os.FileMode) error
 	}
 
-	osFileSystem struct{}
+	osDiagramFileSystem struct{}
 
 	webSequenceDiagramDSL struct {
 		data  bytes.Buffer
@@ -52,11 +52,11 @@ type (
 	}
 )
 
-func (r *osFileSystem) create(name string) (io.WriteCloser, error) {
+func (r *osDiagramFileSystem) create(name string) (io.WriteCloser, error) {
 	return os.Create(name)
 }
 
-func (r *osFileSystem) mkdirAll(path string, perm os.FileMode) error {
+func (r *osDiagramFileSystem) mkdirAll(path string, perm os.FileMode) error {
 	return os.MkdirAll(path, perm)
 }
 
@@ -152,7 +152,7 @@ func SequenceDiagram(path ...string) *SequenceDiagramFormatter {
 	} else {
 		storagePath = path[0]
 	}
-	return &SequenceDiagramFormatter{storagePath: storagePath, fs: &osFileSystem{}}
+	return &SequenceDiagramFormatter{storagePath: storagePath, fs: &osDiagramFileSystem{}}
 }
 
 var templateFunc = &htmlTemplate.FuncMap{
