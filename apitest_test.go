@@ -1566,3 +1566,23 @@ func TestApiTest_ReportsAllUnmatchedMocks(t *testing.T) {
 	assert.Equal(t, "http://localhost:8080/user", unmatchedMocks[0].URL.String())
 	assert.Equal(t, "http://localhost:8080/order", unmatchedMocks[1].URL.String())
 }
+
+func TestApiTest_AddsBasicAuthWithColonInPasswordToRequest(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		username, password, ok := r.BasicAuth()
+		if !ok || username != "username" || password != "pass:word:1" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	apitest.New().
+		Handler(handler).
+		Get("/hello").
+		BasicAuth("username", "pass:word:1").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}

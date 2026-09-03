@@ -234,20 +234,22 @@ func (a *APITest) UseFS(fs fs.FS) *APITest {
 
 // Request is the user defined request that will be invoked on the handler under test
 type Request struct {
-	interceptor     Intercept
-	method          string
-	url             string
-	body            string
-	query           map[string][]string
-	queryCollection map[string][]string
-	headers         map[string][]string
-	formData        map[string][]string
-	multipartBody   *bytes.Buffer
-	multipart       *multipart.Writer
-	cookies         []*Cookie
-	basicAuth       string
-	context         context.Context
-	apiTest         *APITest
+	interceptor       Intercept
+	method            string
+	url               string
+	body              string
+	query             map[string][]string
+	queryCollection   map[string][]string
+	headers           map[string][]string
+	formData          map[string][]string
+	multipartBody     *bytes.Buffer
+	multipart         *multipart.Writer
+	cookies           []*Cookie
+	basicAuthSet      bool
+	basicAuthUsername string
+	basicAuthPassword string
+	context           context.Context
+	apiTest           *APITest
 }
 
 // Intercept will be called before the request is made. Updates to the request will be reflected in the test
@@ -502,7 +504,9 @@ func (r *Request) Cookies(c ...*Cookie) *Request {
 
 // BasicAuth is a builder method to sets basic auth on the request.
 func (r *Request) BasicAuth(username, password string) *Request {
-	r.basicAuth = fmt.Sprintf("%s:%s", username, password)
+	r.basicAuthSet = true
+	r.basicAuthUsername = username
+	r.basicAuthPassword = password
 	return r
 }
 
@@ -1027,9 +1031,8 @@ func (a *APITest) buildRequest() *http.Request {
 		req.AddCookie(cookie.ToHttpCookie())
 	}
 
-	if a.request.basicAuth != "" {
-		parts := strings.Split(a.request.basicAuth, ":")
-		req.SetBasicAuth(parts[0], parts[1])
+	if a.request.basicAuthSet {
+		req.SetBasicAuth(a.request.basicAuthUsername, a.request.basicAuthPassword)
 	}
 
 	return req
