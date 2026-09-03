@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"testing/fstest"
 	"time"
@@ -1656,4 +1657,41 @@ func TestApiTest_RequestBuilderErrorsAreReportedByExpect(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestApiTest_ReportCapturesConcurrentMockInteractions(t *testing.T) {
+	const calls = 10
+	captor := &RecorderCaptor{}
+
+	apitest.New().
+		Report(captor).
+		Mocks(apitest.NewMock().
+			Get("http://concurrent.example.com/item").
+			RespondWith().
+			Status(http.StatusOK).
+			AnyTimes().
+			End()).
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var wg sync.WaitGroup
+			for i := 0; i < calls; i++ {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					res, err := http.Get("http://concurrent.example.com/item")
+					if err != nil {
+						return
+					}
+					_ = res.Body.Close()
+				}()
+			}
+			wg.Wait()
+			w.WriteHeader(http.StatusOK)
+		})).
+		Get("/").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	// inbound request + final response + a request and response per mock call
+	assert.Equal(t, 2+calls*2, len(captor.capturedRecorder.Events))
 }

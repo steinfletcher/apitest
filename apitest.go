@@ -20,6 +20,7 @@ import (
 	"runtime/debug"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -799,6 +800,7 @@ func (a *APITest) report() *http.Response {
 	var capturedInboundReq *http.Request
 	var capturedFinalRes *http.Response
 	var capturedMockInteractions []*mockInteraction
+	var capturedMockInteractionsMu sync.Mutex // mocks may be invoked concurrently by the handler
 
 	a.observers = append(a.observers, func(finalRes *http.Response, inboundReq *http.Request, a *APITest) {
 		capturedFinalRes = copyHttpResponse(finalRes)
@@ -806,11 +808,14 @@ func (a *APITest) report() *http.Response {
 	})
 
 	a.mocksObservers = append(a.mocksObservers, func(mockRes *http.Response, mockReq *http.Request, a *APITest) {
-		capturedMockInteractions = append(capturedMockInteractions, &mockInteraction{
+		interaction := &mockInteraction{
 			request:   copyHttpRequest(mockReq),
 			response:  copyHttpResponse(mockRes),
 			timestamp: time.Now().UTC(),
-		})
+		}
+		capturedMockInteractionsMu.Lock()
+		capturedMockInteractions = append(capturedMockInteractions, interaction)
+		capturedMockInteractionsMu.Unlock()
 	})
 
 	if a.recorder == nil {
