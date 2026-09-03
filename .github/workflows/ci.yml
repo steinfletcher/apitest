@@ -28,6 +28,13 @@ jobs:
       - name: Run tests
         run: make test
 
+      - name: Upload coverage to Coveralls
+        if: matrix.go == 'stable'
+        uses: coverallsapp/github-action@v2
+        with:
+          file: coverage.out
+          format: golang
+
       - name: Run example tests
         run: make test-examples
 
