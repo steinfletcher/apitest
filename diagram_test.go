@@ -233,3 +233,56 @@ func TestWebSequenceDiagram_RenamesOnlyExactDefaultParticipantNames(t *testing.T
 		"\"consultant.example.com\"->>\"app\": (3) 200\n"
 	assert.Equal(t, expected, dsl.toString())
 }
+
+type recordingFileSystem struct {
+	created []string
+	closed  int
+	content strings.Builder
+}
+
+func (f *recordingFileSystem) create(name string) (io.WriteCloser, error) {
+	f.created = append(f.created, name)
+	return &recordingFile{fs: f}, nil
+}
+
+func (f *recordingFileSystem) mkdirAll(path string, perm os.FileMode) error {
+	return nil
+}
+
+type recordingFile struct {
+	fs *recordingFileSystem
+}
+
+func (r *recordingFile) Write(p []byte) (int, error) {
+	return r.fs.content.Write(p)
+}
+
+func (r *recordingFile) Close() error {
+	r.fs.closed++
+	return nil
+}
+
+func TestSequenceDiagramFormatter_ClosesTheDiagramFile(t *testing.T) {
+	fs := &recordingFileSystem{}
+	formatter := &SequenceDiagramFormatter{storagePath: ".sequence", fs: fs}
+	recorder := NewTestRecorder().
+		AddTitle("title").
+		AddMeta(map[string]interface{}{"hash": "abc123"}).
+		AddHttpRequest(HttpRequest{
+			Source: ConsumerDefaultName,
+			Target: SystemUnderTestDefaultName,
+			Value:  httptest.NewRequest(http.MethodGet, "/user", nil),
+		}).
+		AddHttpResponse(HttpResponse{
+			Source: SystemUnderTestDefaultName,
+			Target: ConsumerDefaultName,
+			Value:  &http.Response{StatusCode: http.StatusOK, Header: http.Header{}, Body: ioutil.NopCloser(strings.NewReader(""))},
+		})
+
+	formatter.Format(recorder)
+
+	assert.Equal(t, 1, len(fs.created))
+	assert.Equal(t, true, strings.HasSuffix(fs.created[0], "abc123.html"))
+	assert.Equal(t, 1, fs.closed)
+	assert.Equal(t, true, strings.Contains(fs.content.String(), "<!DOCTYPE html>"))
+}

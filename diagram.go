@@ -40,7 +40,7 @@ type (
 	}
 
 	fileSystem interface {
-		create(name string) (*os.File, error)
+		create(name string) (io.WriteCloser, error)
 		mkdirAll(path string, perm os.FileMode) error
 	}
 
@@ -53,7 +53,7 @@ type (
 	}
 )
 
-func (r *osFileSystem) create(name string) (*os.File, error) {
+func (r *osFileSystem) create(name string) (io.WriteCloser, error) {
 	return os.Create(name)
 }
 
@@ -130,15 +130,16 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 	if err != nil {
 		panic(err)
 	}
-	saveFilesTo := fmt.Sprintf("%s/%s", r.storagePath, fileName)
+	saveFilesTo := filepath.Join(r.storagePath, fileName)
 
 	f, err := r.fs.create(saveFilesTo)
 	if err != nil {
 		panic(err)
 	}
+	defer f.Close()
 
 	s, _ := filepath.Abs(saveFilesTo)
-	_, err = f.WriteString(out.String())
+	_, err = f.Write(out.Bytes())
 	if err != nil {
 		panic(err)
 	}
