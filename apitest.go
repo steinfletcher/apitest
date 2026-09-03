@@ -721,7 +721,6 @@ func (r *Response) End() Result {
 			unmatchedMocks = append(unmatchedMocks, UnmatchedMock{
 				URL: *m.request.url,
 			})
-			break
 		}
 	}
 

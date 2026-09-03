@@ -1538,3 +1538,31 @@ func getUserData() []byte {
 }
 
 var assert = apitest.DefaultVerifier{}
+
+func TestApiTest_ReportsAllUnmatchedMocks(t *testing.T) {
+	getUser := apitest.NewMock().
+		Get("http://localhost:8080/user").
+		RespondWith().
+		Status(http.StatusOK).
+		End()
+	getOrder := apitest.NewMock().
+		Get("http://localhost:8080/order").
+		RespondWith().
+		Status(http.StatusOK).
+		End()
+
+	res := apitest.New().
+		Mocks(getUser, getOrder).
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})).
+		Get("/").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	unmatchedMocks := res.UnmatchedMocks()
+	assert.Equal(t, 2, len(unmatchedMocks))
+	assert.Equal(t, "http://localhost:8080/user", unmatchedMocks[0].URL.String())
+	assert.Equal(t, "http://localhost:8080/order", unmatchedMocks[1].URL.String())
+}
