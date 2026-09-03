@@ -13,7 +13,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -73,14 +72,14 @@ func (r *webSequenceDiagramDSL) addResponseRow(source string, target string, des
 func (r *webSequenceDiagramDSL) addRow(operation, source string, target string, description string) {
 	if name, ok := r.meta["consumerName"]; ok {
 		if n, ok := name.(string); ok {
-			source = strings.ReplaceAll(source, ConsumerDefaultName, n)
-			target = strings.ReplaceAll(target, ConsumerDefaultName, n)
+			source = renameParticipant(source, ConsumerDefaultName, n)
+			target = renameParticipant(target, ConsumerDefaultName, n)
 		}
 	}
 	if name, ok := r.meta["systemUnderTestName"]; ok {
 		if n, ok := name.(string); ok {
-			source = strings.ReplaceAll(source, SystemUnderTestDefaultName, n)
-			target = strings.ReplaceAll(target, SystemUnderTestDefaultName, n)
+			source = renameParticipant(source, SystemUnderTestDefaultName, n)
+			target = renameParticipant(target, SystemUnderTestDefaultName, n)
 		}
 	}
 	r.count++
@@ -95,6 +94,15 @@ func (r *webSequenceDiagramDSL) addRow(operation, source string, target string, 
 
 func (r *webSequenceDiagramDSL) toString() string {
 	return r.data.String()
+}
+
+// renameParticipant swaps a default participant name (e.g. "sut") for the user supplied one.
+// Only exact matches are renamed so that hosts which merely contain the default name are left alone.
+func renameParticipant(participant, defaultName, name string) string {
+	if participant == defaultName {
+		return name
+	}
+	return participant
 }
 
 // Format formats the events received by the recorder

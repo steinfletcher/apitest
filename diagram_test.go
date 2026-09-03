@@ -217,3 +217,19 @@ func (m *FS) mkdirAll(path string, perm os.FileMode) error {
 	m.CapturedMkdirAllPath = path
 	return nil
 }
+
+func TestWebSequenceDiagram_RenamesOnlyExactDefaultParticipantNames(t *testing.T) {
+	dsl := &webSequenceDiagramDSL{meta: map[string]interface{}{
+		"consumerName":        "consumer",
+		"systemUnderTestName": "app",
+	}}
+
+	dsl.addRequestRow(ConsumerDefaultName, SystemUnderTestDefaultName, "GET /")
+	dsl.addRequestRow(SystemUnderTestDefaultName, "client.example.com", "GET /")
+	dsl.addResponseRow("consultant.example.com", SystemUnderTestDefaultName, "200")
+
+	expected := "\"consumer\"->\"app\": (1) GET /\n" +
+		"\"app\"->\"client.example.com\": (2) GET /\n" +
+		"\"consultant.example.com\"->>\"app\": (3) 200\n"
+	assert.Equal(t, expected, dsl.toString())
+}
