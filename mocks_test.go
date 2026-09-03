@@ -1405,3 +1405,37 @@ func (r *RecorderCaptor) Format(recorder *Recorder) {
 }
 
 var assert = DefaultVerifier{}
+
+func TestMocks_Response_DoesNotMutateMockHeadersBetweenInvocations(t *testing.T) {
+	mock := NewMock().
+		Get("/path").
+		RespondWith().
+		Cookie("a", "b").
+		Body(`{"a": 1}`).
+		Status(http.StatusOK).
+		AnyTimes().
+		End()
+
+	first := buildResponseFromMock(mock.response)
+	second := buildResponseFromMock(mock.response)
+
+	assert.Equal(t, []string{"a=b"}, first.Header["Set-Cookie"])
+	assert.Equal(t, []string{"a=b"}, second.Header["Set-Cookie"])
+	assert.Equal(t, "application/json", second.Header.Get("Content-Type"))
+	assert.Equal(t, map[string][]string{}, mock.response.headers)
+}
+
+func TestMocks_Response_HeaderChangesDoNotLeakBackToMock(t *testing.T) {
+	mock := NewMock().
+		Get("/path").
+		RespondWith().
+		Header("X-Custom", "one").
+		Status(http.StatusOK).
+		End()
+
+	res := buildResponseFromMock(mock.response)
+	res.Header.Add("X-Custom", "two")
+	res.Header.Set("X-Other", "three")
+
+	assert.Equal(t, map[string][]string{"X-Custom": {"one"}}, mock.response.headers)
+}

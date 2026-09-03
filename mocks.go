@@ -174,47 +174,42 @@ func buildResponseFromMock(mockResponse *MockResponse) *http.Response {
 		return nil
 	}
 
-	mockResponse.mu.RLock() // Lock for reading
-	contentTypeHeader := mockResponse.headers["Content-Type"]
-	var contentType string
+	mockResponse.mu.RLock()
+	defer mockResponse.mu.RUnlock()
+
+	// copy the headers so that the response does not share (and mutate) the mock's map
+	headers := make(http.Header, len(mockResponse.headers)+2)
+	for key, values := range mockResponse.headers {
+		headers[key] = append([]string(nil), values...)
+	}
 
 	// if the content type isn't set and the body contains json, set content type as json
 	if len(mockResponse.body) > 0 {
-		if len(contentTypeHeader) == 0 {
+		if contentTypeHeader := headers["Content-Type"]; len(contentTypeHeader) == 0 {
 			if json.Valid([]byte(mockResponse.body)) {
-				contentType = "application/json"
+				headers.Set("Content-Type", "application/json")
 			} else {
-				contentType = "text/plain"
+				headers.Set("Content-Type", "text/plain")
 			}
 		} else {
-			contentType = contentTypeHeader[0]
+			headers.Set("Content-Type", contentTypeHeader[0])
 		}
 	}
 
-	mockResponse.mu.RUnlock() // Unlock after reading
+	for _, cookie := range mockResponse.cookies {
+		if v := cookie.ToHttpCookie().String(); v != "" {
+			headers.Add("Set-Cookie", v)
+		}
+	}
 
-	res := &http.Response{
+	return &http.Response{
 		Body:          ioutil.NopCloser(strings.NewReader(mockResponse.body)),
-		Header:        mockResponse.headers,
+		Header:        headers,
 		StatusCode:    mockResponse.statusCode,
 		ProtoMajor:    1,
 		ProtoMinor:    1,
 		ContentLength: int64(len(mockResponse.body)),
 	}
-
-	for _, cookie := range mockResponse.cookies {
-		if v := cookie.ToHttpCookie().String(); v != "" {
-			res.Header.Add("Set-Cookie", v)
-		}
-	}
-
-	if contentType != "" {
-		mockResponse.mu.Lock() // Lock for writing
-		res.Header.Set("Content-Type", contentType)
-		mockResponse.mu.Unlock() // Unlock after writing
-	}
-
-	return res
 }
 
 // Mock represents the entire interaction for a mock to be used for testing
