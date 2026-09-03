@@ -102,7 +102,7 @@ func (a DefaultVerifier) Fail(t TestingT, failureMessage string, msgAndArgs ...a
 		content = append(content, message...)
 	}
 
-	t.Errorf("\n%s", ""+labeledOutput(content...))
+	t.Errorf("\n%s", labeledOutput(content...))
 
 	return false
 }
@@ -130,9 +130,9 @@ func formatUnequalValues(expected, actual any) (e string, a string) {
 
 func truncatingFormat(data any) string {
 	value := fmt.Sprintf("%#v", data)
-	max := bufio.MaxScanTokenSize - 100 // Give us some space the type info too if needed.
-	if len(value) > max {
-		value = value[0:max] + "<... truncated>"
+	maxLen := bufio.MaxScanTokenSize - 100 // Give us some space the type info too if needed.
+	if len(value) > maxLen {
+		value = value[0:maxLen] + "<... truncated>"
 	}
 	return value
 }

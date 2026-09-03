@@ -260,11 +260,6 @@ type Request struct {
 // Intercept will be called before the request is made. Updates to the request will be reflected in the test
 type Intercept func(*http.Request)
 
-type pair struct {
-	l string
-	r string
-}
-
 // Host is a builder method for explicitly setting the host
 func (a *APITest) Host(host string) *APITest {
 	a.host = host
@@ -706,7 +701,7 @@ func (r *Response) HeaderNotPresent(name string) *Response {
 func (r *Response) Headers(headers map[string]string) *Response {
 	for name, value := range headers {
 		normalizedName := textproto.CanonicalMIMEHeaderKey(name)
-		r.headers[normalizedName] = append(r.headers[textproto.CanonicalMIMEHeaderKey(normalizedName)], value)
+		r.headers[normalizedName] = append(r.headers[normalizedName], value)
 	}
 	return r
 }
@@ -721,7 +716,7 @@ func (r *Response) Status(s int) *Response {
 // custom assertions
 func (r *Response) Assert(fn func(*http.Response, *http.Request) error) *Response {
 	r.assert = append(r.assert, fn)
-	return r.apiTest.response
+	return r
 }
 
 // End runs the test returning the result to the caller
@@ -947,7 +942,7 @@ func (r *Response) runTest() *http.Response {
 
 func (a *APITest) assertMocks() {
 	for _, mock := range a.mocks {
-		if mock.anyTimesSet == false && mock.isUsed == false && mock.timesSet {
+		if !mock.anyTimesSet && !mock.isUsed && mock.timesSet {
 			a.verifier.Fail(a.t, "mock was not invoked expected times", failureMessageArgs{Name: a.name})
 		}
 	}
@@ -1068,41 +1063,21 @@ func (a *APITest) buildRequest() *http.Request {
 }
 
 func formatQuery(request *Request) string {
-	var out url.Values = map[string][]string{}
+	out := url.Values{}
 
-	if request.queryCollection != nil {
-		for _, param := range buildQueryCollection(request.queryCollection) {
-			out.Add(param.l, param.r)
+	for key, values := range request.queryCollection {
+		for _, value := range values {
+			out.Add(key, value)
 		}
 	}
 
-	if request.query != nil {
-		for k, v := range request.query {
-			for _, p := range v {
-				out.Add(k, p)
-			}
+	for key, values := range request.query {
+		for _, value := range values {
+			out.Add(key, value)
 		}
 	}
 
-	if len(out) > 0 {
-		return out.Encode()
-	}
-
-	return ""
-}
-
-func buildQueryCollection(params map[string][]string) []pair {
-	if len(params) == 0 {
-		return []pair{}
-	}
-
-	var pairs []pair
-	for k, v := range params {
-		for _, paramValue := range v {
-			pairs = append(pairs, pair{l: k, r: paramValue})
-		}
-	}
-	return pairs
+	return out.Encode()
 }
 
 func (a *APITest) assertResponse(res *http.Response) {
