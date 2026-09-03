@@ -281,6 +281,25 @@ func TestApi(t *testing.T) {
 }
 ```
 
+#### Test handler timeouts
+
+Wrap the handler in the standard library's `http.TimeoutHandler` when passing it to apitest. A handler that
+overruns the timeout produces the `503` status and body that `TimeoutHandler` generates, which can be asserted on
+as usual. To check that a handler honours a deadline instead, pass a context with a deadline using `WithContext`.
+
+```go
+func TestApi(t *testing.T) {
+	handler := http.TimeoutHandler(slowHandler, 50*time.Millisecond, "request timed out")
+
+	apitest.Handler(handler).
+		Get("/slow").
+		Expect(t).
+		Status(http.StatusServiceUnavailable).
+		Body("request timed out").
+		End()
+}
+```
+
 #### Provide cookies in the request
 
 ```go

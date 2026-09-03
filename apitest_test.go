@@ -1701,3 +1701,38 @@ func TestApiTest_ReportCapturesConcurrentMockInteractions(t *testing.T) {
 	// inbound request + final response + a request and response per mock call
 	assert.Equal(t, 2+calls*2, len(captor.capturedRecorder.Events))
 }
+
+func TestApiTest_SupportsTimeoutHandler(t *testing.T) {
+	slowHandler := func(delay time.Duration) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			select {
+			case <-time.After(delay):
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte("finished"))
+			case <-r.Context().Done():
+			}
+		})
+	}
+
+	t.Run("times out", func(t *testing.T) {
+		handler := http.TimeoutHandler(slowHandler(time.Second), 20*time.Millisecond, "request timed out")
+
+		apitest.Handler(handler).
+			Get("/slow").
+			Expect(t).
+			Status(http.StatusServiceUnavailable).
+			Body("request timed out").
+			End()
+	})
+
+	t.Run("completes within the timeout", func(t *testing.T) {
+		handler := http.TimeoutHandler(slowHandler(time.Millisecond), time.Second, "request timed out")
+
+		apitest.Handler(handler).
+			Get("/fast").
+			Expect(t).
+			Status(http.StatusOK).
+			Body("finished").
+			End()
+	})
+}
