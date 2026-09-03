@@ -194,27 +194,24 @@ func messageFromMsgAndArgs(msgAndArgs ...any) []labeledContent {
 		return []labeledContent{{"Messages", fmt.Sprintf("%+v", msg)}}
 	}
 
-	if len(msgAndArgs) > 1 {
-		var strMsgs []string
-		var structuredMsg *labeledContent
-		for _, msg := range msgAndArgs {
-			if msgAsStr, ok := msg.(string); ok {
-				strMsgs = append(strMsgs, msgAsStr)
-			}
-			if failureMsg, ok := msg.(failureMessageArgs); ok && failureMsg.Name != "" {
-				structuredMsg = &labeledContent{"Name", failureMsg.Name}
-			}
+	var strMsgs []string
+	var structuredMsg *labeledContent
+	for _, msg := range msgAndArgs {
+		if msgAsStr, ok := msg.(string); ok {
+			strMsgs = append(strMsgs, msgAsStr)
 		}
-		combinedContent := []labeledContent{}
-		if len(strMsgs) > 0 {
-			combinedContent = append(combinedContent, labeledContent{"Messages", strings.Join(strMsgs, ", ")})
+		if failureMsg, ok := msg.(failureMessageArgs); ok && failureMsg.Name != "" {
+			structuredMsg = &labeledContent{"Name", failureMsg.Name}
 		}
-		if structuredMsg != nil {
-			combinedContent = append(combinedContent, *structuredMsg)
-		}
-		return combinedContent
 	}
-	return nil
+	combinedContent := []labeledContent{}
+	if len(strMsgs) > 0 {
+		combinedContent = append(combinedContent, labeledContent{"Messages", strings.Join(strMsgs, ", ")})
+	}
+	if structuredMsg != nil {
+		combinedContent = append(combinedContent, *structuredMsg)
+	}
+	return combinedContent
 }
 
 func labeledOutput(content ...labeledContent) string {

@@ -110,19 +110,6 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 		panic(err)
 	}
 
-	tmpl, err := htmlTemplate.New("sequenceDiagram").
-		Funcs(*templateFunc).
-		Parse(reportTemplate)
-	if err != nil {
-		panic(err)
-	}
-
-	var out bytes.Buffer
-	err = tmpl.Execute(&out, output)
-	if err != nil {
-		panic(err)
-	}
-
 	fileName := fmt.Sprintf("%s.html", recorder.Meta["hash"])
 	err = r.fs.mkdirAll(r.storagePath, os.ModePerm)
 	if err != nil {
@@ -136,11 +123,11 @@ func (r *SequenceDiagramFormatter) Format(recorder *Recorder) {
 	}
 	defer f.Close()
 
-	s, _ := filepath.Abs(saveFilesTo)
-	_, err = f.Write(out.Bytes())
-	if err != nil {
+	if err := sequenceDiagramTemplate.Execute(f, output); err != nil {
 		panic(err)
 	}
+
+	s, _ := filepath.Abs(saveFilesTo)
 	fmt.Printf("Created sequence diagram (%s): %s\n", fileName, filepath.FromSlash(s))
 }
 
@@ -160,6 +147,10 @@ var templateFunc = &htmlTemplate.FuncMap{
 		return i + 1
 	},
 }
+
+var sequenceDiagramTemplate = htmlTemplate.Must(htmlTemplate.New("sequenceDiagram").
+	Funcs(*templateFunc).
+	Parse(reportTemplate))
 
 func formatDiagramRequest(req *http.Request) string {
 	out := fmt.Sprintf("%s %s", req.Method, req.URL.Path)
@@ -241,10 +232,8 @@ func newHTMLTemplateModel(r *Recorder) (htmlTemplateModel, error) {
 }
 
 func newHTTPRequestLogEntry(req *http.Request) (logEntry, error) {
-	reqHeader, err := httputil.DumpRequest(req, false)
-	if err != nil {
-		return logEntry{}, err
-	}
+	// DumpRequest only fails while dumping the body, which is not requested here
+	reqHeader, _ := httputil.DumpRequest(req, false)
 	body, err := formatBodyContent(req.Body, func(replacementBody io.ReadCloser) {
 		req.Body = replacementBody
 	})
@@ -255,10 +244,8 @@ func newHTTPRequestLogEntry(req *http.Request) (logEntry, error) {
 }
 
 func newHTTPResponseLogEntry(res *http.Response) (logEntry, error) {
-	resDump, err := httputil.DumpResponse(res, false)
-	if err != nil {
-		return logEntry{}, err
-	}
+	// DumpResponse only fails while dumping the body, which is not requested here
+	resDump, _ := httputil.DumpResponse(res, false)
 	body, err := formatBodyContent(res.Body, func(replacementBody io.ReadCloser) {
 		res.Body = replacementBody
 	})
@@ -280,21 +267,15 @@ func formatBodyContent(bodyReadCloser io.ReadCloser, replaceBody func(replacemen
 
 	replaceBody(io.NopCloser(bytes.NewReader(body)))
 
-	buf := new(bytes.Buffer)
+	// json.Indent cannot fail on a body that json.Valid accepted
 	if json.Valid(body) {
-		jsonEncodeErr := json.Indent(buf, body, "", "    ")
-		if jsonEncodeErr != nil {
-			return "", jsonEncodeErr
+		var indented bytes.Buffer
+		if err := json.Indent(&indented, body, "", "    "); err == nil {
+			return indented.String(), nil
 		}
-		s := buf.String()
-		return s, nil
 	}
 
-	_, err = buf.Write(body)
-	if err != nil {
-		return "", err
-	}
-	return buf.String(), nil
+	return string(body), nil
 }
 
 func quoted(in string) string {

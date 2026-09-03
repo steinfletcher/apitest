@@ -462,17 +462,12 @@ func createHash(meta map[string]any) string {
 	name := meta["name"]
 	app := meta["app"]
 
+	// hash.Hash.Write never returns an error
 	prefix := fnv.New32a()
-	_, err := prefix.Write(fmt.Appendf(nil, "%s%s%s", app, strings.ToUpper(method.(string)), path))
-	if err != nil {
-		panic(err)
-	}
+	_, _ = prefix.Write(fmt.Appendf(nil, "%s%s%s", app, strings.ToUpper(method.(string)), path))
 
 	suffix := fnv.New32a()
-	_, err = suffix.Write([]byte(name.(string)))
-	if err != nil {
-		panic(err)
-	}
+	_, _ = suffix.Write([]byte(name.(string)))
 	return fmt.Sprintf("%d_%d", prefix.Sum32(), suffix.Sum32())
 }
 

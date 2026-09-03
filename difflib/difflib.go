@@ -122,9 +122,6 @@ func (m *SequenceMatcher) SetSeqs(a, b []string) {
 //
 // See also SetSeqs() and SetSeq2().
 func (m *SequenceMatcher) SetSeq1(a []string) {
-	if &a == &m.a {
-		return
-	}
 	m.a = a
 	m.matchingBlocks = nil
 	m.opCodes = nil
@@ -133,9 +130,6 @@ func (m *SequenceMatcher) SetSeq1(a []string) {
 // Set the second sequence to be compared. The first sequence to be compared is
 // not changed.
 func (m *SequenceMatcher) SetSeq2(b []string) {
-	if &b == &m.b {
-		return
-	}
 	m.b = b
 	m.matchingBlocks = nil
 	m.opCodes = nil
