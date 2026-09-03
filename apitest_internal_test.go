@@ -26,3 +26,10 @@ func TestCopyHttpResponse_DoesNotShareHeaderValuesWithTheOriginal(t *testing.T) 
 	assert.Equal(t, "body", string(copiedBody))
 	assert.Equal(t, "body", string(originalBody))
 }
+
+func TestMockInteraction_GetRequestHostFallsBackToTheURL(t *testing.T) {
+	interaction := &mockInteraction{request: &http.Request{URL: mustParseURL("http://users.example.com/path")}}
+	if interaction.GetRequestHost() != "users.example.com" {
+		t.Fatalf("unexpected host %q", interaction.GetRequestHost())
+	}
+}

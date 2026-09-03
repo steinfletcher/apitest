@@ -1463,3 +1463,112 @@ func TestMocks_Copy_PointsRequestAndResponseAtTheCopy(t *testing.T) {
 	assert.Equal(t, 2, original.times)
 	assert.Equal(t, 5, copied.times)
 }
+
+func TestMocks_DeepCopyIsIndependent(t *testing.T) {
+	original := NewMock().Get("/path").RespondWith().Header("X-A", "1").Cookie("c", "v").Times(2).End()
+
+	copied := original.copy()
+	copied.response.headers["X-A"][0] = "changed"
+	copied.response.headers["X-B"] = []string{"2"}
+	copied.response.cookies[0].Value("other")
+
+	assert.Equal(t, map[string][]string{"X-A": {"1"}}, original.response.headers)
+	assert.Equal(t, "v", *original.response.cookies[0].value)
+}
+
+func TestMocks_StandaloneWithClientAndDebug(t *testing.T) {
+	cli := &http.Client{}
+	reset := NewStandaloneMocks(NewMock().Get("http://localhost:8080/path").RespondWith().Status(http.StatusTeapot).End()).
+		HttpClient(cli).
+		Debug().
+		End()
+	defer reset()
+
+	res, err := cli.Get("http://localhost:8080/path")
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusTeapot, res.StatusCode)
+}
+
+func TestMocks_MockDebugStandalone(t *testing.T) {
+	cli := &http.Client{}
+	defer NewMock().Debug().HttpClient(cli).Get("http://localhost:8080/path").RespondWith().Status(http.StatusOK).EndStandalone()()
+
+	res, err := cli.Get("http://localhost:8080/path")
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+}
+
+func TestMocks_JSONBodies(t *testing.T) {
+	assert.Equal(t, `{"a":1}`, NewMock().Get("/").JSON([]byte(`{"a":1}`)).body)
+	assert.Equal(t, `{"a":1}`, NewMock().Get("/").JSON(`{"a":1}`).body)
+	assert.Equal(t, `{"a":1}`, NewMock().Get("/").RespondWith().JSON(`{"a":1}`).body)
+	assert.Equal(t, `{"a":1}`, NewMock().Get("/").RespondWith().JSON([]byte(`{"a":1}`)).body)
+	assert.Equal(t, `{"a":1}`, NewMock().Get("/").RespondWith().JSON(map[string]int{"a": 1}).body)
+}
+
+func TestMocks_BodyFromFilePanicsWhenMissing(t *testing.T) {
+	assertPanics := func(name string, fn func()) {
+		t.Helper()
+		defer func() {
+			if recover() == nil {
+				t.Fatalf("%s: expected a panic", name)
+			}
+		}()
+		fn()
+	}
+	assertPanics("request", func() { NewMock().Get("/").BodyFromFile("testdata/does-not-exist.json") })
+	assertPanics("response", func() { NewMock().Get("/").RespondWith().BodyFromFile("testdata/does-not-exist.json") })
+}
+
+func TestMocks_BodyRegexpMatcher(t *testing.T) {
+	spec := NewMock().Post("/path").BodyRegexp(`"id":\s*\d+`)
+
+	matching := httptest.NewRequest(http.MethodPost, "/path", strings.NewReader(`{"id": 123}`))
+	assert.NoError(t, bodyRegexpMatcher(matching, spec))
+	body, _ := io.ReadAll(matching.Body)
+	assert.Equal(t, `{"id": 123}`, string(body))
+
+	mismatch := httptest.NewRequest(http.MethodPost, "/path", strings.NewReader(`{"id": "abc"}`))
+	assert.Equal(t, true, bodyRegexpMatcher(mismatch, spec) != nil)
+
+	assert.Equal(t, "expected a body but received none", errString(bodyRegexpMatcher(&http.Request{}, spec)))
+	assert.Equal(t, "expected a body but received none", errString(bodyRegexpMatcher(httptest.NewRequest(http.MethodPost, "/path", strings.NewReader("")), spec)))
+	assert.Equal(t, "read failed", errString(bodyRegexpMatcher(&http.Request{Body: io.NopCloser(failingReader{})}, spec)))
+	assert.NoError(t, bodyRegexpMatcher(&http.Request{}, NewMock().Post("/path")))
+}
+
+func TestMocks_BodyMatcherErrors(t *testing.T) {
+	spec := NewMock().Post("/path").Body(`{"a": 1}`)
+
+	assert.Equal(t, "expected a body but received none", errString(bodyMatcher(&http.Request{}, spec)))
+	assert.Equal(t, "read failed", errString(bodyMatcher(&http.Request{Body: io.NopCloser(failingReader{})}, spec)))
+
+	jsonMismatch := bodyMatcher(httptest.NewRequest(http.MethodPost, "/path", strings.NewReader(`{"a": 2}`)), spec)
+	assert.Equal(t, true, jsonMismatch != nil)
+	assert.Equal(t, true, strings.Contains(jsonMismatch.Error(), "Diff:"))
+
+	textMismatch := bodyMatcher(httptest.NewRequest(http.MethodPost, "/path", strings.NewReader(`plain`)), NewMock().Post("/path").Body("other"))
+	assert.Equal(t, true, textMismatch != nil)
+	assert.Equal(t, true, strings.Contains(textMismatch.Error(), "received body did not match expected mock body"))
+}
+
+func TestMocks_FormDataMatchersReportUnparsableForms(t *testing.T) {
+	malformed := func() *http.Request {
+		req := httptest.NewRequest(http.MethodPost, "/path", strings.NewReader("a=%zz"))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		return req
+	}
+
+	assert.Equal(t, "unable to parse form data", errString(formDataMatcher(malformed(), NewMock().Post("/path").FormData("a", "1"))))
+	assert.Equal(t, "unable to parse form data", errString(formDataPresentMatcher(malformed(), NewMock().Post("/path").FormDataPresent("a"))))
+	assert.Equal(t, "unable to parse form data", errString(formDataNotPresentMatcher(malformed(), NewMock().Post("/path").FormDataNotPresent("a"))))
+}
+
+func errString(err error) string {
+	if err == nil {
+		return "<nil>"
+	}
+	return err.Error()
+}

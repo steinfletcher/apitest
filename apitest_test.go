@@ -1736,3 +1736,161 @@ func TestApiTest_SupportsTimeoutHandler(t *testing.T) {
 			End()
 	})
 }
+
+func TestApiTest_RecorderHookAddsCustomEvents(t *testing.T) {
+	captor := &RecorderCaptor{}
+
+	apitest.New().
+		Report(captor).
+		RecorderHook(func(recorder *apitest.Recorder) {
+			recorder.AddMessageRequest(apitest.MessageRequest{Source: "sut", Target: "queue", Header: "publish", Timestamp: time.Now().Add(time.Second)})
+		}).
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })).
+		Get("/").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	// inbound request, custom message, final response
+	assert.Equal(t, 3, len(captor.capturedRecorder.Events))
+	var messages int
+	for _, event := range captor.capturedRecorder.Events {
+		if _, ok := event.(apitest.MessageRequest); ok {
+			messages++
+		}
+	}
+	assert.Equal(t, 1, messages)
+}
+
+func TestApiTest_EndWithoutHandlerOrNetworkingIsFatal(t *testing.T) {
+	rec := &recordingT{}
+
+	apitest.New().Get("/").Expect(rec).End()
+
+	assert.Equal(t, 2, len(rec.fatals))
+	assert.Equal(t, "either define a http.Handler or enable networking", rec.fatals[0])
+	assert.Equal(t, true, strings.Contains(rec.fatals[1], "nil pointer dereference"))
+}
+
+func TestApiTest_HandlerPanicsAreReportedAsFatal(t *testing.T) {
+	rec := &recordingT{}
+
+	apitest.New().
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { panic("handler exploded") })).
+		Get("/").
+		Expect(rec).
+		End()
+
+	assert.Equal(t, 1, len(rec.fatals))
+	assert.Equal(t, true, strings.HasPrefix(rec.fatals[0], "handler exploded: "))
+}
+
+func TestApiTest_NetworkingErrorsAreFatal(t *testing.T) {
+	rec := &recordingT{}
+	defer func() {
+		// with a non-halting TestingT the test carries on without a response and panics
+		_ = recover()
+		assert.Equal(t, 1, len(rec.fatals))
+		assert.Equal(t, true, strings.Contains(rec.fatals[0], "connection refused"))
+	}()
+
+	apitest.New().
+		EnableNetworking(&http.Client{Timeout: time.Second}).
+		Get("http://127.0.0.1:1/unreachable").
+		Expect(rec).
+		End()
+}
+
+func TestApiTest_EnableNetworkingDefaultsToTheDefaultClient(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusAccepted) }))
+	defer srv.Close()
+
+	apitest.New().
+		EnableNetworking().
+		Get(srv.URL + "/").
+		Expect(t).
+		Status(http.StatusAccepted).
+		End()
+}
+
+func TestApiTest_GraphQLQueryWithVariables(t *testing.T) {
+	var received apitest.GraphQLRequestBody
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewDecoder(r.Body).Decode(&received)
+		w.WriteHeader(http.StatusOK)
+	})
+
+	apitest.Handler(handler).
+		Post("/graphql").
+		GraphQLQuery(`query User($id: ID!) { user(id: $id) { name } }`, map[string]any{"id": "1234"}).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	assert.Equal(t, map[string]any{"id": "1234"}, received.Variables)
+}
+
+func TestApiTest_CustomAssertErrorsAreReported(t *testing.T) {
+	verifier := mocks.NewVerifier()
+	var reported error
+	verifier.NoErrorFn = func(t apitest.TestingT, err error, msgAndArgs ...any) bool {
+		reported = err
+		return false
+	}
+
+	apitest.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })).
+		Verifier(verifier).
+		Get("/").
+		Expect(t).
+		Assert(func(*http.Response, *http.Request) error { return errors.New("custom failure") }).
+		End()
+
+	assert.Equal(t, "custom failure", reported.Error())
+}
+
+func TestApiTest_HeaderPresenceFailures(t *testing.T) {
+	verifier := mocks.NewVerifier()
+	var failures []string
+	verifier.FailFn = func(t apitest.TestingT, failureMessage string, msgAndArgs ...any) bool {
+		failures = append(failures, failureMessage)
+		return false
+	}
+
+	apitest.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Present", "yes")
+		w.WriteHeader(http.StatusOK)
+	})).
+		Verifier(verifier).
+		Get("/").
+		Expect(t).
+		HeaderPresent("X-Missing").
+		HeaderNotPresent("X-Present").
+		End()
+
+	assert.Equal(t, []string{
+		"expected header 'X-Missing' not present in response",
+		"did not expect header 'X-Present' in response",
+	}, failures)
+}
+
+func TestApiTest_DebugWithMockDelays(t *testing.T) {
+	getUser := apitest.NewMock().
+		Get("http://localhost:8080").
+		RespondWith().
+		FixedDelay(10).
+		Status(http.StatusOK).
+		End()
+
+	apitest.New().
+		Debug().
+		EnableMockResponseDelay().
+		Mocks(getUser).
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_ = getUserData()
+			w.WriteHeader(http.StatusOK)
+		})).
+		Get("/").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}

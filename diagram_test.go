@@ -1,13 +1,17 @@
 package apitest
 
 import (
+	"errors"
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestDiagram_BadgeCSSClass(t *testing.T) {
@@ -263,4 +267,132 @@ func TestSequenceDiagramFormatter_ClosesTheDiagramFile(t *testing.T) {
 	assert.Equal(t, true, strings.HasSuffix(fs.created[0], "abc123.html"))
 	assert.Equal(t, 1, fs.closed)
 	assert.Equal(t, true, strings.Contains(fs.content.String(), "<!DOCTYPE html>"))
+}
+
+type fakeDiagramFileSystem struct {
+	mkdirErr  error
+	createErr error
+	writeErr  error
+	content   strings.Builder
+}
+
+func (f *fakeDiagramFileSystem) create(name string) (io.WriteCloser, error) {
+	if f.createErr != nil {
+		return nil, f.createErr
+	}
+	return &fakeDiagramFile{fs: f}, nil
+}
+
+func (f *fakeDiagramFileSystem) mkdirAll(path string, perm os.FileMode) error {
+	return f.mkdirErr
+}
+
+type fakeDiagramFile struct {
+	fs *fakeDiagramFileSystem
+}
+
+func (f *fakeDiagramFile) Write(p []byte) (int, error) {
+	if f.fs.writeErr != nil {
+		return 0, f.fs.writeErr
+	}
+	return f.fs.content.Write(p)
+}
+
+func (f *fakeDiagramFile) Close() error { return nil }
+
+func completeRecorder() *Recorder {
+	return NewTestRecorder().
+		AddTitle("title").
+		AddMeta(map[string]any{"hash": "abc123"}).
+		AddHttpRequest(HttpRequest{Source: ConsumerDefaultName, Target: SystemUnderTestDefaultName, Value: httptest.NewRequest(http.MethodGet, "/user", nil)}).
+		AddHttpResponse(HttpResponse{Source: SystemUnderTestDefaultName, Target: ConsumerDefaultName, Value: &http.Response{StatusCode: http.StatusOK, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(""))}})
+}
+
+func assertPanicContains(t *testing.T, expected string, fn func()) {
+	t.Helper()
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatalf("expected a panic containing %q", expected)
+		}
+		if !strings.Contains(fmt.Sprint(r), expected) {
+			t.Fatalf("expected panic containing %q, got %v", expected, r)
+		}
+	}()
+	fn()
+}
+
+func TestSequenceDiagramFormatter_WritesToTheOSFileSystem(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "nested", "diagrams")
+
+	SequenceDiagram(dir).Format(completeRecorder())
+
+	content, err := os.ReadFile(filepath.Join(dir, "abc123.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(content), "<!DOCTYPE html>") {
+		t.Fatal("expected the diagram html to be written")
+	}
+}
+
+func TestSequenceDiagramFormatter_PanicsOnFailures(t *testing.T) {
+	assertPanicContains(t, "no events are defined", func() {
+		(&SequenceDiagramFormatter{storagePath: ".sequence", fs: &fakeDiagramFileSystem{}}).Format(NewTestRecorder())
+	})
+	assertPanicContains(t, "mkdir failed", func() {
+		(&SequenceDiagramFormatter{storagePath: ".sequence", fs: &fakeDiagramFileSystem{mkdirErr: errors.New("mkdir failed")}}).Format(completeRecorder())
+	})
+	assertPanicContains(t, "create failed", func() {
+		(&SequenceDiagramFormatter{storagePath: ".sequence", fs: &fakeDiagramFileSystem{createErr: errors.New("create failed")}}).Format(completeRecorder())
+	})
+	assertPanicContains(t, "write failed", func() {
+		(&SequenceDiagramFormatter{storagePath: ".sequence", fs: &fakeDiagramFileSystem{writeErr: errors.New("write failed")}}).Format(completeRecorder())
+	})
+}
+
+func TestFormatDiagramRequest_TruncatesLongPaths(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/"+strings.Repeat("a", 100)+"?b=1", nil)
+
+	got := formatDiagramRequest(req)
+
+	if len(got) != 68 || !strings.HasSuffix(got, "...") {
+		t.Fatalf("expected a truncated description, got %q", got)
+	}
+}
+
+type customEvent struct{}
+
+func (customEvent) GetTime() time.Time { return time.Time{} }
+
+func TestNewHTMLTemplateModel_Errors(t *testing.T) {
+	failingBody := io.NopCloser(failingReader{})
+
+	_, err := newHTMLTemplateModel(NewTestRecorder().AddHttpRequest(HttpRequest{Value: &http.Request{Method: http.MethodGet, URL: mustParseURL("/x"), Body: failingBody}}))
+	if err == nil || err.Error() != "read failed" {
+		t.Fatalf("expected the request body error, got %v", err)
+	}
+
+	_, err = newHTMLTemplateModel(NewTestRecorder().AddHttpResponse(HttpResponse{Value: &http.Response{StatusCode: http.StatusOK, Body: failingBody}}))
+	if err == nil || err.Error() != "read failed" {
+		t.Fatalf("expected the response body error, got %v", err)
+	}
+
+	_, err = newHTMLTemplateModel(NewTestRecorder().AddHttpRequest(HttpRequest{Value: httptest.NewRequest(http.MethodGet, "/x", nil)}))
+	if err == nil || err.Error() != "final event should be a response type" {
+		t.Fatalf("expected the final event error, got %v", err)
+	}
+
+	recorder := completeRecorder()
+	recorder.Meta["unmarshallable"] = func() {}
+	_, err = newHTMLTemplateModel(recorder)
+	if err == nil || !strings.Contains(err.Error(), "unsupported type") {
+		t.Fatalf("expected the meta marshalling error, got %v", err)
+	}
+
+	assertPanicContains(t, "received unknown event type", func() {
+		r := NewTestRecorder()
+		r.Events = append(r.Events, customEvent{})
+		_, _ = newHTMLTemplateModel(r)
+	})
 }
