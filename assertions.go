@@ -49,45 +49,35 @@ func (a *APITest) assertResponse(res *http.Response) {
 }
 
 func (a *APITest) assertCookies(response *http.Response) {
-	if len(a.response.cookies) > 0 {
-		for _, expectedCookie := range a.response.cookies {
-			var mismatchedFields []string
-			foundCookie := false
-			for _, actualCookie := range response.Cookies() {
-				cookieFound, errors := compareCookies(expectedCookie, actualCookie)
-				if cookieFound {
-					foundCookie = true
-					mismatchedFields = append(mismatchedFields, errors...)
-				}
+	actualCookies := response.Cookies()
+
+	for _, expectedCookie := range a.response.cookies {
+		var mismatchedFields []string
+		foundCookie := false
+		for _, actualCookie := range actualCookies {
+			cookieFound, errors := compareCookies(expectedCookie, actualCookie)
+			if cookieFound {
+				foundCookie = true
+				mismatchedFields = append(mismatchedFields, errors...)
 			}
-			a.verifier.Equal(a.t, true, foundCookie, "ExpectedCookie not found - "+*expectedCookie.name, failureMessageArgs{Name: a.name})
-			a.verifier.Equal(a.t, 0, len(mismatchedFields), strings.Join(mismatchedFields, ","), failureMessageArgs{Name: a.name})
 		}
+		a.verifier.Equal(a.t, true, foundCookie, "ExpectedCookie not found - "+*expectedCookie.name, failureMessageArgs{Name: a.name})
+		a.verifier.Equal(a.t, 0, len(mismatchedFields), strings.Join(mismatchedFields, ","), failureMessageArgs{Name: a.name})
 	}
 
-	if len(a.response.cookiesPresent) > 0 {
-		for _, cookieName := range a.response.cookiesPresent {
-			foundCookie := false
-			for _, cookie := range response.Cookies() {
-				if cookie.Name == cookieName {
-					foundCookie = true
-				}
-			}
-			a.verifier.Equal(a.t, true, foundCookie, "ExpectedCookie not found - "+cookieName, failureMessageArgs{Name: a.name})
-		}
+	for _, cookieName := range a.response.cookiesPresent {
+		a.verifier.Equal(a.t, true, hasCookie(actualCookies, cookieName), "ExpectedCookie not found - "+cookieName, failureMessageArgs{Name: a.name})
 	}
 
-	if len(a.response.cookiesNotPresent) > 0 {
-		for _, cookieName := range a.response.cookiesNotPresent {
-			foundCookie := false
-			for _, cookie := range response.Cookies() {
-				if cookie.Name == cookieName {
-					foundCookie = true
-				}
-			}
-			a.verifier.Equal(a.t, false, foundCookie, "ExpectedCookie found - "+cookieName, failureMessageArgs{Name: a.name})
-		}
+	for _, cookieName := range a.response.cookiesNotPresent {
+		a.verifier.Equal(a.t, false, hasCookie(actualCookies, cookieName), "ExpectedCookie found - "+cookieName, failureMessageArgs{Name: a.name})
 	}
+}
+
+func hasCookie(cookies []*http.Cookie, name string) bool {
+	return slices.ContainsFunc(cookies, func(cookie *http.Cookie) bool {
+		return cookie.Name == name
+	})
 }
 
 func (a *APITest) assertHeaders(res *http.Response) {
