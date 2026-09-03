@@ -1,0 +1,44 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: standard
+  enable:
+    - copyloopvar
+    - errorlint
+    - misspell
+    - modernize
+    - nilerr
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - wastedassign
+  settings:
+    errcheck:
+      exclude-functions:
+        - (io.Closer).Close
+        - (io/fs.File).Close
+        - (*bufio.Writer).Flush
+
+  exclusions:
+    rules:
+      # InboundRequest and FinalResponse are exported but their fields are never read
+      - path: apitest\.go
+        linters: [unused]
+        text: "field (request|response|timestamp) is unused"
+      # MockVerifier's value receivers are part of its public API
+      - path: mocks/verifier\.go
+        linters: [staticcheck]
+        text: "SA4005"
+      # the db recorder deliberately supports the legacy (deprecated) driver interfaces
+      - path: x/db/
+        linters: [staticcheck]
+        text: "SA1019|ST1005"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
