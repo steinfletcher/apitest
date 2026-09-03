@@ -5,7 +5,6 @@
 <p align="center">
 <a href="https://pkg.go.dev/github.com/steinfletcher/apitest"><img src="https://pkg.go.dev/badge/github.com/steinfletcher/apitest.svg" alt="Go Reference" /></a>
 <a href="https://github.com/steinfletcher/apitest/actions/workflows/ci.yml"><img src="https://github.com/steinfletcher/apitest/actions/workflows/ci.yml/badge.svg" alt="Build Status" /></a>
-<a href="https://goreportcard.com/report/github.com/steinfletcher/apitest"><img src="https://goreportcard.com/badge/github.com/steinfletcher/apitest" alt="Go Report Card" /></a>
 <a href="https://github.com/avelino/awesome-go/#testing"><img src="https://awesome.re/mentioned-badge.svg" alt="Mentioned in Awesome Go" /></a>
 </p>
 
