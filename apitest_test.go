@@ -199,7 +199,7 @@ func TestApiTest_JSONBody(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		body interface{}
+		body any
 	}{
 		"string": {
 			body: `{"a": 12345}`,
@@ -211,7 +211,7 @@ func TestApiTest_JSONBody(t *testing.T) {
 			body: bodyStruct{A: 12345},
 		},
 		"map": {
-			body: map[string]interface{}{"a": 12345},
+			body: map[string]any{"a": 12345},
 		},
 	}
 	for name, test := range tests {
@@ -541,7 +541,7 @@ func TestApiTest_GraphQLRequest(t *testing.T) {
 			expected := apitest.GraphQLRequestBody{
 				Query:         `query { todos { text } }`,
 				OperationName: "myOperation",
-				Variables: map[string]interface{}{
+				Variables: map[string]any{
 					"a": float64(1),
 					"b": "2",
 				},
@@ -554,7 +554,7 @@ func TestApiTest_GraphQLRequest(t *testing.T) {
 		Post("/query").
 		GraphQLRequest(apitest.GraphQLRequestBody{
 			Query: "query { todos { text } }",
-			Variables: map[string]interface{}{
+			Variables: map[string]any{
 				"a": 1,
 				"b": "2",
 			},
@@ -872,11 +872,11 @@ func TestApiTest_CustomAssert(t *testing.T) {
 
 func TestApiTest_VerifierCapturesTheTestMessage(t *testing.T) {
 	verifier := mocks.NewVerifier()
-	verifier.EqualFn = func(t apitest.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+	verifier.EqualFn = func(t apitest.TestingT, expected, actual any, msgAndArgs ...any) bool {
 		if expected == http.StatusOK {
 			return true
 		}
-		args := msgAndArgs[0].(interface{}).([]interface{})
+		args := msgAndArgs[0].(any).([]any)
 		assert.Equal(t, 2, len(args))
 		assert.Equal(t, "expected header 'Abc' not present in response", args[0].(string))
 		return true
@@ -908,7 +908,7 @@ func TestApiTest_Report(t *testing.T) {
 
 	apitest.New("some test").
 		Debug().
-		Meta(map[string]interface{}{"host": "abc.com"}).
+		Meta(map[string]any{"host": "abc.com"}).
 		Report(reporter).
 		Mocks(getUser).
 		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -963,7 +963,7 @@ func TestApiTest_Recorder(t *testing.T) {
 	recorder.AddMessageResponse(messageResponse)
 
 	apitest.New("some test").
-		Meta(map[string]interface{}{"host": "abc.com"}).
+		Meta(map[string]any{"host": "abc.com"}).
 		Report(reporter).
 		Recorder(recorder).
 		Mocks(getUser).
@@ -1450,7 +1450,7 @@ func TestApiTest_ErrorIfMockInvocationsDoNotMatchTimes(t *testing.T) {
 		End()
 
 	verifier := mocks.NewVerifier()
-	verifier.FailFn = func(t apitest.TestingT, failureMessage string, msgAndArgs ...interface{}) bool {
+	verifier.FailFn = func(t apitest.TestingT, failureMessage string, msgAndArgs ...any) bool {
 		assert.Equal(t, "mock was not invoked expected times", failureMessage)
 		return true
 	}
@@ -1594,13 +1594,13 @@ type recordingT struct {
 	fatals []string
 }
 
-func (r *recordingT) Errorf(format string, args ...interface{}) {}
+func (r *recordingT) Errorf(format string, args ...any) {}
 
-func (r *recordingT) Fatal(args ...interface{}) {
+func (r *recordingT) Fatal(args ...any) {
 	r.fatals = append(r.fatals, fmt.Sprint(args...))
 }
 
-func (r *recordingT) Fatalf(format string, args ...interface{}) {
+func (r *recordingT) Fatalf(format string, args ...any) {
 	r.fatals = append(r.fatals, fmt.Sprintf(format, args...))
 }
 
@@ -1623,7 +1623,7 @@ func TestApiTest_RequestBuilderErrorsAreReportedByExpect(t *testing.T) {
 		},
 		"graphql request that cannot be marshalled": {
 			build: func(r *apitest.Request) *apitest.Request {
-				return r.GraphQLRequest(apitest.GraphQLRequestBody{Variables: map[string]interface{}{"a": make(chan int)}})
+				return r.GraphQLRequest(apitest.GraphQLRequestBody{Variables: map[string]any{"a": make(chan int)}})
 			},
 			expectedMessage: "unsupported type",
 		},

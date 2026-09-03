@@ -22,7 +22,7 @@ type (
 	Recorder struct {
 		Title    string
 		SubTitle string
-		Meta     map[string]interface{}
+		Meta     map[string]any
 		Events   []Event
 	}
 
@@ -115,7 +115,7 @@ func (r *Recorder) AddSubTitle(subTitle string) *Recorder {
 }
 
 // AddMeta add Meta to the recorder
-func (r *Recorder) AddMeta(meta map[string]interface{}) *Recorder {
+func (r *Recorder) AddMeta(meta map[string]any) *Recorder {
 	r.Meta = meta
 	return r
 }

@@ -18,9 +18,9 @@ import (
 // TestingT is an interface to wrap the native *testing.T interface, this allows integration with GinkgoT() interface
 // GinkgoT interface defined in https://github.com/onsi/ginkgo/blob/55c858784e51c26077949c81b6defb6b97b76944/ginkgo_dsl.go#L91
 type TestingT interface {
-	Errorf(format string, args ...interface{})
-	Fatal(args ...interface{})
-	Fatalf(format string, args ...interface{})
+	Errorf(format string, args ...any)
+	Fatal(args ...any)
+	Fatalf(format string, args ...any)
 }
 
 // failureMessageArgs are passed to the verifier but get stripped out from the user facing error message that gets printed
@@ -32,11 +32,11 @@ type failureMessageArgs struct {
 // Verifier is the assertion interface allowing consumers to inject a custom assertion implementation.
 // It also allows failure scenarios to be tested within apitest
 type Verifier interface {
-	Equal(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool
-	True(t TestingT, value bool, msgAndArgs ...interface{}) bool
-	JSONEq(t TestingT, expected string, actual string, msgAndArgs ...interface{}) bool
-	Fail(t TestingT, failureMessage string, msgAndArgs ...interface{}) bool
-	NoError(t TestingT, err error, msgAndArgs ...interface{}) bool
+	Equal(t TestingT, expected, actual any, msgAndArgs ...any) bool
+	True(t TestingT, value bool, msgAndArgs ...any) bool
+	JSONEq(t TestingT, expected string, actual string, msgAndArgs ...any) bool
+	Fail(t TestingT, failureMessage string, msgAndArgs ...any) bool
+	NoError(t TestingT, err error, msgAndArgs ...any) bool
 }
 
 // DefaultVerifier is a verifier that uses some code from https://github.com/stretchr/testify to perform assertions
@@ -44,7 +44,7 @@ type DefaultVerifier struct{}
 
 var _ Verifier = DefaultVerifier{}
 
-func (a DefaultVerifier) True(t TestingT, value bool, msgAndArgs ...interface{}) bool {
+func (a DefaultVerifier) True(t TestingT, value bool, msgAndArgs ...any) bool {
 	if !value {
 		return a.Fail(t, "Should be true", msgAndArgs...)
 	}
@@ -52,8 +52,8 @@ func (a DefaultVerifier) True(t TestingT, value bool, msgAndArgs ...interface{})
 }
 
 // JSONEq asserts that two JSON strings are equivalent
-func (a DefaultVerifier) JSONEq(t TestingT, expected string, actual string, msgAndArgs ...interface{}) bool {
-	var expectedJSONAsInterface, actualJSONAsInterface interface{}
+func (a DefaultVerifier) JSONEq(t TestingT, expected string, actual string, msgAndArgs ...any) bool {
+	var expectedJSONAsInterface, actualJSONAsInterface any
 
 	if err := json.Unmarshal([]byte(expected), &expectedJSONAsInterface); err != nil {
 		return a.Fail(t, fmt.Sprintf("Expected value ('%s') is not valid json.\nJSON parsing error: '%s'", expected, err.Error()), msgAndArgs...)
@@ -66,7 +66,7 @@ func (a DefaultVerifier) JSONEq(t TestingT, expected string, actual string, msgA
 	return a.Equal(t, expectedJSONAsInterface, actualJSONAsInterface, msgAndArgs...)
 }
 
-func (a DefaultVerifier) Equal(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+func (a DefaultVerifier) Equal(t TestingT, expected, actual any, msgAndArgs ...any) bool {
 	if err := validateEqualArgs(expected, actual); err != nil {
 		return a.Fail(t, fmt.Sprintf("Invalid operation: %#v == %#v (%s)",
 			expected, actual, err), msgAndArgs...)
@@ -84,7 +84,7 @@ func (a DefaultVerifier) Equal(t TestingT, expected, actual interface{}, msgAndA
 }
 
 // Fail reports a failure
-func (a DefaultVerifier) Fail(t TestingT, failureMessage string, msgAndArgs ...interface{}) bool {
+func (a DefaultVerifier) Fail(t TestingT, failureMessage string, msgAndArgs ...any) bool {
 	content := []labeledContent{
 		{"Error Trace", strings.Join(callerInfo(), "\n\t\t\t")},
 		{"Error", failureMessage},
@@ -108,7 +108,7 @@ func (a DefaultVerifier) Fail(t TestingT, failureMessage string, msgAndArgs ...i
 }
 
 // NoError asserts that a function returned no error
-func (a DefaultVerifier) NoError(t TestingT, err error, msgAndArgs ...interface{}) bool {
+func (a DefaultVerifier) NoError(t TestingT, err error, msgAndArgs ...any) bool {
 	if err != nil {
 		return a.Fail(t, fmt.Sprintf("Received unexpected error:\n%+v", err), msgAndArgs...)
 	}
@@ -116,7 +116,7 @@ func (a DefaultVerifier) NoError(t TestingT, err error, msgAndArgs ...interface{
 	return true
 }
 
-func formatUnequalValues(expected, actual interface{}) (e string, a string) {
+func formatUnequalValues(expected, actual any) (e string, a string) {
 	if reflect.TypeOf(expected) != reflect.TypeOf(actual) {
 		return fmt.Sprintf("%T(%s)", expected, truncatingFormat(expected)),
 			fmt.Sprintf("%T(%s)", actual, truncatingFormat(actual))
@@ -128,7 +128,7 @@ func formatUnequalValues(expected, actual interface{}) (e string, a string) {
 	return truncatingFormat(expected), truncatingFormat(actual)
 }
 
-func truncatingFormat(data interface{}) string {
+func truncatingFormat(data any) string {
 	value := fmt.Sprintf("%#v", data)
 	max := bufio.MaxScanTokenSize - 100 // Give us some space the type info too if needed.
 	if len(value) > max {
@@ -137,7 +137,7 @@ func truncatingFormat(data interface{}) string {
 	return value
 }
 
-func objectsAreEqual(expected, actual interface{}) bool {
+func objectsAreEqual(expected, actual any) bool {
 	if expected == nil || actual == nil {
 		return expected == actual
 	}
@@ -157,14 +157,14 @@ func objectsAreEqual(expected, actual interface{}) bool {
 	return bytes.Equal(exp, act)
 }
 
-func isFunction(arg interface{}) bool {
+func isFunction(arg any) bool {
 	if arg == nil {
 		return false
 	}
 	return reflect.TypeOf(arg).Kind() == reflect.Func
 }
 
-func validateEqualArgs(expected, actual interface{}) error {
+func validateEqualArgs(expected, actual any) error {
 	if expected == nil && actual == nil {
 		return nil
 	}
@@ -175,7 +175,7 @@ func validateEqualArgs(expected, actual interface{}) error {
 	return nil
 }
 
-func messageFromMsgAndArgs(msgAndArgs ...interface{}) []labeledContent {
+func messageFromMsgAndArgs(msgAndArgs ...any) []labeledContent {
 	if len(msgAndArgs) == 0 || msgAndArgs == nil {
 		return nil
 	}
@@ -312,29 +312,29 @@ type labeledContent struct {
 // NoopVerifier is a verifier that does not perform verification
 type NoopVerifier struct{}
 
-func (n NoopVerifier) True(t TestingT, v bool, msgAndArgs ...interface{}) bool {
+func (n NoopVerifier) True(t TestingT, v bool, msgAndArgs ...any) bool {
 	return true
 }
 
 var _ Verifier = NoopVerifier{}
 
 // Equal does not perform any assertion and always returns true
-func (n NoopVerifier) Equal(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+func (n NoopVerifier) Equal(t TestingT, expected, actual any, msgAndArgs ...any) bool {
 	return true
 }
 
 // JSONEq does not perform any assertion and always returns true
-func (n NoopVerifier) JSONEq(t TestingT, expected string, actual string, msgAndArgs ...interface{}) bool {
+func (n NoopVerifier) JSONEq(t TestingT, expected string, actual string, msgAndArgs ...any) bool {
 	return true
 }
 
 // Fail does not perform any assertion and always returns true
-func (n NoopVerifier) Fail(t TestingT, failureMessage string, msgAndArgs ...interface{}) bool {
+func (n NoopVerifier) Fail(t TestingT, failureMessage string, msgAndArgs ...any) bool {
 	return true
 }
 
 // NoError asserts that a function returned no error
-func (n NoopVerifier) NoError(t TestingT, err error, msgAndArgs ...interface{}) bool {
+func (n NoopVerifier) NoError(t TestingT, err error, msgAndArgs ...any) bool {
 	return true
 }
 

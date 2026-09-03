@@ -81,7 +81,7 @@ func TestRecorderBuilder(t *testing.T) {
 	assert.Equal(t, 4, len(recorder.Events))
 	assert.Equal(t, "title", recorder.Title)
 	assert.Equal(t, "subTitle", recorder.SubTitle)
-	assert.Equal(t, map[string]interface{}{
+	assert.Equal(t, map[string]any{
 		"path":   "/user",
 		"name":   "some test",
 		"host":   "example.com",
@@ -124,7 +124,7 @@ func aRecorder() *Recorder {
 		AddMessageRequest(MessageRequest{Header: "A", Body: "B", Source: "mesReqSource"}).
 		AddMessageResponse(MessageResponse{Header: "C", Body: "D", Source: "mesResSource"}).
 		AddHttpResponse(aResponse()).
-		AddMeta(map[string]interface{}{
+		AddMeta(map[string]any{
 			"path":   "/user",
 			"name":   "some test",
 			"host":   "example.com",
@@ -218,7 +218,7 @@ func (m *FS) mkdirAll(path string, perm os.FileMode) error {
 }
 
 func TestWebSequenceDiagram_RenamesOnlyExactDefaultParticipantNames(t *testing.T) {
-	dsl := &webSequenceDiagramDSL{meta: map[string]interface{}{
+	dsl := &webSequenceDiagramDSL{meta: map[string]any{
 		"consumerName":        "consumer",
 		"systemUnderTestName": "app",
 	}}
@@ -266,7 +266,7 @@ func TestSequenceDiagramFormatter_ClosesTheDiagramFile(t *testing.T) {
 	formatter := &SequenceDiagramFormatter{storagePath: ".sequence", fs: fs}
 	recorder := NewTestRecorder().
 		AddTitle("title").
-		AddMeta(map[string]interface{}{"hash": "abc123"}).
+		AddMeta(map[string]any{"hash": "abc123"}).
 		AddHttpRequest(HttpRequest{
 			Source: ConsumerDefaultName,
 			Target: SystemUnderTestDefaultName,

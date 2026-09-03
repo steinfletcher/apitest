@@ -572,7 +572,7 @@ func WriteUnifiedDiff(writer io.Writer, diff UnifiedDiff) error {
 	SetColorizeLogs()
 	buf := bufio.NewWriter(writer)
 	defer buf.Flush()
-	wf := func(format string, args ...interface{}) error {
+	wf := func(format string, args ...any) error {
 		_, err := buf.WriteString(fmt.Sprintf(format, args...))
 		return err
 	}
@@ -695,7 +695,7 @@ func WriteContextDiff(writer io.Writer, diff ContextDiff) error {
 	buf := bufio.NewWriter(writer)
 	defer buf.Flush()
 	var diffErr error
-	wf := func(format string, args ...interface{}) {
+	wf := func(format string, args ...any) {
 		_, err := buf.WriteString(fmt.Sprintf(format, args...))
 		if diffErr == nil && err != nil {
 			diffErr = err

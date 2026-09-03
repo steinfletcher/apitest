@@ -400,7 +400,7 @@ func (m *Mock) Get(u string) *MockRequest {
 }
 
 // Getf configures the mock to match http method GET and supports formatting
-func (m *Mock) Getf(format string, args ...interface{}) *MockRequest {
+func (m *Mock) Getf(format string, args ...any) *MockRequest {
 	return m.Get(fmt.Sprintf(format, args...))
 }
 
@@ -419,7 +419,7 @@ func (m *Mock) Put(u string) *MockRequest {
 }
 
 // Putf configures the mock to match http method PUT and supports formatting
-func (m *Mock) Putf(format string, args ...interface{}) *MockRequest {
+func (m *Mock) Putf(format string, args ...any) *MockRequest {
 	return m.Put(fmt.Sprintf(format, args...))
 }
 
@@ -431,7 +431,7 @@ func (m *Mock) Post(u string) *MockRequest {
 }
 
 // Postf configures the mock to match http method POST and supports formatting
-func (m *Mock) Postf(format string, args ...interface{}) *MockRequest {
+func (m *Mock) Postf(format string, args ...any) *MockRequest {
 	return m.Post(fmt.Sprintf(format, args...))
 }
 
@@ -443,7 +443,7 @@ func (m *Mock) Delete(u string) *MockRequest {
 }
 
 // Deletef configures the mock to match http method DELETE and supports formatting
-func (m *Mock) Deletef(format string, args ...interface{}) *MockRequest {
+func (m *Mock) Deletef(format string, args ...any) *MockRequest {
 	return m.Delete(fmt.Sprintf(format, args...))
 }
 
@@ -455,7 +455,7 @@ func (m *Mock) Patch(u string) *MockRequest {
 }
 
 // Patchf configures the mock to match http method PATCH and supports formatting
-func (m *Mock) Patchf(format string, args ...interface{}) *MockRequest {
+func (m *Mock) Patchf(format string, args ...any) *MockRequest {
 	return m.Patch(fmt.Sprintf(format, args...))
 }
 
@@ -509,7 +509,7 @@ func (r *MockRequest) BodyRegexp(b string) *MockRequest {
 }
 
 // Bodyf configures the mock request to match the given body. Supports formatting the body
-func (r *MockRequest) Bodyf(format string, args ...interface{}) *MockRequest {
+func (r *MockRequest) Bodyf(format string, args ...any) *MockRequest {
 	return r.Body(fmt.Sprintf(format, args...))
 }
 
@@ -524,7 +524,7 @@ func (r *MockRequest) BodyFromFile(f string) *MockRequest {
 }
 
 // JSON is a convenience method for setting the mock request body
-func (r *MockRequest) JSON(v interface{}) *MockRequest {
+func (r *MockRequest) JSON(v any) *MockRequest {
 	switch x := v.(type) {
 	case string:
 		r.body = x
@@ -711,7 +711,7 @@ func (r *MockResponse) Body(body string) *MockResponse {
 }
 
 // Bodyf sets the mock response body. Supports formatting
-func (r *MockResponse) Bodyf(format string, args ...interface{}) *MockResponse {
+func (r *MockResponse) Bodyf(format string, args ...any) *MockResponse {
 	return r.Body(fmt.Sprintf(format, args...))
 }
 
@@ -729,7 +729,7 @@ func (r *MockResponse) BodyFromFile(f string) *MockResponse {
 }
 
 // JSON is a convenience method for setting the mock response body
-func (r *MockResponse) JSON(v interface{}) *MockResponse {
+func (r *MockResponse) JSON(v any) *MockResponse {
 	switch x := v.(type) {
 	case string:
 		r.body = x
@@ -1106,10 +1106,10 @@ var bodyMatcher = func(req *http.Request, spec *MockRequest) error {
 	}
 
 	// Perform JSON match
-	var reqJSON interface{}
+	var reqJSON any
 	reqJSONErr := json.Unmarshal(body, &reqJSON)
 
-	var matchJSON interface{}
+	var matchJSON any
 	specJSONErr := json.Unmarshal([]byte(mockBody), &matchJSON)
 
 	isJSON := reqJSONErr == nil && specJSONErr == nil
@@ -1199,7 +1199,7 @@ var spewConfig = spew.ConfigState{
 	DisableMethods:          true,
 }
 
-func diff(expected interface{}, actual interface{}) string {
+func diff(expected any, actual any) string {
 	if expected == nil || actual == nil {
 		return ""
 	}
@@ -1237,7 +1237,7 @@ func diff(expected interface{}, actual interface{}) string {
 	return "\n\nDiff:\n" + diff
 }
 
-func typeAndKind(v interface{}) (reflect.Type, reflect.Kind) {
+func typeAndKind(v any) (reflect.Type, reflect.Kind) {
 	t := reflect.TypeOf(v)
 	k := t.Kind()
 

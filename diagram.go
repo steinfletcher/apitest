@@ -48,7 +48,7 @@ type (
 	webSequenceDiagramDSL struct {
 		data  bytes.Buffer
 		count int
-		meta  map[string]interface{}
+		meta  map[string]any
 	}
 )
 

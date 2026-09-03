@@ -38,15 +38,15 @@ type recordingT struct {
 	fatals []string
 }
 
-func (r *recordingT) Errorf(format string, args ...interface{}) {
+func (r *recordingT) Errorf(format string, args ...any) {
 	r.errors = append(r.errors, fmt.Sprintf(format, args...))
 }
 
-func (r *recordingT) Fatal(args ...interface{}) {
+func (r *recordingT) Fatal(args ...any) {
 	r.fatals = append(r.fatals, fmt.Sprint(args...))
 }
 
-func (r *recordingT) Fatalf(format string, args ...interface{}) {
+func (r *recordingT) Fatalf(format string, args ...any) {
 	r.fatals = append(r.fatals, fmt.Sprintf(format, args...))
 }
 

@@ -185,7 +185,7 @@ func compareValue(expectedCookie *Cookie, actualCookie *http.Cookie, compareErro
 	return compareErrors
 }
 
-func formatError(name string, expectedValue, actualValue interface{}) string {
+func formatError(name string, expectedValue, actualValue any) string {
 	return fmt.Sprintf("Mismatched field %s. Expected %v but received %v",
 		name,
 		expectedValue,

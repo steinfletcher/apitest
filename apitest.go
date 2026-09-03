@@ -56,7 +56,7 @@ type APITest struct {
 	httpClient               *http.Client
 	httpRequest              *http.Request
 	transport                *Transport
-	meta                     map[string]interface{}
+	meta                     map[string]any
 	started                  time.Time
 	finished                 time.Time
 	fileSystem               fs.FS
@@ -83,7 +83,7 @@ type RecorderHook func(*Recorder)
 // New creates a new api test. The name is optional and will appear in test reports
 func New(name ...string) *APITest {
 	apiTest := &APITest{
-		meta: map[string]interface{}{},
+		meta: map[string]any{},
 	}
 
 	request := &Request{
@@ -153,7 +153,7 @@ func (a *APITest) Recorder(recorder *Recorder) *APITest {
 }
 
 // Meta provides a hook to add custom meta data to the test which can be picked up when defining a custom reporter
-func (a *APITest) Meta(meta map[string]interface{}) *APITest {
+func (a *APITest) Meta(meta map[string]any) *APITest {
 	a.meta = meta
 	return a
 }
@@ -301,7 +301,7 @@ func (a *APITest) Get(url string) *Request {
 }
 
 // Getf is a convenience method that adds formatting support to Get
-func (a *APITest) Getf(format string, args ...interface{}) *Request {
+func (a *APITest) Getf(format string, args ...any) *Request {
 	return a.Get(fmt.Sprintf(format, args...))
 }
 
@@ -313,7 +313,7 @@ func (a *APITest) Post(url string) *Request {
 }
 
 // Postf is a convenience method that adds formatting support to Post
-func (a *APITest) Postf(format string, args ...interface{}) *Request {
+func (a *APITest) Postf(format string, args ...any) *Request {
 	return a.Post(fmt.Sprintf(format, args...))
 }
 
@@ -325,7 +325,7 @@ func (a *APITest) Put(url string) *Request {
 }
 
 // Putf is a convenience method that adds formatting support to Put
-func (a *APITest) Putf(format string, args ...interface{}) *Request {
+func (a *APITest) Putf(format string, args ...any) *Request {
 	return a.Put(fmt.Sprintf(format, args...))
 }
 
@@ -337,7 +337,7 @@ func (a *APITest) Delete(url string) *Request {
 }
 
 // Deletef is a convenience method that adds formatting support to Delete
-func (a *APITest) Deletef(format string, args ...interface{}) *Request {
+func (a *APITest) Deletef(format string, args ...any) *Request {
 	return a.Delete(fmt.Sprintf(format, args...))
 }
 
@@ -349,7 +349,7 @@ func (a *APITest) Patch(url string) *Request {
 }
 
 // Patchf is a convenience method that adds formatting support to Patch
-func (a *APITest) Patchf(format string, args ...interface{}) *Request {
+func (a *APITest) Patchf(format string, args ...any) *Request {
 	return a.Patch(fmt.Sprintf(format, args...))
 }
 
@@ -360,7 +360,7 @@ func (r *Request) URL(url string) *Request {
 }
 
 // URLf is a builder method for setting the url of the request and supports a formatter
-func (r *Request) URLf(format string, args ...interface{}) *Request {
+func (r *Request) URLf(format string, args ...any) *Request {
 	r.url = fmt.Sprintf(format, args...)
 	return r
 }
@@ -372,7 +372,7 @@ func (r *Request) Body(b string) *Request {
 }
 
 // Bodyf sets the request body and supports a formatter
-func (r *Request) Bodyf(format string, args ...interface{}) *Request {
+func (r *Request) Bodyf(format string, args ...any) *Request {
 	r.body = fmt.Sprintf(format, args...)
 	return r
 }
@@ -390,7 +390,7 @@ func (r *Request) BodyFromFile(f string) *Request {
 
 // JSON is a convenience method for setting the request body and content type header as "application/json".
 // If v is not a string or []byte it will marshall the provided variable as json
-func (r *Request) JSON(v interface{}) *Request {
+func (r *Request) JSON(v any) *Request {
 	switch x := v.(type) {
 	case string:
 		r.body = x
@@ -416,7 +416,7 @@ func (r *Request) JSONFromFile(f string) *Request {
 }
 
 // GraphQLQuery is a convenience method for building a graphql POST request
-func (r *Request) GraphQLQuery(query string, variables ...map[string]interface{}) *Request {
+func (r *Request) GraphQLQuery(query string, variables ...map[string]any) *Request {
 	q := GraphQLRequestBody{
 		Query: query,
 	}
@@ -445,9 +445,9 @@ func (r *Request) GraphQLRequest(body GraphQLRequestBody) *Request {
 
 // GraphQLRequestBody represents the POST request body as per the GraphQL spec
 type GraphQLRequestBody struct {
-	Query         string                 `json:"query"`
-	Variables     map[string]interface{} `json:"variables,omitempty"`
-	OperationName string                 `json:"operationName,omitempty"`
+	Query         string         `json:"query"`
+	Variables     map[string]any `json:"variables,omitempty"`
+	OperationName string         `json:"operationName,omitempty"`
 }
 
 // Query is a convenience method to add a query parameter to the request.
@@ -639,7 +639,7 @@ func (r *Response) Body(b string) *Response {
 }
 
 // Bodyf is the expected response body that supports a formatter
-func (r *Response) Bodyf(format string, args ...interface{}) *Response {
+func (r *Response) Bodyf(format string, args ...any) *Response {
 	r.body = fmt.Sprintf(format, args...)
 	return r
 }
@@ -771,7 +771,7 @@ func (r Result) UnmatchedMocks() []UnmatchedMock {
 }
 
 // JSON unmarshal the result response body to a valid struct
-func (r Result) JSON(t interface{}) {
+func (r Result) JSON(t any) {
 	data, err := io.ReadAll(r.Response.Body)
 	if err != nil {
 		panic(err)
@@ -869,7 +869,7 @@ func (a *APITest) report() *http.Response {
 		return a.recorder.Events[i].GetTime().Before(a.recorder.Events[j].GetTime())
 	})
 
-	meta := map[string]interface{}{}
+	meta := map[string]any{}
 
 	for k, v := range a.meta {
 		meta[k] = v
@@ -888,7 +888,7 @@ func (a *APITest) report() *http.Response {
 	return res
 }
 
-func createHash(meta map[string]interface{}) string {
+func createHash(meta map[string]any) string {
 	path := meta["path"]
 	method := meta["method"]
 	name := meta["name"]

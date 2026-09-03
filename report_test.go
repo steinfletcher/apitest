@@ -57,7 +57,7 @@ func TestRecorder_AddsSubTitle(t *testing.T) {
 }
 
 func TestRecorder_Reset(t *testing.T) {
-	meta := map[string]interface{}{
+	meta := map[string]any{
 		"test": "meta",
 	}
 	rec := NewTestRecorder().

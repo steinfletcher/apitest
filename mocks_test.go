@@ -658,7 +658,7 @@ func TestMocks_BodyMatcher_SupportsRawArrays(t *testing.T) {
 
 func TestMocks_RequestBody(t *testing.T) {
 	tests := map[string]struct {
-		requestBody interface{}
+		requestBody any
 	}{
 		"supports string input": {`{"a":1}`},
 		"supports maps":         {map[string]int{"a": 1}},
@@ -1375,10 +1375,10 @@ var customCli = &http.Client{
 	Transport: &http.Transport{},
 }
 
-type HttpGet func(path string, response interface{})
+type HttpGet func(path string, response any)
 
 func NewHttpGet(cli *http.Client) HttpGet {
-	return func(path string, response interface{}) {
+	return func(path string, response any) {
 		res, err := cli.Get(fmt.Sprintf("http://localhost:8080%s", path))
 		if err != nil {
 			panic(err)
