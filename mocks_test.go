@@ -199,8 +199,11 @@ func TestMocks_HeaderPresentMatcher(t *testing.T) {
 		headerPresent  string
 		expectedError  error
 	}{
-		"present":     {map[string]string{"A": "123", "X": "456"}, "X", nil},
-		"not present": {map[string]string{"A": "123"}, "C", errors.New("expected header 'C' was not present")},
+		"present":               {map[string]string{"A": "123", "X": "456"}, "X", nil},
+		"empty value":           {map[string]string{"X": ""}, "X", nil},
+		"lowercase name":        {map[string]string{"X": "456"}, "x", nil},
+		"lowercase empty value": {map[string]string{"X": ""}, "x", nil},
+		"not present":           {map[string]string{"A": "123"}, "C", errors.New("expected header 'C' was not present")},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -223,8 +226,11 @@ func TestMocks_HeaderNotPresentMatcher(t *testing.T) {
 		headerNotPresent string
 		expectedError    error
 	}{
-		"not present": {map[string]string{"A": "123"}, "C", nil},
-		"present":     {map[string]string{"A": "123", "X": "456"}, "X", errors.New("unexpected header 'X' was present")},
+		"not present":           {map[string]string{"A": "123"}, "C", nil},
+		"present":               {map[string]string{"A": "123", "X": "456"}, "X", errors.New("unexpected header 'X' was present")},
+		"empty value":           {map[string]string{"X": ""}, "X", errors.New("unexpected header 'X' was present")},
+		"lowercase name":        {map[string]string{"X": "456"}, "x", errors.New("unexpected header 'x' was present")},
+		"lowercase empty value": {map[string]string{"X": ""}, "x", errors.New("unexpected header 'x' was present")},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -395,6 +401,10 @@ func TestMocks_QueryPresent(t *testing.T) {
 		expectedError error
 	}{
 		{"http://test.com/v1/path?a=1", "a", nil},
+		{"http://test.com/v1/path?a=", "a", nil},
+		{"http://test.com/v1/path?a", "a", nil},
+		{"http://test.com/v1/path?a=&a=1", "a", nil},
+		{"http://test.com/v1/path?a=1&a=", "a", nil},
 		{"http://test.com/v1/path", "a", errors.New("expected query param a not received")},
 		{"http://test.com/v1/path?c=1", "b", errors.New("expected query param b not received")},
 		{"http://test.com/v2/path?b=2&a=1", "a", nil},
@@ -416,6 +426,10 @@ func TestMocks_QueryNotPresent(t *testing.T) {
 		expectedError error
 	}{
 		{"http://test.com/v1/path?a=1", "a", errors.New("unexpected query param 'a' present")},
+		{"http://test.com/v1/path?a=", "a", errors.New("unexpected query param 'a' present")},
+		{"http://test.com/v1/path?a", "a", errors.New("unexpected query param 'a' present")},
+		{"http://test.com/v1/path?a=&a=1", "a", errors.New("unexpected query param 'a' present")},
+		{"http://test.com/v1/path?a=1&a=", "a", errors.New("unexpected query param 'a' present")},
 		{"http://test.com/v1/path", "a", nil},
 		{"http://test.com/v1/path?c=1", "b", nil},
 		{"http://test.com/v2/path?b=2&a=1", "a", errors.New("unexpected query param 'a' present")},
@@ -797,6 +811,86 @@ func TestMocks_Matches(t *testing.T) {
 	assert.Equal(t, true, matchErrors == nil)
 	assert.Equal(t, true, mockResponse != nil)
 	assert.Equal(t, `{"is_contactable": true}`, mockResponse.body)
+}
+
+func TestMocks_Matches_Presence(t *testing.T) {
+	tests := map[string]struct {
+		requestURL    string
+		requestHeader http.Header
+		headerPresent bool
+		queryPresent  bool
+	}{
+		"absent": {
+			requestURL: "/assert",
+		},
+		"nonempty values": {
+			requestURL:    "/assert?flag=one",
+			requestHeader: http.Header{"X-Presence": {"one"}},
+			headerPresent: true,
+			queryPresent:  true,
+		},
+		"empty values": {
+			requestURL:    "/assert?flag=",
+			requestHeader: http.Header{"X-Presence": {""}},
+			headerPresent: true,
+			queryPresent:  true,
+		},
+		"bare query": {
+			requestURL:   "/assert?flag",
+			queryPresent: true,
+		},
+		"empty first values": {
+			requestURL:    "/assert?flag=&flag=one",
+			requestHeader: http.Header{"X-Presence": {"", "one"}},
+			headerPresent: true,
+			queryPresent:  true,
+		},
+		"empty last values": {
+			requestURL:    "/assert?flag=one&flag=",
+			requestHeader: http.Header{"X-Presence": {"one", ""}},
+			headerPresent: true,
+			queryPresent:  true,
+		},
+		"unrelated names": {
+			requestURL:    "/assert?other=",
+			requestHeader: http.Header{"Other": {""}},
+		},
+		"query name case": {
+			requestURL:    "/assert?FLAG=",
+			requestHeader: http.Header{"X-Presence": {"one"}},
+			headerPresent: true,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, test.requestURL, nil)
+			for key, values := range test.requestHeader {
+				for _, value := range values {
+					req.Header.Add(key, value)
+				}
+			}
+			matchers := []struct {
+				name          string
+				configure     func(*MockRequest) *MockRequest
+				expectedMatch bool
+			}{
+				{"header present", func(r *MockRequest) *MockRequest { return r.HeaderPresent("x-presence") }, test.headerPresent},
+				{"header not present", func(r *MockRequest) *MockRequest { return r.HeaderNotPresent("x-presence") }, !test.headerPresent},
+				{"query present", func(r *MockRequest) *MockRequest { return r.QueryPresent("flag") }, test.queryPresent},
+				{"query not present", func(r *MockRequest) *MockRequest { return r.QueryNotPresent("flag") }, !test.queryPresent},
+			}
+			for _, matcher := range matchers {
+				t.Run(matcher.name, func(t *testing.T) {
+					mock := matcher.configure(NewMock().Get("/assert")).
+						RespondWith().
+						Status(http.StatusOK).
+						End()
+
+					assert.Equal(t, matcher.expectedMatch, len(mock.Matches(req)) == 0)
+				})
+			}
+		})
+	}
 }
 
 func TestMocks_Matches_Errors(t *testing.T) {

@@ -122,7 +122,7 @@ var basicAuthMatcher = func(req *http.Request, spec *MockRequest) error {
 
 var headerPresentMatcher = func(req *http.Request, spec *MockRequest) error {
 	for _, header := range spec.headerPresent {
-		if req.Header.Get(header) == "" {
+		if _, ok := req.Header[http.CanonicalHeaderKey(header)]; !ok {
 			return fmt.Errorf("expected header '%s' was not present", header)
 		}
 	}
@@ -131,7 +131,7 @@ var headerPresentMatcher = func(req *http.Request, spec *MockRequest) error {
 
 var headerNotPresentMatcher = func(req *http.Request, spec *MockRequest) error {
 	for _, header := range spec.headerNotPresent {
-		if req.Header.Get(header) != "" {
+		if _, ok := req.Header[http.CanonicalHeaderKey(header)]; ok {
 			return fmt.Errorf("unexpected header '%s' was present", header)
 		}
 	}
@@ -161,7 +161,7 @@ var queryParamMatcher = func(req *http.Request, spec *MockRequest) error {
 
 var queryPresentMatcher = func(req *http.Request, spec *MockRequest) error {
 	for _, query := range spec.queryPresent {
-		if req.URL.Query().Get(query) == "" {
+		if !req.URL.Query().Has(query) {
 			return fmt.Errorf("expected query param %s not received", query)
 		}
 	}
@@ -170,7 +170,7 @@ var queryPresentMatcher = func(req *http.Request, spec *MockRequest) error {
 
 var queryNotPresentMatcher = func(req *http.Request, spec *MockRequest) error {
 	for _, query := range spec.queryNotPresent {
-		if req.URL.Query().Get(query) != "" {
+		if req.URL.Query().Has(query) {
 			return fmt.Errorf("unexpected query param '%s' present", query)
 		}
 	}
