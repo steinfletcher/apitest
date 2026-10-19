@@ -95,7 +95,7 @@ func (a *APITest) assertHeaders(res *http.Response) {
 
 	if len(a.response.headersPresent) > 0 {
 		for _, expectedName := range a.response.headersPresent {
-			if res.Header.Get(expectedName) == "" {
+			if _, ok := res.Header[expectedName]; !ok {
 				a.verifier.Fail(a.t, fmt.Sprintf("expected header '%s' not present in response", expectedName), failureMessageArgs{Name: a.name})
 			}
 		}
@@ -103,7 +103,7 @@ func (a *APITest) assertHeaders(res *http.Response) {
 
 	if len(a.response.headersNotPresent) > 0 {
 		for _, name := range a.response.headersNotPresent {
-			if res.Header.Get(name) != "" {
+			if _, ok := res.Header[name]; ok {
 				a.verifier.Fail(a.t, fmt.Sprintf("did not expect header '%s' in response", name), failureMessageArgs{Name: a.name})
 			}
 		}

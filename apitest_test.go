@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -1871,6 +1872,60 @@ func TestApiTest_HeaderPresenceFailures(t *testing.T) {
 		"expected header 'X-Missing' not present in response",
 		"did not expect header 'X-Present' in response",
 	}, failures)
+}
+
+func TestApiTest_HeaderPresenceRegardlessOfValue(t *testing.T) {
+	tests := map[string]struct {
+		responseHeaders http.Header
+		header          string
+		present         bool
+	}{
+		"non-empty value":                 {http.Header{"X-Flag": {"on"}}, "X-Flag", true},
+		"empty value":                     {http.Header{"X-Flag": {""}}, "X-Flag", true},
+		"repeated with empty first value": {http.Header{"X-Flag": {"", "on"}}, "X-Flag", true},
+		"lowercase name from caller":      {http.Header{"X-Flag": {""}}, "x-flag", true},
+		"absent":                          {http.Header{"X-Other": {"on"}}, "X-Flag", false},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				maps.Copy(w.Header(), test.responseHeaders)
+				w.WriteHeader(http.StatusOK)
+			})
+
+			presentFailures := headerAssertionFailures(t, handler, func(r *apitest.Response) { r.HeaderPresent(test.header) })
+			notPresentFailures := headerAssertionFailures(t, handler, func(r *apitest.Response) { r.HeaderNotPresent(test.header) })
+
+			if test.present {
+				assert.Equal(t, []string(nil), presentFailures)
+				assert.Equal(t, []string{"did not expect header 'X-Flag' in response"}, notPresentFailures)
+			} else {
+				assert.Equal(t, []string{"expected header 'X-Flag' not present in response"}, presentFailures)
+				assert.Equal(t, []string(nil), notPresentFailures)
+			}
+		})
+	}
+}
+
+// headerAssertionFailures runs a single request against handler with the given
+// expectation applied and returns the verifier failure messages it produced.
+func headerAssertionFailures(t *testing.T, handler http.Handler, expect func(*apitest.Response)) []string {
+	t.Helper()
+	verifier := mocks.NewVerifier()
+	var failures []string
+	verifier.FailFn = func(t apitest.TestingT, failureMessage string, msgAndArgs ...any) bool {
+		failures = append(failures, failureMessage)
+		return false
+	}
+
+	response := apitest.Handler(handler).
+		Verifier(verifier).
+		Get("/").
+		Expect(t)
+	expect(response)
+	response.End()
+
+	return failures
 }
 
 func TestApiTest_DebugWithMockDelays(t *testing.T) {
