@@ -80,14 +80,16 @@ func (r *Response) Header(key, value string) *Response {
 	return r
 }
 
-// HeaderPresent is a builder method to set the request headers that should be present in the response
+// HeaderPresent is a builder method to set the headers that should be present in the response.
+// The check passes when the header key exists, regardless of value, including an empty value.
 func (r *Response) HeaderPresent(name string) *Response {
 	normalizedName := textproto.CanonicalMIMEHeaderKey(name)
 	r.headersPresent = append(r.headersPresent, normalizedName)
 	return r
 }
 
-// HeaderNotPresent is a builder method to set the request headers that should not be present in the response
+// HeaderNotPresent is a builder method to set the headers that should not be present in the response.
+// The check fails whenever the header key exists, regardless of value, including an empty value.
 func (r *Response) HeaderNotPresent(name string) *Response {
 	normalizedName := textproto.CanonicalMIMEHeaderKey(name)
 	r.headersNotPresent = append(r.headersNotPresent, normalizedName)
