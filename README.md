@@ -36,6 +36,23 @@ This README covers the whole library. The same material with more narrative is a
 [https://apitest.dev](https://apitest.dev), and the API reference is on
 [pkg.go.dev](https://pkg.go.dev/github.com/steinfletcher/apitest).
 
+## AI coding agents
+
+This repository includes an [Agent Skill](https://agentskills.io) that teaches coding agents how to write apitest tests,
+including the mistakes that are easy to make with mocks and JSONPath. In Claude Code, add the repository as a plugin
+marketplace and install the plugin:
+
+```bash
+claude plugin marketplace add steinfletcher/apitest
+claude plugin install apitest@apitest
+```
+
+Inside a session, `/plugin marketplace add steinfletcher/apitest` followed by `/plugin install apitest@apitest` does the
+same. To use the skill without the plugin, or with another agent that supports Agent Skills, copy
+[`skills/apitest`](skills/apitest) into the agent's skills directory, such as `.claude/skills/apitest` in your project.
+
+The documentation is also available as Markdown for agents, at [apitest.dev/llms-full.txt](https://apitest.dev/llms-full.txt).
+
 ## Installation
 
 ```bash

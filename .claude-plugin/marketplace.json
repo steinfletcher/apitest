@@ -1,0 +1,18 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "apitest",
+  "description": "The apitest skill for writing Go HTTP tests with github.com/steinfletcher/apitest.",
+  "owner": {
+    "name": "Stein Fletcher",
+    "url": "https://github.com/steinfletcher"
+  },
+  "plugins": [
+    {
+      "name": "apitest",
+      "source": "./",
+      "description": "Write, fix and review Go tests that use github.com/steinfletcher/apitest.",
+      "category": "development",
+      "tags": ["go", "testing", "http"]
+    }
+  ]
+}

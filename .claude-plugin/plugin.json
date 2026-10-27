@@ -1,0 +1,13 @@
+{
+  "name": "apitest",
+  "displayName": "apitest",
+  "description": "Teaches coding agents to write, fix and review Go tests that use github.com/steinfletcher/apitest: requests, assertions, JSONPath, HTTP mocks, sequence diagrams and debugging.",
+  "author": {
+    "name": "Stein Fletcher",
+    "url": "https://github.com/steinfletcher"
+  },
+  "homepage": "https://apitest.dev",
+  "repository": "https://github.com/steinfletcher/apitest",
+  "license": "MIT",
+  "keywords": ["go", "golang", "testing", "http", "api", "mocks"]
+}
