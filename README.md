@@ -105,7 +105,8 @@ apitest.Handler(handler).
 ### Query parameters
 
 `Query`, `QueryParams` and `QueryCollection` can be combined. `QueryCollection` sets repeated parameters, so
-`map[string][]string{"a": {"b", "c", "d"}}` is encoded as `a=b&a=c&a=d`.
+`map[string][]string{"a": {"b", "c", "d"}}` is encoded as `a=b&a=c&a=d`. A query string written in the URL, as in
+`Get("/hello?page=2")`, is kept, and parameters from the builder methods are appended to it.
 
 ```go
 apitest.Handler(handler).

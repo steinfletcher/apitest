@@ -331,7 +331,13 @@ func (a *APITest) buildRequest() *http.Request {
 		req = req.WithContext(a.request.context)
 	}
 
-	req.URL.RawQuery = formatQuery(a.request)
+	if query := formatQuery(a.request); query != "" {
+		if req.URL.RawQuery != "" {
+			req.URL.RawQuery += "&" + query
+		} else {
+			req.URL.RawQuery = query
+		}
+	}
 	req.Host = SystemUnderTestDefaultName
 	if len(a.host) > 0 {
 		req.Host = a.host
