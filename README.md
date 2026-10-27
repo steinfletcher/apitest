@@ -568,9 +568,20 @@ Use `HttpClient` on the mock to target a specific client, and `Debug` on the moc
 ## Sequence diagrams and reports
 
 `Report` renders every test into a report once it completes. The built-in `SequenceDiagram` formatter writes an HTML
-page per test with a sequence diagram of the request, any mocked calls, and the response, along with the full wire
-representation of each message. See the
-[demo](http://demo-html.apitest.dev.s3-website-eu-west-1.amazonaws.com/).
+page per test with a sequence diagram of the request, any mocked calls, and the response, followed by the wire
+representation of each message. See the [demo](https://apitest.dev/demo/user-api.html).
+
+<a href="https://apitest.dev/demo/user-api.html">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://apitest.dev/images/report-user-api-dark.webp">
+    <img alt="An apitest report for GET /user/1234, with a sequence diagram of the calls to the users and preferences services and the list of messages" src="https://apitest.dev/images/report-user-api-light.webp">
+  </picture>
+</a>
+
+The page is self-contained: styles, scripts and the diagram are inline, so it loads nothing from the network and can be
+archived as a CI artifact. Click an arrow to jump to its message, filter the events, focus on one participant, and copy
+any request as a curl command. Requests that received no response, such as calls that matched no mock, are flagged. The
+diagram is drawn as SVG on the server side, so it renders even where JavaScript is disabled.
 
 ```go
 func TestGetUser(t *testing.T) {
@@ -745,7 +756,7 @@ apitest.New().
 | [Ginkgo](https://github.com/steinfletcher/apitest/tree/master/examples/ginkgo)                       | Ginkgo BDD test framework                                                                                  |
 | [mocks](https://github.com/steinfletcher/apitest/tree/master/examples/mocks)                         | mocking out external http calls, including a custom matcher                                                |
 | [websockets](https://github.com/steinfletcher/apitest/tree/master/examples/websockets)               | a websocket handler under test                                                                             |
-| [sequence diagrams](https://github.com/steinfletcher/apitest/tree/master/examples/sequence-diagrams) | generate sequence diagrams from tests. See the [demo](http://demo-html.apitest.dev.s3-website-eu-west-1.amazonaws.com/) |
+| [sequence diagrams](https://github.com/steinfletcher/apitest/tree/master/examples/sequence-diagrams) | generate sequence diagrams from tests. See the [demo](https://apitest.dev/demo/user-api.html) |
 | [sqlite](https://github.com/steinfletcher/apitest/tree/master/examples/sequence-diagrams-with-sqlite-database), [mysql](https://github.com/steinfletcher/apitest/tree/master/examples/sequence-diagrams-with-mysql-database), [postgres](https://github.com/steinfletcher/apitest/tree/master/examples/sequence-diagrams-with-postgres-database) | database queries recorded in sequence diagrams |
 
 ### Companion libraries

@@ -14,20 +14,20 @@ import (
 	"time"
 )
 
-func TestDiagram_BadgeCSSClass(t *testing.T) {
+func TestDiagram_StatusClass(t *testing.T) {
 	tests := []struct {
 		status int
 		class  string
 	}{
-		{status: http.StatusOK, class: "badge badge-success"},
-		{status: http.StatusInternalServerError, class: "badge badge-danger"},
-		{status: http.StatusBadRequest, class: "badge badge-warning"},
+		{status: http.StatusOK, class: "ok"},
+		{status: http.StatusFound, class: "ok"},
+		{status: http.StatusInternalServerError, class: "error"},
+		{status: http.StatusBadRequest, class: "warn"},
+		{status: -1, class: "none"},
 	}
 	for _, test := range tests {
 		t.Run(test.class, func(t *testing.T) {
-			class := badgeCSSClass(test.status)
-
-			assert.Equal(t, test.class, class)
+			assert.Equal(t, test.class, statusClass(test.status))
 		})
 	}
 }
@@ -35,35 +35,44 @@ func TestDiagram_BadgeCSSClass(t *testing.T) {
 func TestFormatBodyContent_ShouldReplaceBody(t *testing.T) {
 	stream := io.NopCloser(strings.NewReader("lol"))
 
-	val, err := formatBodyContent(stream, func(replacementBody io.ReadCloser) {
+	val, raw, err := formatBodyContent(stream, func(replacementBody io.ReadCloser) {
 		stream = replacementBody
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, "lol", val)
+	assert.Equal(t, "lol", raw)
 
-	valSecondRun, errSecondRun := formatBodyContent(stream, func(replacementBody io.ReadCloser) {
+	valSecondRun, _, errSecondRun := formatBodyContent(stream, func(replacementBody io.ReadCloser) {
 		stream = replacementBody
 	})
 	assert.NoError(t, errSecondRun)
 	assert.Equal(t, "lol", valSecondRun)
 }
 
-func TestWebSequenceDiagram_GeneratesDSL(t *testing.T) {
-	wsd := webSequenceDiagramDSL{}
-	wsd.addRequestRow("A", "B", "request1")
-	wsd.addRequestRow("B", "C", "request2")
-	wsd.addResponseRow("C", "B", "response1")
-	wsd.addResponseRow("B", "A", "response2")
+func TestRenderDiagram_DrawsParticipantsAndArrows(t *testing.T) {
+	svg := string(renderDiagram([]string{"A", "B", "C"}, []reportEvent{
+		{Number: 1, Kind: "request", Source: "A", Target: "B", Label: "request1"},
+		{Number: 2, Kind: "request", Source: "B", Target: "C", Label: "request<2>"},
+		{Number: 3, Kind: "response", Source: "C", Target: "B", Label: "200 OK", StatusClass: "ok"},
+		{Number: 4, Kind: "response", Source: "B", Target: "A", Label: "500 Internal Server Error", StatusClass: "error"},
+	}))
 
-	actual := wsd.toString()
-
-	expected := `"A"->"B": (1) request1
-"B"->"C": (2) request2
-"C"->>"B": (3) response1
-"B"->>"A": (4) response2
-`
-	if expected != actual {
-		t.Fatalf("expected=%s != \nactual=%s", expected, actual)
+	for _, want := range []string{
+		`<svg xmlns="http://www.w3.org/2000/svg" class="seq"`,
+		`data-participant="A"`, `data-participant="B"`, `data-participant="C"`,
+		`<a href="#event-1" class="msg request" data-event="1" data-source="A" data-target="B">`,
+		`<a href="#event-3" class="msg response s-ok" data-event="3"`,
+		`<a href="#event-4" class="msg response s-error" data-event="4"`,
+		`<tspan class="num">1</tspan> request1</text>`,
+		`request&lt;2&gt;`,
+		`<path class="head open"`,
+	} {
+		if !strings.Contains(svg, want) {
+			t.Errorf("diagram is missing %q", want)
+		}
+	}
+	if strings.Count(svg, `<rect class="box"`) != 6 {
+		t.Errorf("expected a box above and below each of the 3 participants")
 	}
 }
 
@@ -111,13 +120,25 @@ func TestNewHTMLTemplateModel_Success(t *testing.T) {
 	model, err := newHTMLTemplateModel(recorder)
 
 	assert.True(t, err == nil)
-	assert.Equal(t, 4, len(model.LogEntries))
+	assert.Equal(t, 4, len(model.Events))
 	assert.Equal(t, "title", model.Title)
 	assert.Equal(t, "subTitle", model.SubTitle)
 	assert.Equal(t, template.JS(`{"host":"example.com","method":"GET","name":"some test","path":"/user"}`), model.MetaJSON)
 	assert.Equal(t, http.StatusNoContent, model.StatusCode)
-	assert.Equal(t, "badge badge-success", model.BadgeClass)
-	assert.True(t, strings.Contains(model.WebSequenceDSL, "GET /abcdef"))
+	assert.Equal(t, "No Content", model.StatusText)
+	assert.Equal(t, "ok", model.StatusClass)
+	assert.Equal(t, []string{"reqSource", "reqTarget", "mesReqSource", "", "mesResSource", "resSource", "resTarget"}, model.Participants)
+	assert.Equal(t, []metaItem{{Key: "host", Value: "example.com"}}, model.Meta)
+	assert.True(t, strings.Contains(string(model.Diagram), "GET /abcdef?name=abc"))
+	assert.Equal(t, "request", model.Events[0].Kind)
+	assert.Equal(t, "GET http://example.com/abcdef?name=abc HTTP/1.1", model.Events[0].StartLine)
+	assert.Equal(t, []headerLine{{Name: "Content-Type", Value: "application/json"}}, model.Events[0].Headers)
+	assert.Equal(t, "curl 'http://example.com/abcdef?name=abc' -H 'Content-Type: application/json'", model.Events[0].Curl)
+	assert.Equal(t, "A", model.Events[1].Label)
+	assert.Equal(t, "B", model.Events[1].Body)
+	assert.Equal(t, "response", model.Events[3].Kind)
+	assert.Equal(t, "204 No Content", model.Events[3].Label)
+	assert.Equal(t, "ok", model.Events[3].StatusClass)
 }
 
 func aRecorder() *Recorder {
@@ -200,20 +221,19 @@ func aResponse() HttpResponse {
 	}
 }
 
-func TestWebSequenceDiagram_RenamesOnlyExactDefaultParticipantNames(t *testing.T) {
-	dsl := &webSequenceDiagramDSL{meta: map[string]any{
-		"consumerName":        "consumer",
-		"systemUnderTestName": "app",
-	}}
+func TestNewHTMLTemplateModel_RenamesOnlyExactDefaultParticipantNames(t *testing.T) {
+	recorder := NewTestRecorder().
+		AddMeta(map[string]any{"consumerName": "consumer", "systemUnderTestName": "app"}).
+		AddHttpRequest(HttpRequest{Source: ConsumerDefaultName, Target: SystemUnderTestDefaultName, Value: httptest.NewRequest(http.MethodGet, "/", nil)}).
+		AddHttpRequest(HttpRequest{Source: SystemUnderTestDefaultName, Target: "client.example.com", Value: httptest.NewRequest(http.MethodGet, "/", nil)}).
+		AddHttpResponse(HttpResponse{Source: "consultant.example.com", Target: SystemUnderTestDefaultName, Value: &http.Response{StatusCode: http.StatusOK}})
 
-	dsl.addRequestRow(ConsumerDefaultName, SystemUnderTestDefaultName, "GET /")
-	dsl.addRequestRow(SystemUnderTestDefaultName, "client.example.com", "GET /")
-	dsl.addResponseRow("consultant.example.com", SystemUnderTestDefaultName, "200")
+	model, err := newHTMLTemplateModel(recorder)
 
-	expected := "\"consumer\"->\"app\": (1) GET /\n" +
-		"\"app\"->\"client.example.com\": (2) GET /\n" +
-		"\"consultant.example.com\"->>\"app\": (3) 200\n"
-	assert.Equal(t, expected, dsl.toString())
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"consumer", "app", "client.example.com", "consultant.example.com"}, model.Participants)
+	assert.Equal(t, "consumer", model.Events[0].Source)
+	assert.Equal(t, "app", model.Events[2].Target)
 }
 
 type recordingFileSystem struct {

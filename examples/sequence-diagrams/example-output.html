@@ -1,132 +1,640 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js"></script>
-    <script src="https://bramp.github.io/js-sequence-diagrams/js/sequence-diagram-min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="apitest">
+<title>POST /user/search · gets the user 1</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #fbf9f5;
+  --fg: #1f272e;
+  --muted: #5d6874;
+  --card: #ffffff;
+  --card-2: #f6f2eb;
+  --border: rgba(96, 112, 132, 0.22);
+  --primary: #c8650c;
+  --primary-soft: rgba(248, 176, 94, 0.18);
+  --lifeline: rgba(96, 112, 132, 0.35);
+  --ok: #15803d;
+  --ok-soft: rgba(22, 163, 74, 0.12);
+  --warn: #b45309;
+  --warn-soft: rgba(217, 119, 6, 0.14);
+  --error: #dc2626;
+  --error-soft: rgba(220, 38, 38, 0.12);
+  --j-key: #9a3412;
+  --j-str: #0f766e;
+  --j-num: #1d4ed8;
+  --j-lit: #7c3aed;
+  --shadow: 0 1px 2px rgba(31, 39, 46, 0.06), 0 8px 24px rgba(31, 39, 46, 0.06);
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e1216;
+  --fg: #ebe7e0;
+  --muted: #9aa5b1;
+  --card: #141a20;
+  --card-2: #1a2129;
+  --border: rgba(126, 141, 160, 0.2);
+  --primary: #f8b05e;
+  --primary-soft: rgba(248, 176, 94, 0.14);
+  --lifeline: rgba(126, 141, 160, 0.38);
+  --ok: #4ade80;
+  --ok-soft: rgba(74, 222, 128, 0.12);
+  --warn: #fbbf24;
+  --warn-soft: rgba(251, 191, 36, 0.12);
+  --error: #f87171;
+  --error-soft: rgba(248, 113, 113, 0.13);
+  --j-key: #fdba74;
+  --j-str: #5eead4;
+  --j-num: #93c5fd;
+  --j-lit: #c4b5fd;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0e1216;
+    --fg: #ebe7e0;
+    --muted: #9aa5b1;
+    --card: #141a20;
+    --card-2: #1a2129;
+    --border: rgba(126, 141, 160, 0.2);
+    --primary: #f8b05e;
+    --primary-soft: rgba(248, 176, 94, 0.14);
+    --lifeline: rgba(126, 141, 160, 0.38);
+    --ok: #4ade80;
+    --ok-soft: rgba(74, 222, 128, 0.12);
+    --warn: #fbbf24;
+    --warn-soft: rgba(251, 191, 36, 0.12);
+    --error: #f87171;
+    --error-soft: rgba(248, 113, 113, 0.13);
+    --j-key: #fdba74;
+    --j-str: #5eead4;
+    --j-num: #93c5fd;
+    --j-lit: #c4b5fd;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.55 var(--sans); -webkit-font-smoothing: antialiased; }
+code, pre, kbd { font-family: var(--mono); font-size: 12.5px; }
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+.wrap { max-width: 1440px; margin: 0 auto; padding: 0 24px; }
+
+.topbar { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+.topbar .wrap { display: flex; align-items: center; gap: 12px; height: 52px; }
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 650; letter-spacing: -0.01em; text-decoration: none; }
+.brand .mark { width: 18px; height: 18px; border-radius: 5px; background: conic-gradient(var(--fg) 25%, var(--primary) 0 50%, var(--fg) 0 75%, var(--primary) 0); background-size: 9px 9px; }
+.brand small { color: var(--muted); font-weight: 500; }
+.spacer { flex: 1; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--card); border-radius: 9px; padding: 5px 10px; font-size: 12.5px; cursor: pointer; transition: border-color .15s, background .15s; }
+.btn:hover { border-color: var(--primary); }
+.btn:focus-visible, .event-head:focus-visible, .seq a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.btn svg { width: 14px; height: 14px; }
+.icon-btn { padding: 6px; }
+
+.hero { padding: 28px 0 8px; }
+.hero h1 { margin: 0; font: 650 22px/1.3 var(--mono); letter-spacing: -0.01em; word-break: break-all; }
+.hero .sub { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: 3px 11px; font-size: 12.5px; color: var(--muted); }
+.chip b { color: var(--fg); font-weight: 600; }
+.status { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 11px; font: 600 12.5px var(--sans); }
+.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.status.ok { color: var(--ok); background: var(--ok-soft); }
+.status.warn { color: var(--warn); background: var(--warn-soft); }
+.status.error { color: var(--error); background: var(--error-soft); }
+.status.none { color: var(--muted); background: var(--card-2); }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 20px 0 40px; }
+@media (min-width: 1100px) {
+  .grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: start; }
+  .diagram { position: sticky; top: 68px; max-height: calc(100vh - 88px); display: flex; flex-direction: column; }
+  .diagram .scroll { overflow: auto; }
+}
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); min-width: 0; }
+.panel-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.panel-head h2 { margin: 0; font-size: 13px; font-weight: 650; letter-spacing: 0.02em; text-transform: uppercase; color: var(--muted); }
+.legend { display: flex; gap: 14px; margin-left: auto; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 22px; border-top: 2px solid var(--fg); }
+.legend i.dashed { border-top-style: dashed; }
+.scroll { overflow-x: auto; padding: 8px; }
+
+.seq { display: block; margin: 0 auto; font-family: var(--mono); max-width: 100%; height: auto; }
+.seq.natural { max-width: none; }
+.seq .lifeline { stroke: var(--lifeline); stroke-width: 1.5; stroke-dasharray: 2 5; stroke-linecap: round; }
+.seq .box { fill: var(--card-2); stroke: var(--border); stroke-width: 1.2; }
+.seq .name { fill: var(--fg); font-size: 13px; font-weight: 600; }
+.seq .participant { cursor: pointer; }
+.seq .participant:hover .box, .seq .participant.focus .box { stroke: var(--primary); }
+.seq .participant.focus .box { fill: var(--primary-soft); }
+.seq .msg { color: var(--fg); text-decoration: none; cursor: pointer; }
+.seq .msg.s-ok { color: var(--ok); }
+.seq .msg.s-warn { color: var(--warn); }
+.seq .msg.s-error { color: var(--error); }
+.seq .msg.unanswered { color: var(--warn); }
+.seq .no-reply circle { fill: var(--warn-soft); stroke: var(--warn); stroke-width: 1.2; }
+.seq .no-reply path { stroke: var(--warn); stroke-width: 1.6; stroke-linecap: round; }
+.seq .line { stroke: currentColor; stroke-width: 1.6; fill: none; }
+.seq .response .line { stroke-dasharray: 6 5; }
+.seq .head { fill: currentColor; stroke: currentColor; stroke-width: 1.2; stroke-linejoin: round; }
+.seq .head.open { fill: none; stroke-width: 1.6; stroke-linecap: round; }
+.seq .hit { stroke: transparent; stroke-width: 18; fill: none; }
+.seq .label-bg { fill: var(--card); }
+.seq .label { fill: var(--fg); font-size: 12px; }
+.seq .label .num { fill: var(--primary); font-weight: 700; }
+.seq .msg:hover .label-bg, .seq .msg.hover .label-bg { fill: var(--card-2); }
+.seq .msg.active .label-bg { fill: var(--primary-soft); stroke: var(--primary); stroke-width: 1; }
+.seq .msg.active .line { stroke-width: 2.4; }
+.seq.filtering .msg:not(.match), .seq.filtering .participant:not(.match) { opacity: 0.18; }
+
+.tools { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.search { position: relative; }
+.search input { width: 220px; max-width: 42vw; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 9px; padding: 5px 10px 5px 28px; font: 12.5px var(--sans); outline: none; }
+.search input:focus { border-color: var(--primary); }
+.search svg { position: absolute; left: 8px; top: 50%; width: 13px; height: 13px; transform: translateY(-50%); color: var(--muted); }
+
+.events { list-style: none; margin: 0; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.event { border: 1px solid var(--border); border-radius: 12px; background: var(--card); scroll-margin-top: 76px; transition: border-color .15s, box-shadow .15s; }
+.event.selected { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.event.hover:not(.selected) { border-color: color-mix(in srgb, var(--primary) 50%, var(--border)); }
+.event[hidden] { display: none; }
+.event-head { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto auto; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; background: none; text-align: left; cursor: pointer; border-radius: 12px; }
+.badge { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 7px; background: var(--primary-soft); color: var(--primary); font: 700 12px var(--mono); }
+.route { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.route b { color: var(--fg); font-weight: 600; }
+.route .arrow { margin: 0 4px; }
+.summary { font-family: var(--mono); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.offset { font: 11.5px var(--mono); color: var(--muted); white-space: nowrap; }
+.end { display: inline-flex; align-items: center; gap: 8px; }
+.chev { width: 16px; height: 16px; color: var(--muted); transition: transform .2s; }
+.event.collapsed .chev { transform: rotate(-90deg); }
+.event.collapsed .event-body { display: none; }
+.event-body { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 10px; }
+.start-line { font: 600 12.5px var(--mono); padding: 8px 10px; background: var(--card-2); border-radius: 8px; overflow-x: auto; white-space: pre; }
+.headers { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 14px; margin: 0; font: 12.5px var(--mono); padding: 0 2px; }
+.headers dt { color: var(--muted); }
+.headers dd { margin: 0; overflow-wrap: anywhere; }
+.code { position: relative; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); overflow: hidden; }
+.code-head { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; border-bottom: 1px solid var(--border); font-size: 11.5px; color: var(--muted); }
+.code pre { margin: 0; padding: 10px 12px; overflow: auto; max-height: 420px; line-height: 1.55; }
+.code.expanded pre { max-height: none; }
+.j-k { color: var(--j-key); }
+.j-s { color: var(--j-str); }
+.j-n { color: var(--j-num); }
+.j-b, .j-z { color: var(--j-lit); }
+.j-p { color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn.copied { border-color: var(--ok); color: var(--ok); }
+.empty { padding: 28px; text-align: center; color: var(--muted); }
+
+.meta { display: flex; flex-wrap: wrap; gap: 6px; }
+footer { border-top: 1px solid var(--border); color: var(--muted); font-size: 12.5px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; padding-top: 16px; padding-bottom: 24px; }
+footer a { color: var(--primary); text-decoration: none; }
+kbd { border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; font-size: 11px; background: var(--card); }
+@media (max-width: 640px) {
+  .wrap { padding: 0 14px; }
+  .event-head { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+  .route, .offset { display: none; }
+  .event-head { gap: 8px; }
+  .search input { width: 150px; }
+  .legend { display: none; }
+}
+@media print {
+  .topbar, .tools, .actions, .chev { display: none !important; }
+  body { background: #fff; }
+  .panel, .event { box-shadow: none; }
+  .event.collapsed .event-body { display: flex; }
+  .code pre { max-height: none; }
+  .diagram { position: static; max-height: none; }
+}
+</style>
+<script>
+(function () {
+  try {
+    var theme = localStorage.getItem("apitest-report-theme");
+    if (theme === "light" || theme === "dark") document.documentElement.setAttribute("data-theme", theme);
+  } catch (e) {}
+})();
+</script>
 </head>
 <body>
 
-<div class="container-fluid">
-    <h2>GET /user?name=jan</h2>
-    <span class="badge badge-success">200</span>
-    <p class="lead">gets the user</p>
-    <div class="card text-center">
-        <div class="card-body">
-            <div id="d" class="justify-content-center"></div>
-        </div>
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="https://apitest.dev" target="_blank" rel="noopener"><span class="mark" aria-hidden="true"></span>apitest <small>report</small></a>
+    <span class="spacer"></span>
+    <button class="btn" type="button" id="toggle-all" title="Expand or collapse every event">Collapse all</button>
+    <button class="btn icon-btn" type="button" id="theme" title="Toggle dark mode" aria-label="Toggle dark mode">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="hero">
+    <h1>POST /user/search</h1>
+    <p class="sub">gets the user 1</p>
+    <div class="stats">
+      <span class="status ok">200 OK</span>
+      <span class="chip">Duration <b>308 µs</b></span>
+      <span class="chip">Events <b>6</b></span>
+      <span class="chip">Participants <b>4</b></span>
+      <span class="chip">2026-10-27 11:08:36 UTC</span>
+      <span class="chip">host <b>user-service</b></span>
     </div>
-    <br><br>
-    <p class="lead">Request/Response wire representation</p>
-    <table class="table">
-        <thead>
-        <tr>
-            <th scope="col">#</th>
-            <th scope="col">Payload</th>
-        </tr>
-        </thead>
-        <tbody>
+  </section>
 
-        <tr>
-            <th scope="row">1</th>
-            <td>
-<pre>GET /user?name=jan HTTP/1.1
-Host: application
+  <main class="grid">
+    <section class="panel diagram" aria-labelledby="diagram-title">
+      <div class="panel-head">
+        <h2 id="diagram-title">Sequence</h2>
+        <div class="legend"><span><i></i>request</span><span><i class="dashed"></i>response</span></div>
+      </div>
+      <div class="scroll"><svg xmlns="http://www.w3.org/2000/svg" class="seq" viewBox="0 0 693.8 404" width="693.8" height="404" role="img" aria-label="Sequence diagram of 6 events between 4 participants"><g class="participant" data-participant="cli"><line class="lifeline" x1="52" y1="46" x2="52" y2="358"/><rect class="box" x="16" y="12" width="72" height="34" rx="9"/><text class="name" x="52" y="29" text-anchor="middle" dominant-baseline="central">cli</text><rect class="box" x="16" y="358" width="72" height="34" rx="9"/><text class="name" x="52" y="375" text-anchor="middle" dominant-baseline="central">cli</text></g><g class="participant" data-participant="sut"><line class="lifeline" x1="256.8" y1="46" x2="256.8" y2="358"/><rect class="box" x="220.8" y="12" width="72" height="34" rx="9"/><text class="name" x="256.8" y="29" text-anchor="middle" dominant-baseline="central">sut</text><rect class="box" x="220.8" y="358" width="72" height="34" rx="9"/><text class="name" x="256.8" y="375" text-anchor="middle" dominant-baseline="central">sut</text></g><g class="participant" data-participant="users"><line class="lifeline" x1="476" y1="46" x2="476" y2="358"/><rect class="box" x="440" y="12" width="72" height="34" rx="9"/><text class="name" x="476" y="29" text-anchor="middle" dominant-baseline="central">users</text><rect class="box" x="440" y="358" width="72" height="34" rx="9"/><text class="name" x="476" y="375" text-anchor="middle" dominant-baseline="central">users</text></g><g class="participant" data-participant="preferences"><line class="lifeline" x1="618.9" y1="46" x2="618.9" y2="358"/><rect class="box" x="560" y="12" width="117.8" height="34" rx="9"/><text class="name" x="618.9" y="29" text-anchor="middle" dominant-baseline="central">preferences</text><rect class="box" x="560" y="358" width="117.8" height="34" rx="9"/><text class="name" x="618.9" y="375" text-anchor="middle" dominant-baseline="central">preferences</text></g><a href="#event-1" class="msg request" data-event="1" data-source="cli" data-target="sut"><title>1. cli → sut: POST /user/search</title><line class="hit" x1="52" y1="82" x2="256.8" y2="82"/><line class="line" x1="52" y1="82" x2="251.4" y2="82"/><path class="head" d="M256.8 82L247.8 77.5L247.8 86.5Z"/><rect class="label-bg" x="76" y="56" width="156.8" height="20" rx="6"/><text class="label" x="154.4" y="66" text-anchor="middle" dominant-baseline="central"><tspan class="num">1</tspan> POST /user/search</text></a><a href="#event-2" class="msg request" data-event="2" data-source="sut" data-target="users"><title>2. sut → users: GET /api/user/12345</title><line class="hit" x1="256.8" y1="128" x2="476" y2="128"/><line class="line" x1="256.8" y1="128" x2="470.6" y2="128"/><path class="head" d="M476 128L467 123.5L467 132.5Z"/><rect class="label-bg" x="280.8" y="102" width="171.2" height="20" rx="6"/><text class="label" x="366.4" y="112" text-anchor="middle" dominant-baseline="central"><tspan class="num">2</tspan> GET /api/user/12345</text></a><a href="#event-3" class="msg response s-ok" data-event="3" data-source="users" data-target="sut"><title>3. users → sut: 200 OK</title><line class="hit" x1="476" y1="174" x2="256.8" y2="174"/><line class="line" x1="476" y1="174" x2="262.2" y2="174"/><path class="head open" d="M265.8 169.5L256.8 174L265.8 178.5"/><rect class="label-bg" x="327.6" y="148" width="77.6" height="20" rx="6"/><text class="label" x="366.4" y="158" text-anchor="middle" dominant-baseline="central"><tspan class="num">3</tspan> 200 OK</text></a><a href="#event-4" class="msg request" data-event="4" data-source="sut" data-target="preferences"><title>4. sut → preferences: GET /api/preferences/12345</title><line class="hit" x1="256.8" y1="220" x2="618.9" y2="220"/><line class="line" x1="256.8" y1="220" x2="613.5" y2="220"/><path class="head" d="M618.9 220L609.9 215.5L609.9 224.5Z"/><rect class="label-bg" x="327.1" y="194" width="221.6" height="20" rx="6"/><text class="label" x="437.9" y="204" text-anchor="middle" dominant-baseline="central"><tspan class="num">4</tspan> GET /api/preferences/12345</text></a><a href="#event-5" class="msg response s-ok" data-event="5" data-source="preferences" data-target="sut"><title>5. preferences → sut: 200 OK</title><line class="hit" x1="618.9" y1="266" x2="256.8" y2="266"/><line class="line" x1="618.9" y1="266" x2="262.2" y2="266"/><path class="head open" d="M265.8 261.5L256.8 266L265.8 270.5"/><rect class="label-bg" x="399.1" y="240" width="77.6" height="20" rx="6"/><text class="label" x="437.9" y="250" text-anchor="middle" dominant-baseline="central"><tspan class="num">5</tspan> 200 OK</text></a><a href="#event-6" class="msg response s-ok" data-event="6" data-source="sut" data-target="cli"><title>6. sut → cli: 200 OK</title><line class="hit" x1="256.8" y1="312" x2="52" y2="312"/><line class="line" x1="256.8" y1="312" x2="57.4" y2="312"/><path class="head open" d="M61 307.5L52 312L61 316.5"/><rect class="label-bg" x="115.6" y="286" width="77.6" height="20" rx="6"/><text class="label" x="154.4" y="296" text-anchor="middle" dominant-baseline="central"><tspan class="num">6</tspan> 200 OK</text></a></svg></div>
+    </section>
 
-</pre>
+    <section class="panel" aria-labelledby="events-title">
+      <div class="panel-head">
+        <h2 id="events-title">Events</h2>
+        <div class="tools">
+          <label class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input type="search" id="filter" placeholder="Filter events" aria-label="Filter events" autocomplete="off">
+          </label>
+        </div>
+      </div>
+      <ol class="events" id="events">
+        
+        <li class="event request" id="event-1" data-event="1" data-source="cli" data-target="sut">
+          <button class="event-head" type="button" aria-expanded="true" aria-controls="event-body-1">
+            <span class="badge">1</span>
+            <span class="route"><b>cli</b><span class="arrow">→</span><b>sut</b></span>
+            <span class="summary" title="POST /user/search">POST /user/search</span>
+            <span class="end"><span class="offset">&#43;0 µs</span></span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="event-body" id="event-body-1">
+            <div class="start-line">POST /user/search HTTP/1.1</div>
+            <dl class="headers"><dt>Host</dt><dd>sut</dd><dt>Content-Type</dt><dd>application/json</dd></dl>
+            
+            <div class="code">
+              <div class="code-head"><span>JSON · 14 B</span><span class="spacer"></span><button class="btn" type="button" data-expand hidden>Show all</button><button class="btn" type="button" data-copy="{
+  &#34;name&#34;: &#34;jan&#34;
+}">Copy</button></div>
+              <pre><code><span class="j-p">{</span>
+  <span class="j-k">&#34;name&#34;</span><span class="j-p">:</span> <span class="j-s">&#34;jan&#34;</span>
+<span class="j-p">}</span></code></pre>
+            </div>
+            
+            <div class="actions">
+              <button class="btn" type="button" data-copy="POST /user/search HTTP/1.1
+Host: sut
+Content-Type: application/json
 
-            </td>
-        </tr>
-
-        <tr>
-            <th scope="row">2</th>
-            <td>
-<pre>GET /api/user/12345 HTTP/1.1
-Host: users
-
-</pre>
-
-            </td>
-        </tr>
-
-        <tr>
-            <th scope="row">3</th>
-            <td>
-<pre>HTTP/1.1 200 OK
+{
+  &#34;name&#34;: &#34;jan&#34;
+}">Copy raw</button>
+              <button class="btn" type="button" data-copy="curl -X POST &#39;http://sut/user/search&#39; -H &#39;Content-Type: application/json&#39; --data-raw &#39;{&#34;name&#34;:&#34;jan&#34;}&#39;">Copy as curl</button>
+            </div>
+          </div>
+        </li>
+        
+        <li class="event request" id="event-2" data-event="2" data-source="sut" data-target="users">
+          <button class="event-head" type="button" aria-expanded="true" aria-controls="event-body-2">
+            <span class="badge">2</span>
+            <span class="route"><b>sut</b><span class="arrow">→</span><b>users</b></span>
+            <span class="summary" title="GET /api/user/12345">GET /api/user/12345</span>
+            <span class="end"><span class="offset">&#43;67 µs</span></span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="event-body" id="event-body-2">
+            <div class="start-line">GET /api/user/12345 HTTP/1.1</div>
+            <dl class="headers"><dt>Host</dt><dd>users</dd></dl>
+            
+            <div class="actions">
+              <button class="btn" type="button" data-copy="GET /api/user/12345 HTTP/1.1
+Host: users">Copy raw</button>
+              <button class="btn" type="button" data-copy="curl &#39;http://users/api/user/12345&#39;">Copy as curl</button>
+            </div>
+          </div>
+        </li>
+        
+        <li class="event response s-ok" id="event-3" data-event="3" data-source="users" data-target="sut">
+          <button class="event-head" type="button" aria-expanded="true" aria-controls="event-body-3">
+            <span class="badge">3</span>
+            <span class="route"><b>users</b><span class="arrow">⇢</span><b>sut</b></span>
+            <span class="summary" title="200 OK">200 OK</span>
+            <span class="end"><span class="status ok">200</span><span class="offset">&#43;67 µs</span></span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="event-body" id="event-body-3">
+            <div class="start-line">HTTP/1.1 200 OK</div>
+            <dl class="headers"><dt>Content-Length</dt><dd>29</dd><dt>Content-Type</dt><dd>application/json</dd></dl>
+            
+            <div class="code">
+              <div class="code-head"><span>JSON · 29 B</span><span class="spacer"></span><button class="btn" type="button" data-expand hidden>Show all</button><button class="btn" type="button" data-copy="{
+  &#34;name&#34;: &#34;jon&#34;,
+  &#34;id&#34;: &#34;1234&#34;
+}">Copy</button></div>
+              <pre><code><span class="j-p">{</span>
+  <span class="j-k">&#34;name&#34;</span><span class="j-p">:</span> <span class="j-s">&#34;jon&#34;</span><span class="j-p">,</span>
+  <span class="j-k">&#34;id&#34;</span><span class="j-p">:</span> <span class="j-s">&#34;1234&#34;</span>
+<span class="j-p">}</span></code></pre>
+            </div>
+            
+            <div class="actions">
+              <button class="btn" type="button" data-copy="HTTP/1.1 200 OK
 Content-Length: 29
 Content-Type: application/json
 
-</pre>
-                <pre><code class="json">{
-    &#34;name&#34;: &#34;jon&#34;,
-    &#34;id&#34;: &#34;1234&#34;
-}</code></pre>
-            </td>
-        </tr>
-
-        <tr>
-            <th scope="row">4</th>
-            <td>
-<pre>GET /api/preferences/12345 HTTP/1.1
-Host: preferences
-
-</pre>
-
-            </td>
-        </tr>
-
-        <tr>
-            <th scope="row">5</th>
-            <td>
-<pre>HTTP/1.1 200 OK
+{
+  &#34;name&#34;: &#34;jon&#34;,
+  &#34;id&#34;: &#34;1234&#34;
+}">Copy raw</button>
+              
+            </div>
+          </div>
+        </li>
+        
+        <li class="event request" id="event-4" data-event="4" data-source="sut" data-target="preferences">
+          <button class="event-head" type="button" aria-expanded="true" aria-controls="event-body-4">
+            <span class="badge">4</span>
+            <span class="route"><b>sut</b><span class="arrow">→</span><b>preferences</b></span>
+            <span class="summary" title="GET /api/preferences/12345">GET /api/preferences/12345</span>
+            <span class="end"><span class="offset">&#43;173 µs</span></span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="event-body" id="event-body-4">
+            <div class="start-line">GET /api/preferences/12345 HTTP/1.1</div>
+            <dl class="headers"><dt>Host</dt><dd>preferences</dd></dl>
+            
+            <div class="actions">
+              <button class="btn" type="button" data-copy="GET /api/preferences/12345 HTTP/1.1
+Host: preferences">Copy raw</button>
+              <button class="btn" type="button" data-copy="curl &#39;http://preferences/api/preferences/12345&#39;">Copy as curl</button>
+            </div>
+          </div>
+        </li>
+        
+        <li class="event response s-ok" id="event-5" data-event="5" data-source="preferences" data-target="sut">
+          <button class="event-head" type="button" aria-expanded="true" aria-controls="event-body-5">
+            <span class="badge">5</span>
+            <span class="route"><b>preferences</b><span class="arrow">⇢</span><b>sut</b></span>
+            <span class="summary" title="200 OK">200 OK</span>
+            <span class="end"><span class="status ok">200</span><span class="offset">&#43;173 µs</span></span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="event-body" id="event-body-5">
+            <div class="start-line">HTTP/1.1 200 OK</div>
+            <dl class="headers"><dt>Content-Length</dt><dd>24</dd><dt>Content-Type</dt><dd>application/json</dd></dl>
+            
+            <div class="code">
+              <div class="code-head"><span>JSON · 24 B</span><span class="spacer"></span><button class="btn" type="button" data-expand hidden>Show all</button><button class="btn" type="button" data-copy="{
+  &#34;is_contactable&#34;: true
+}">Copy</button></div>
+              <pre><code><span class="j-p">{</span>
+  <span class="j-k">&#34;is_contactable&#34;</span><span class="j-p">:</span> <span class="j-b">true</span>
+<span class="j-p">}</span></code></pre>
+            </div>
+            
+            <div class="actions">
+              <button class="btn" type="button" data-copy="HTTP/1.1 200 OK
 Content-Length: 24
 Content-Type: application/json
 
-</pre>
-                <pre><code class="json">{
-    &#34;is_contactable&#34;: true
-}</code></pre>
-            </td>
-        </tr>
-
-        <tr>
-            <th scope="row">6</th>
-            <td>
-<pre>HTTP/1.1 200 OK
+{
+  &#34;is_contactable&#34;: true
+}">Copy raw</button>
+              
+            </div>
+          </div>
+        </li>
+        
+        <li class="event response s-ok" id="event-6" data-event="6" data-source="sut" data-target="cli">
+          <button class="event-head" type="button" aria-expanded="true" aria-controls="event-body-6">
+            <span class="badge">6</span>
+            <span class="route"><b>sut</b><span class="arrow">⇢</span><b>cli</b></span>
+            <span class="summary" title="200 OK">200 OK</span>
+            <span class="end"><span class="status ok">200</span><span class="offset">&#43;308 µs</span></span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="event-body" id="event-body-6">
+            <div class="start-line">HTTP/1.1 200 OK</div>
+            <dl class="headers"><dt>Connection</dt><dd>close</dd><dt>Content-Type</dt><dd>application/json</dd></dl>
+            
+            <div class="code">
+              <div class="code-head"><span>JSON · 36 B</span><span class="spacer"></span><button class="btn" type="button" data-expand hidden>Show all</button><button class="btn" type="button" data-copy="{
+  &#34;name&#34;: &#34;jon&#34;,
+  &#34;is_contactable&#34;: true
+}">Copy</button></div>
+              <pre><code><span class="j-p">{</span>
+  <span class="j-k">&#34;name&#34;</span><span class="j-p">:</span> <span class="j-s">&#34;jon&#34;</span><span class="j-p">,</span>
+  <span class="j-k">&#34;is_contactable&#34;</span><span class="j-p">:</span> <span class="j-b">true</span>
+<span class="j-p">}</span></code></pre>
+            </div>
+            
+            <div class="actions">
+              <button class="btn" type="button" data-copy="HTTP/1.1 200 OK
 Connection: close
 Content-Type: application/json
 
-</pre>
-                <pre><code class="json">{
-    &#34;name&#34;: &#34;jon&#34;,
-    &#34;is_contactable&#34;: true
-}</code></pre>
-            </td>
-        </tr>
-
-        </tbody>
-    </table>
+{
+  &#34;name&#34;: &#34;jon&#34;,
+  &#34;is_contactable&#34;: true
+}">Copy raw</button>
+              
+            </div>
+          </div>
+        </li>
+        
+      </ol>
+      <p class="empty" id="no-match" hidden>No events match the filter.</p>
+    </section>
+  </main>
 </div>
+
+<footer>
+  <div class="wrap">
+    <span>Generated by <a href="https://apitest.dev" target="_blank" rel="noopener">apitest</a></span>
+    <span><kbd>j</kbd> <kbd>k</kbd> move between events · <kbd>/</kbd> filter · click a participant to focus on it</span>
+  </div>
+</footer>
+
+<script type="application/json" id="metaJson">{"duration":307917,"hash":"386527107_3595993589","host":"user-service","method":"POST","name":"gets the user 1","path":"/user/search","status_code":200}</script>
 <script>
-    Diagram.parse("\x22cli\x22-\x3e\x22user-service\x22: (1) GET \/user?name=jan\n\x22user-service\x22-\x3e\x22users\x22: (2) GET http:\/\/users\/api\/user\/12345\n\x22users\x22-\x3e\x3e\x22user-service\x22: (3) 200\n\x22user-service\x22-\x3e\x22preferences\x22: (4) GET http:\/\/preferences\/api\/preferences\/12345\n\x22preferences\x22-\x3e\x3e\x22user-service\x22: (5) 200\n\x22user-service\x22-\x3e\x3e\x22cli\x22: (6) 200\n").drawSVG("d", {
-        theme: 'simple',
-        'font-size': 14
+(function () {
+  var root = document.documentElement;
+  var svg = document.querySelector(".seq");
+  var events = Array.prototype.slice.call(document.querySelectorAll(".event"));
+  var arrows = svg ? Array.prototype.slice.call(svg.querySelectorAll(".msg")) : [];
+  var participants = svg ? Array.prototype.slice.call(svg.querySelectorAll(".participant")) : [];
+  var filter = document.getElementById("filter");
+  var noMatch = document.getElementById("no-match");
+  var focused = null;
+  var selected = null;
+
+  function arrowFor(n) { return svg ? svg.querySelector('.msg[data-event="' + n + '"]') : null; }
+  function eventFor(n) { return document.getElementById("event-" + n); }
+
+  function setExpanded(el, open) {
+    el.classList.toggle("collapsed", !open);
+    el.querySelector(".event-head").setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  function select(n, scroll) {
+    var el = eventFor(n);
+    if (!el) return;
+    events.forEach(function (e) { e.classList.remove("selected"); });
+    arrows.forEach(function (a) { a.classList.remove("active"); });
+    el.classList.add("selected");
+    setExpanded(el, true);
+    var arrow = arrowFor(n);
+    if (arrow) arrow.classList.add("active");
+    selected = n;
+    if (scroll) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (history.replaceState) history.replaceState(null, "", "#event-" + n);
+  }
+
+  arrows.forEach(function (a) {
+    var n = a.getAttribute("data-event");
+    a.addEventListener("click", function (ev) { ev.preventDefault(); select(n, true); });
+    a.addEventListener("mouseenter", function () { var e = eventFor(n); if (e) e.classList.add("hover"); });
+    a.addEventListener("mouseleave", function () { var e = eventFor(n); if (e) e.classList.remove("hover"); });
+  });
+
+  events.forEach(function (el) {
+    var n = el.getAttribute("data-event");
+    el.querySelector(".event-head").addEventListener("click", function () {
+      if (selected === n) { setExpanded(el, el.classList.contains("collapsed")); return; }
+      select(n, false);
     });
-</script>
-<style>
-    body {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
+    el.addEventListener("mouseenter", function () { var a = arrowFor(n); if (a) a.classList.add("hover"); });
+    el.addEventListener("mouseleave", function () { var a = arrowFor(n); if (a) a.classList.remove("hover"); });
+  });
+
+  participants.forEach(function (p) {
+    p.addEventListener("click", function () {
+      var name = p.getAttribute("data-participant");
+      focused = focused === name ? null : name;
+      applyFilter();
+    });
+  });
+
+  function applyFilter() {
+    var q = filter ? filter.value.trim().toLowerCase() : "";
+    var visible = 0;
+    events.forEach(function (el) {
+      var src = el.getAttribute("data-source"), dst = el.getAttribute("data-target");
+      var show = (!focused || src === focused || dst === focused) && (!q || el.textContent.toLowerCase().indexOf(q) >= 0);
+      el.hidden = !show;
+      var a = arrowFor(el.getAttribute("data-event"));
+      if (a) a.classList.toggle("match", show);
+      if (show) visible++;
+    });
+    participants.forEach(function (p) {
+      var name = p.getAttribute("data-participant");
+      p.classList.toggle("focus", name === focused);
+      p.classList.toggle("match", !focused || name === focused || arrows.some(function (a) {
+        return a.classList.contains("match") && (a.getAttribute("data-source") === name || a.getAttribute("data-target") === name);
+      }));
+    });
+    if (svg) svg.classList.toggle("filtering", !!(q || focused));
+    if (noMatch) noMatch.hidden = visible > 0;
+  }
+  if (filter) filter.addEventListener("input", applyFilter);
+
+  document.addEventListener("keydown", function (ev) {
+    var tag = (ev.target && ev.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || ev.metaKey || ev.ctrlKey || ev.altKey) {
+      if (ev.key === "Escape" && ev.target === filter) { filter.value = ""; applyFilter(); filter.blur(); }
+      return;
     }
-</style>
-<script type="application/json" id="metaJson">null</script>
-<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.13.1/build/highlight.min.js"></script>
-<script>hljs.initHighlightingOnLoad();</script>
+    if (ev.key === "/") { ev.preventDefault(); if (filter) filter.focus(); return; }
+    if (ev.key === "Escape") { focused = null; if (filter) filter.value = ""; applyFilter(); return; }
+    var shown = events.filter(function (e) { return !e.hidden; });
+    if (!shown.length) return;
+    var idx = shown.findIndex(function (e) { return e.getAttribute("data-event") === selected; });
+    if (ev.key === "j" || ev.key === "ArrowDown") { ev.preventDefault(); select(shown[Math.min(idx + 1, shown.length - 1)].getAttribute("data-event"), true); }
+    if (ev.key === "k" || ev.key === "ArrowUp") { ev.preventDefault(); select(shown[Math.max(idx - 1, 0)].getAttribute("data-event"), true); }
+  });
+
+  var toggleAll = document.getElementById("toggle-all");
+  if (toggleAll) toggleAll.addEventListener("click", function () {
+    var collapse = toggleAll.textContent === "Collapse all";
+    events.forEach(function (el) { setExpanded(el, !collapse); });
+    toggleAll.textContent = collapse ? "Expand all" : "Collapse all";
+  });
+
+  var themeBtn = document.getElementById("theme");
+  if (themeBtn) themeBtn.addEventListener("click", function () {
+    var dark = root.getAttribute("data-theme") ? root.getAttribute("data-theme") === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    var next = dark ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("apitest-report-theme", next); } catch (e) {}
+  });
+
+  function copy(text, btn) {
+    function done() {
+      var label = btn.textContent;
+      btn.classList.add("copied");
+      btn.textContent = "Copied";
+      setTimeout(function () { btn.classList.remove("copied"); btn.textContent = label; }, 1200);
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, function () { fallback(text); done(); });
+    } else {
+      fallback(text);
+      done();
+    }
+  }
+  function fallback(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  document.querySelectorAll("[data-copy]").forEach(function (btn) {
+    btn.addEventListener("click", function () { copy(btn.getAttribute("data-copy"), btn); });
+  });
+
+  document.querySelectorAll(".code").forEach(function (block) {
+    var pre = block.querySelector("pre");
+    var btn = block.querySelector("[data-expand]");
+    if (!pre || !btn || pre.scrollHeight <= pre.clientHeight + 4) return;
+    btn.hidden = false;
+    btn.addEventListener("click", function () {
+      var open = block.classList.toggle("expanded");
+      btn.textContent = open ? "Show less" : "Show all";
+    });
+  });
+
+  
+  function fitDiagram() {
+    if (!svg) return;
+    var natural = parseFloat(svg.getAttribute("width"));
+    var available = svg.parentNode.clientWidth - 16;
+    svg.classList.toggle("natural", natural > 0 && available / natural < 0.72);
+  }
+  fitDiagram();
+  window.addEventListener("resize", fitDiagram);
+
+  var initial = location.hash.match(/^#event-(\d+)$/);
+  if (initial) select(initial[1], true);
+})();
+</script>
 </body>
 </html>
