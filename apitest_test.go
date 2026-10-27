@@ -303,6 +303,44 @@ func TestApiTest_AddsQueryParamsToRequest(t *testing.T) {
 		End()
 }
 
+func TestApiTest_KeepsQueryInURL(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.RawQuery != "page=2" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	apitest.New().
+		Handler(handler).
+		Get("/hello?page=2").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestApiTest_MergesQueryInURLWithQueryParams(t *testing.T) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.RawQuery != "page=2&a=1&a=2&b=3" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	apitest.New().
+		Handler(handler).
+		Get("/hello?page=2&a=1").
+		Query("a", "2").
+		QueryParams(map[string]string{"b": "3"}).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
 func TestApiTest_AddsQueryParamCollectionToRequest(t *testing.T) {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
