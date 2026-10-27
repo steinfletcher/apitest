@@ -571,6 +571,13 @@ Use `HttpClient` on the mock to target a specific client, and `Debug` on the moc
 page per test with a sequence diagram of the request, any mocked calls, and the response, followed by the wire
 representation of each message. See the [demo](https://apitest.dev/demo/user-api.html).
 
+<a href="https://apitest.dev/demo/user-api.html">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://apitest.dev/images/report-user-api-dark.webp">
+    <img alt="An apitest report for GET /user/1234, with a sequence diagram of the calls to the users and preferences services and the list of messages" src="https://apitest.dev/images/report-user-api-light.webp">
+  </picture>
+</a>
+
 The page is self-contained: styles, scripts and the diagram are inline, so it loads nothing from the network and can be
 archived as a CI artifact. Click an arrow to jump to its message, filter the events, focus on one participant, and copy
 any request as a curl command. Requests that received no response, such as calls that matched no mock, are flagged. The
