@@ -49,6 +49,26 @@ func (m *Mock) copy() *Mock {
 	return &newMock
 }
 
+// expandTimes copies each mock once per expected invocation so that every copy answers a single request.
+// Mocks with AnyTimes set are not copied
+func expandTimes(mocks []*Mock) []*Mock {
+	var m []*Mock
+	for i := range mocks {
+		if mocks[i].anyTimesSet {
+			m = append(m, mocks[i])
+			continue
+		}
+
+		times := mocks[i].response.mock.times
+		for j := 1; j <= times; j++ {
+			mockCpy := mocks[i].copy()
+			mockCpy.times = 1
+			m = append(m, mockCpy)
+		}
+	}
+	return m
+}
+
 // MockRequest represents the http request side of a mock interaction
 type MockRequest struct {
 	mock               *Mock
@@ -144,7 +164,7 @@ func (r *StandaloneMocks) Debug() *StandaloneMocks {
 // End finalises the mock, ready for use
 func (r *StandaloneMocks) End() func() {
 	transport := newTransport(
-		r.mocks,
+		expandTimes(r.mocks),
 		r.httpClient,
 		r.debug,
 		false,
@@ -555,7 +575,7 @@ func (r *MockResponse) End() *Mock {
 // EndStandalone finalises the response definition of standalone mocks
 func (r *MockResponse) EndStandalone(other ...*Mock) func() {
 	transport := newTransport(
-		append([]*Mock{r.mock}, other...),
+		expandTimes(append([]*Mock{r.mock}, other...)),
 		r.mock.httpClient,
 		r.mock.debugStandalone,
 		false,

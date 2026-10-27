@@ -522,7 +522,8 @@ apitest.New().
 ### Standalone mocks
 
 Mocks can also be used outside an apitest test, for example in a unit test of an HTTP client. `EndStandalone` and
-`NewStandaloneMocks(...).End()` install the mocks and return a function that removes them.
+`NewStandaloneMocks(...).End()` install the mocks and return a function that removes them. `Times` and `AnyTimes` set
+how many calls each mock answers, as in a test, but a mock called fewer times than expected is not reported.
 
 ```go
 func TestUserClient(t *testing.T) {
