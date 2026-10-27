@@ -1193,6 +1193,48 @@ func TestMocks_Standalone_WithContainer(t *testing.T) {
 	assert.JSONEq(t, `{"a": 12345}`, string(data))
 }
 
+func TestMocks_Standalone_Times(t *testing.T) {
+	cli := http.Client{}
+	defer NewMock().
+		Get("http://localhost:8080/path").
+		RespondWith().
+		Status(http.StatusOK).
+		Times(2).
+		EndStandalone()()
+
+	assertStandaloneMockAnswersTimes(t, &cli, 2)
+}
+
+func TestMocks_StandaloneMocks_Times(t *testing.T) {
+	cli := http.Client{}
+	defer NewStandaloneMocks(
+		NewMock().
+			Get("http://localhost:8080/path").
+			RespondWith().
+			Status(http.StatusOK).
+			Times(2).
+			End(),
+	).
+		HttpClient(&cli).
+		End()()
+
+	assertStandaloneMockAnswersTimes(t, &cli, 2)
+}
+
+func assertStandaloneMockAnswersTimes(t *testing.T, cli *http.Client, times int) {
+	t.Helper()
+	for i := 1; i <= times; i++ {
+		resp, err := cli.Get("http://localhost:8080/path")
+		if err != nil {
+			t.Fatalf("call %d: %v", i, err)
+		}
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	}
+
+	_, err := cli.Get("http://localhost:8080/path")
+	assert.Equal(t, true, err != nil)
+}
+
 func TestMocks_Standalone_WithCustomHTTPClient(t *testing.T) {
 	httpClient := customCli
 	defer NewMock().
