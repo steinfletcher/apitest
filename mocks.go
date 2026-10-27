@@ -264,10 +264,21 @@ func (m *Mock) parseUrl(u string) {
 	m.request.url = parsed
 }
 
-// Method configures mock to match given http method
+// Method configures mock to match given http method. The mock matches any url unless one is set using MockRequest.URL
 func (m *Mock) Method(method string) *MockRequest {
 	m.request.method = method
 	return m.request
+}
+
+// URL configures the mock request to match the given url
+func (r *MockRequest) URL(u string) *MockRequest {
+	r.mock.parseUrl(u)
+	return r
+}
+
+// URLf configures the mock request to match the given url and supports formatting
+func (r *MockRequest) URLf(format string, args ...any) *MockRequest {
+	return r.URL(fmt.Sprintf(format, args...))
 }
 
 // Body configures the mock request to match the given body

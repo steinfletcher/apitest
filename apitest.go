@@ -340,9 +340,11 @@ func (r *Response) End() Result {
 	var unmatchedMocks []UnmatchedMock
 	for _, m := range r.apiTest.mocks {
 		if !m.isUsed {
-			unmatchedMocks = append(unmatchedMocks, UnmatchedMock{
-				URL: *m.request.url,
-			})
+			unmatchedMock := UnmatchedMock{}
+			if m.request.url != nil {
+				unmatchedMock.URL = *m.request.url
+			}
+			unmatchedMocks = append(unmatchedMocks, unmatchedMock)
 		}
 	}
 

@@ -16,6 +16,9 @@ import (
 type Matcher func(*http.Request, *MockRequest) error
 
 var pathMatcher Matcher = func(r *http.Request, spec *MockRequest) error {
+	if spec.url == nil {
+		return nil
+	}
 	receivedPath := r.URL.Path
 	mockPath := spec.url.Path
 	if receivedPath == mockPath {
@@ -28,6 +31,9 @@ var pathMatcher Matcher = func(r *http.Request, spec *MockRequest) error {
 }
 
 var hostMatcher Matcher = func(r *http.Request, spec *MockRequest) error {
+	if spec.url == nil {
+		return nil
+	}
 	receivedHost := r.Host
 	if receivedHost == "" {
 		receivedHost = r.URL.Host
@@ -58,6 +64,9 @@ var methodMatcher Matcher = func(r *http.Request, spec *MockRequest) error {
 }
 
 var schemeMatcher Matcher = func(r *http.Request, spec *MockRequest) error {
+	if spec.url == nil {
+		return nil
+	}
 	receivedScheme := r.URL.Scheme
 	mockScheme := spec.url.Scheme
 	if receivedScheme == "" {
