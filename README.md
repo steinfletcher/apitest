@@ -405,7 +405,8 @@ is used once unless `Times` or `AnyTimes` is set. The built-in matchers behave a
 * **Path** must equal the mock path, or match it as a regular expression. The expression is not anchored, so
   `Get("/user")` also matches `/user/1234`; use `Get("^/user$")` for an exact match.
 * **Host** and **scheme** must equal the mock's when the mock URL specifies them, otherwise they are ignored.
-* **Method** must equal the mock's.
+* **Method** must equal the mock's. A mock started with `Method` instead of a verb method such as `Get` matches any URL
+  unless one is set, as in `NewMock().Method(http.MethodOptions).URL("http://users/api/user")`.
 * **Header**, **query** and **form data** values are regular expressions matched against the received values.
   `HeaderPresent`, `QueryPresent`, `FormDataPresent` and `CookiePresent` (and their `NotPresent` counterparts) check
   for presence regardless of value.

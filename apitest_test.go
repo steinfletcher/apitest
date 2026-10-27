@@ -1515,6 +1515,35 @@ func TestApiTest_ErrorIfMockInvocationsDoNotMatchTimes(t *testing.T) {
 	assert.Equal(t, "http://localhost:8080", unmatchedMocks[0].URL.String())
 }
 
+func TestApiTest_UnmatchedMockWithoutURL(t *testing.T) {
+	options := apitest.NewMock().
+		Method(http.MethodOptions).
+		RespondWith().
+		Status(http.StatusNoContent).
+		End()
+
+	verifier := mocks.NewVerifier()
+	verifier.FailFn = func(t apitest.TestingT, failureMessage string, msgAndArgs ...any) bool {
+		assert.Equal(t, "mock was not invoked expected times", failureMessage)
+		return true
+	}
+
+	res := apitest.New().
+		Mocks(options).
+		Verifier(verifier).
+		Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})).
+		Get("/").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+
+	unmatchedMocks := res.UnmatchedMocks()
+	assert.Equal(t, 1, len(unmatchedMocks))
+	assert.Equal(t, "", unmatchedMocks[0].URL.String())
+}
+
 func TestApiTest_MatchesTimes(t *testing.T) {
 	getUser := apitest.NewMock().
 		Get("http://localhost:8080").

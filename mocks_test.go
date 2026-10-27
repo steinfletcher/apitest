@@ -993,6 +993,65 @@ func TestMocks_MethodMatcher(t *testing.T) {
 	}
 }
 
+func TestMocks_Method_WithoutURL_MatchesAnyURL(t *testing.T) {
+	mock := NewMock().
+		Method(http.MethodOptions).
+		RespondWith().
+		Status(http.StatusNoContent).
+		End()
+
+	optionsErrs := mock.Matches(httptest.NewRequest(http.MethodOptions, "http://example.com/any/path", nil))
+	getErrs := mock.Matches(httptest.NewRequest(http.MethodGet, "http://example.com/any/path", nil))
+
+	assert.Equal(t, 0, len(optionsErrs))
+	assert.Equal(t, []error{errors.New("received method GET did not match mock method OPTIONS")}, getErrs)
+}
+
+func TestMocks_Method_WithURL(t *testing.T) {
+	mock := NewMock().
+		Method(http.MethodOptions).
+		URL("http://example.com/path").
+		RespondWith().
+		Status(http.StatusNoContent).
+		End()
+
+	matchErrs := mock.Matches(httptest.NewRequest(http.MethodOptions, "http://example.com/path", nil))
+	otherErrs := mock.Matches(httptest.NewRequest(http.MethodOptions, "http://example.com/other", nil))
+
+	assert.Equal(t, 0, len(matchErrs))
+	assert.Equal(t, []error{errors.New("received path /other did not match mock path /path")}, otherErrs)
+}
+
+func TestMocks_Method_WithURLf(t *testing.T) {
+	mock := NewMock().
+		Method(http.MethodOptions).
+		URLf("http://example.com/users/%d", 1234).
+		RespondWith().
+		Status(http.StatusNoContent).
+		End()
+
+	matchErrs := mock.Matches(httptest.NewRequest(http.MethodOptions, "http://example.com/users/1234", nil))
+
+	assert.Equal(t, 0, len(matchErrs))
+	assert.Equal(t, "/users/1234", mock.request.url.Path)
+}
+
+func TestMocks_Standalone_MethodWithoutURL(t *testing.T) {
+	defer NewMock().
+		Method(http.MethodOptions).
+		RespondWith().
+		Status(http.StatusNoContent).
+		EndStandalone()()
+
+	req, _ := http.NewRequest(http.MethodOptions, "http://localhost:8080/any/path", nil)
+	resp, err := http.DefaultClient.Do(req)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+}
+
 func TestMocks_Request_SetsTheMethod(t *testing.T) {
 	tests := []struct {
 		expectedMethod string
